@@ -19,15 +19,25 @@ class MoodLamp():
                 self._run_one_cycle(pixels)
 
     def _run_one_cycle(self, pixels):
-        pixel_sequences.show_one_color(pixels, pixel_sequences.RED, 1)
-        pixel_sequences.show_one_color(pixels, pixel_sequences.GREEN, 1)
-        pixel_sequences.show_one_color(pixels, pixel_sequences.BLUE, 1)
+        self.show_rgb(pixels, 1)
 
-        pixel_sequences.color_chase(pixels, pixel_sequences.RED, 0.1)
-        pixel_sequences.color_chase(pixels, pixel_sequences.YELLOW, 0.1)
-        pixel_sequences.color_chase(pixels, pixel_sequences.GREEN, 0.1)
-        pixel_sequences.color_chase(pixels, pixel_sequences.CYAN, 0.1)
-        pixel_sequences.color_chase(pixels, pixel_sequences.BLUE, 0.1)
-        pixel_sequences.color_chase(pixels, pixel_sequences.PURPLE, 0.1)
+        self.show_color_chase(pixels, 0.1)
 
-        pixel_sequences.rainbow_cycle(pixels, 0)
+        self.show_rainbow_cycle(pixels, 0)
+
+    def show_rainbow_cycle(self, pixels, wait):
+        pixel_sequences.rainbow_cycle(pixels, wait)
+
+    def show_color_chase(self, pixels, wait):
+        pixel_sequences.color_chase(pixels, pixel_sequences.RED, wait)
+        pixel_sequences.color_chase(pixels, pixel_sequences.YELLOW, wait)
+        pixel_sequences.color_chase(pixels, pixel_sequences.GREEN, wait)
+        pixel_sequences.color_chase(pixels, pixel_sequences.CYAN, wait)
+        pixel_sequences.color_chase(pixels, pixel_sequences.BLUE, wait)
+        pixel_sequences.color_chase(pixels, pixel_sequences.PURPLE, wait)
+
+    def show_rgb(self, pixels, wait):
+        pixel_sequences.show_one_color(pixels, pixel_sequences.RED, wait)
+        pixel_sequences.show_one_color(pixels, pixel_sequences.GREEN, wait)
+        pixel_sequences.show_one_color(pixels, pixel_sequences.BLUE, wait)
+

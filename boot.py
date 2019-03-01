@@ -11,9 +11,10 @@ import mood_lamp
 
 
 pixel_pin = board.GPIO2
-num_pixels = 8
-brightness=0.01
+num_pixels = 100
+brightness=0.06
 
 ml = mood_lamp.MoodLamp(pixel_pin, num_pixels, brightness)
 
 ml.run()
+
