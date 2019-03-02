@@ -3,6 +3,27 @@ import time
 ## from https://gist.github.com/tdicola/f4324c9ae813410182d5ed00e866c8fb
 
 #Core classes
+class SignalSource:
+    def __init__(self, source=None):
+        self.set_source(source)
+
+    def __call__(self):
+        # Get the source signal value and return it when reading this signal
+        # source's value.
+        return self._source()
+
+    def set_source(self, source):
+        # Allow setting this signal source to either another signal (anything
+        # callable) or a static value (for convenience when something is a
+        # fixed value that never changes).
+        if callable(source):
+            # Callable source, save it directly.
+            self._source = source
+        else:
+            # Not callable, assume it's a static value and make a lambda
+            # that's callable to capture and always return it.
+            self._source = lambda: source
+
 class SignalBase:
     @property
     def range(self):
@@ -30,28 +51,14 @@ class SignalBase:
         # Transform assuming discrete integer values instead of floats.
         return int(self.transform(y0, y1))
 
-class SignalSource:
-    def __init__(self, source=None):
-        self.set_source(source)
+#Signals
+class StaticSignal(SignalBase):
+    def __init__(self, static_value=0.0):
+        self.static_value = static_value
 
     def __call__(self):
-        # Get the source signal value and return it when reading this signal
-        # source's value.
-        return self._source()
+        return self.static_value
 
-    def set_source(self, source):
-        # Allow setting this signal source to either another signal (anything
-        # callable) or a static value (for convenience when something is a
-        # fixed value that never changes).
-        if callable(source):
-            # Callable source, save it directly.
-            self._source = source
-        else:
-            # Not callable, assume it's a static value and make a lambda
-            # that's callable to capture and always return it.
-            self._source = lambda: source
-
-#Signals
 class SineWaveSignal(SignalBase):
 
     def __init__(self, time=0.0, amplitude=1.0, frequency=1.0, phase=0.0):

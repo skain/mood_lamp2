@@ -60,21 +60,13 @@ def show_one_color(pixels, color, wait):
 
 def red_green_sin(pixels, frame_wait=0.0):
     clock = sp.FrameClockSignal()
-    frequency = sp.SignalSource(0.1)
-    # frequency = TransformedSignal(ADC(ADC_PIN),
-    #                               0.1,
-    #                               0.5)
-    red_wave = sp.TransformedSignal(sp.SineWaveSignal(time=clock,
-                                                      frequency=frequency),
-                                                      0,
-                                                      255,
-                                                      discrete=True)
-    green_wave = sp.TransformedSignal(sp.SineWaveSignal(time=clock,
-                                                        frequency=frequency,
-                                                        phase=math.pi),
-                                      0,
-                                      255,
-                                      discrete=True)
+    frequency = sp.StaticSignal(0.1)
+    red_wave = sp.TransformedSignal(
+        sp.SineWaveSignal(time=clock, frequency=frequency),
+        0,255,discrete=True)
+    green_wave = sp.TransformedSignal(
+        sp.SineWaveSignal(time=clock, frequency=frequency, phase=math.pi),
+        0, 255,  discrete=True)
 
     clock.update()
     color = (red_wave(), green_wave(), 0)
@@ -83,8 +75,9 @@ def red_green_sin(pixels, frame_wait=0.0):
     print("freq={}\tr={}\tg={}\tb={}".format(frequency(), *color))
     time.sleep(frame_wait)
 
-# def possig_test(pixels, frame_wait=0.0):
-#     clock = sp.FrameClockSignal()
-#     frequency = sp.SignalSource(0.1)
-#     red_wave = sp.TransformedSignal(sp.SineWaveSignal(time=clock,
-#                                                     frequency=frequency))
+def possig_test(pixels, frame_wait=0.0):
+    clock = sp.FrameClockSignal()
+    frequency = sp.StaticSignal(0.1)
+    red_wave = sp.TransformedSignal(
+        sp.SineWaveSignal(time=clock, frequency=frequency),
+        0, 255, discrete=True)
