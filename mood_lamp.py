@@ -1,4 +1,5 @@
 import neopixel
+import time
 import pixel_sequences
 
 
@@ -14,9 +15,16 @@ class MoodLamp():
         return neopixel.NeoPixel(self.pixel_pin, self.num_pixels, brightness=self.brightness, auto_write=False)
 
     def run(self):
+        '''this is the entry point for old-fashioned hand-coded algos'''
         with self._create_pixels() as pixels:
             while(True):
                 self._run_one_cycle(pixels)
+    
+    def run_sp(self):
+        '''this is the entry point for new signal processing based functions'''
+        with self._create_pixels() as pixels:
+            while(True):
+                pixel_sequences.red_green_sin(pixels)
 
     def _run_one_cycle(self, pixels):
         self.show_rgb(pixels, 1)

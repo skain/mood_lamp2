@@ -1,7 +1,9 @@
 # CircuitPython demo - NeoPixel
 import time
+import math
 import board
 import neopixel
+import signal_processing as sp
 
 
 
@@ -34,7 +36,7 @@ def color_chase(pixels, color, wait):
         pixels[i] = color
         time.sleep(wait)
         pixels.show()
-    time.sleep(0.5)
+    # time.sleep(0.5)
 
 
 def rainbow_cycle(pixels, wait):
@@ -52,3 +54,27 @@ def show_one_color(pixels, color, wait):
     pixels.show()
     time.sleep(wait)
 
+def red_green_sin(pixels, frame_wait=0.0):
+    clock = sp.FrameClock()
+    frequency = sp.SignalSource(0.1)
+    # frequency = TransformedSignal(ADC(ADC_PIN),
+    #                               0.1,
+    #                               0.5)
+    red_wave   = sp.TransformedSignal(sp.SineWave(time=clock,
+                                            frequency=frequency()),
+                                   0,
+                                   255,
+                                   discrete=True)
+    green_wave = sp.TransformedSignal(sp.SineWave(time=clock,
+                                            frequency=frequency(),
+                                            phase=math.pi),
+                                   0,
+                                   255,
+                                   discrete=True)
+
+    clock.update()
+    color = (red_wave(), green_wave(), 0)
+    pixels.fill(color)
+    pixels.write()
+    print("freq={}\tr={}\tg={}\tb={}".format(frequency(), *color))
+    time.sleep(frame_wait)
