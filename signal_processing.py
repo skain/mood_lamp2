@@ -2,6 +2,7 @@ import math
 import time
 ## from https://gist.github.com/tdicola/f4324c9ae813410182d5ed00e866c8fb
 
+#Core classes
 class SignalBase:
     @property
     def range(self):
@@ -50,6 +51,7 @@ class SignalSource:
             # that's callable to capture and always return it.
             self._source = lambda: source
 
+#Signals
 class SineWaveSignal(SignalBase):
 
     def __init__(self, time=0.0, amplitude=1.0, frequency=1.0, phase=0.0):
@@ -109,3 +111,9 @@ class TransformedSignal(SignalBase):
 
     def __call__(self):
         return self._transform(self.y0, self.y1)
+
+class StripPositionSignal(SignalBase):
+    def __init__(self):
+        self.position = 0
+
+
