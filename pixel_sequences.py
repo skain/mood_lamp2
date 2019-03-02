@@ -55,17 +55,17 @@ def show_one_color(pixels, color, wait):
     time.sleep(wait)
 
 def red_green_sin(pixels, frame_wait=0.0):
-    clock = sp.FrameClock()
+    clock = sp.FrameClockSignal()
     frequency = sp.SignalSource(0.1)
     # frequency = TransformedSignal(ADC(ADC_PIN),
     #                               0.1,
     #                               0.5)
-    red_wave   = sp.TransformedSignal(sp.SineWave(time=clock,
+    red_wave   = sp.TransformedSignal(sp.SineWaveSignal(time=clock,
                                             frequency=frequency()),
                                    0,
                                    255,
                                    discrete=True)
-    green_wave = sp.TransformedSignal(sp.SineWave(time=clock,
+    green_wave = sp.TransformedSignal(sp.SineWaveSignal(time=clock,
                                             frequency=frequency(),
                                             phase=math.pi),
                                    0,

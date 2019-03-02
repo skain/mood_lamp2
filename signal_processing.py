@@ -2,8 +2,7 @@ import math
 import time
 ## from https://gist.github.com/tdicola/f4324c9ae813410182d5ed00e866c8fb
 
-class Signal:
-
+class SignalBase:
     @property
     def range(self):
         return None
@@ -31,7 +30,6 @@ class Signal:
         return int(self.transform(y0, y1))
 
 class SignalSource:
-
     def __init__(self, source=None):
         self.set_source(source)
 
@@ -52,7 +50,7 @@ class SignalSource:
             # that's callable to capture and always return it.
             self._source = lambda: source
 
-class SineWave(Signal):
+class SineWaveSignal(SignalBase):
 
     def __init__(self, time=0.0, amplitude=1.0, frequency=1.0, phase=0.0):
         self.time = SignalSource(time)
@@ -73,7 +71,7 @@ class SineWave(Signal):
         return self.amplitude() * \
                math.sin(2*math.pi*self.frequency()*self.time() + self.phase())
 
-class FrameClock(Signal):
+class FrameClockSignal(SignalBase):
 
     def __init__(self):
         self.update()
@@ -94,42 +92,7 @@ class FrameClock(Signal):
     def __call__(self):
         return self._current_s
 
-class ADC(Signal):
-
-    ADC_MAX = 4095   # Set to max value of your board's ADC.
-    ADC_MIN = 0      # Set to min value of your board's ADC.
-
-    def __init__(self, pin, _range=(ADC_MIN, ADC_MAX), readings=3, avg_size=10):
-        self._range = _range
-        # CircuitPython ADC creation:
-        self._analogin = nativeio.AnalogIn(pin)
-        # MicroPython ESP8266 ADC creation:
-        # self._analogin = machine.ADC(pin)
-        self._readings = readings
-        self._avg_size = avg_size
-        self._avg = 0
-
-    @property
-    def range(self):
-        return self._range
-
-    def __call__(self):
-        # Take a number of readings and average them together to smooth out
-        # small local ADC variations.
-        accumulated = 0
-        for i in range(self._readings):
-            # CircuitPython ADC reading:
-            accumulated += (self._analogin.value >> 4)
-            # MicroPython ESP8266 ADC reading:
-            # accumulated += self._analogin.read()
-        reading = accumulated // self._readings
-        # Compute running average to smooth out larger ADC variations (i.e.
-        # low pass filter).
-        self._avg -= self._avg / self._avg_size
-        self._avg += reading / self._avg_size
-        return int(self._avg)
-
-class TransformedSignal(Signal):
+class TransformedSignal(SignalBase):
 
     def __init__(self, source_signal, y0, y1, discrete=False):
         self.source = source_signal
