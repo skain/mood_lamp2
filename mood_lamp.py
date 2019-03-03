@@ -11,27 +11,23 @@ class MoodLamp():
         self.brightness = brightness
         self.pixels = None
 
-    def _create_pixels(self):
+    def create_pixels(self):
         return neopixel.NeoPixel(self.pixel_pin, self.num_pixels, brightness=self.brightness, auto_write=False)
 
-    def run(self):
-        '''this is the entry point for old-fashioned hand-coded algos'''
-        with self._create_pixels() as pixels:
-            while(True):
-                self._run_one_cycle(pixels)
-    
-    def run_sp(self):
-        '''this is the entry point for new signal processing based functions'''
-        with self._create_pixels() as pixels:
-            while(True):
-                pixel_sequences.red_green_sin(pixels)
+    def run(self, pixels):
+        while(True):
+        # for i in range(10):
+            # self._run_one_cycle(pixels)
+            # self.run_debug(pixels)
+            # pixel_sequences.red_green_sin(pixels)
+            pixel_sequences.possig_test(pixels)
 
     def _run_one_cycle(self, pixels):
         self.show_rgb(pixels, 1)
 
         self.show_color_chase(pixels, 0.1)
 
-        self.show_rainbow_cycle(pixels, 0)
+        self.show_rainbow_cycle(pixels, 0.1)
 
     def show_rainbow_cycle(self, pixels, wait):
         pixel_sequences.rainbow_cycle(pixels, wait)

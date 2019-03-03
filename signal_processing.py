@@ -24,11 +24,10 @@ class SignalSource:
             # that's callable to capture and always return it.
             self._source = lambda: source
 
-class SignalBase:
-    @property
-    def range(self):
-        return None
-
+class SignalBase(object):
+    def __init__(self, value_range=None):
+        self.value_range = value_range
+        
     def __call__(self):
         raise NotImplementedError('Signal must have a callable implementation!')
 
@@ -37,11 +36,11 @@ class SignalBase:
         # specified target range (y0...y1).  If this signal has no bounds/range
         # then the value is just clamped to the specified range.
         x = self()
-        if self.range is not None:
+        if self.value_range is not None:
             # This signal has a known range so we can interpolate between it
             # and the desired target range (y0...y1).
-            return y0 + (x-self.range[0]) * \
-                        ((y1-y0)/(self.range[1]-self.range[0]))
+            return y0 + (x-self.value_range[0]) * \
+                        ((y1-y0)/(self.value_range[1]-self.value_range[0]))
         else:
             # No range of values for this signal, can't interpolate so just
             # clamp to a value inside desired target range.
@@ -54,27 +53,44 @@ class SignalBase:
 #Signals
 class StaticSignal(SignalBase):
     def __init__(self, static_value=0.0):
-        self.static_value = static_value
+        self._static_value = static_value
 
     def __call__(self):
-        return self.static_value
+        return self._static_value
+
+class PublicValueSignal(SignalBase):
+    def __init__(self, value=0.0, value_range=None):
+        super(PublicValueSignal, self).__init__(value_range)        
+        self.value = value
+
+    def __call__(self):
+        return self.value
+
+    def update(self, value):
+        '''
+        While it is certainly allowed to directly update value here, it's probably better to use this interface
+        '''
+        self.value = value
 
 class SineWaveSignal(SignalBase):
-
     def __init__(self, time=0.0, amplitude=1.0, frequency=1.0, phase=0.0):
+        value_range = (-amplitude, amplitude)
+        super(SineWaveSignal, self).__init__(value_range=value_range)
         self.time = SignalSource(time)
         self.amplitude = SignalSource(amplitude)
         self.frequency = SignalSource(frequency)
         self.phase = SignalSource(phase)
 
-    @property
-    def range(self):
-        # Since amplitude might be a changing signal, the range of this signal
-        # changes too and must be computed on the fly!  This might not really
-        # be necessary in practice and could be switched back to a
-        # non-SignalSource static value set once at initialization.
-        amplitude = self.amplitude()
-        return (-amplitude, amplitude)
+    # -skain I'm not going to worry about this right now since the complexity is too much at this point.
+    # I may have to revisit in the future if I want to have variable amplitudes here
+    # @property
+    # def range(self):
+    #     # Since amplitude might be a changing signal, the range of this signal
+    #     # changes too and must be computed on the fly!  This might not really
+    #     # be necessary in practice and could be switched back to a
+    #     # non-SignalSource static value set once at initialization.
+    #     amplitude = self.amplitude()
+    #     return (-amplitude, amplitude)
 
     def __call__(self):
         return self.amplitude() * \
@@ -103,7 +119,8 @@ class FrameClockSignal(SignalBase):
 
 class TransformedSignal(SignalBase):
 
-    def __init__(self, source_signal, y0, y1, discrete=False):
+    def __init__(self, source_signal, y0, y1, discrete=False, value_range=None):
+        super(TransformedSignal, self).__init__(value_range)
         self.source = source_signal
         self.y0 = y0
         self.y1 = y1
@@ -119,8 +136,13 @@ class TransformedSignal(SignalBase):
     def __call__(self):
         return self._transform(self.y0, self.y1)
 
-class StripPositionSignal(SignalBase):
-    def __init__(self):
-        self.position = 0
+class StripPositionPhaseSignal(TransformedSignal):
+    '''
+    Uses the current pixel's strip postiion (managed externally) to calculate a proportional phase value
+    '''
+    def __init__(self, num_pixels):
+        self.num_pixels = num_pixels
+        super(StripPositionPhaseSignal, self).__init__(PublicValueSignal(value_range=(0, self.num_pixels-1)), 0, math.pi)
 
-
+    def update(self, current_pixel_index):
+        self.source.update(current_pixel_index)

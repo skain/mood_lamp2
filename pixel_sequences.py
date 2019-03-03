@@ -71,13 +71,28 @@ def red_green_sin(pixels, frame_wait=0.0):
     clock.update()
     color = (red_wave(), green_wave(), 0)
     pixels.fill(color)
-    pixels.write()
+    pixels.show()
     print("freq={}\tr={}\tg={}\tb={}".format(frequency(), *color))
     time.sleep(frame_wait)
 
 def possig_test(pixels, frame_wait=0.0):
     clock = sp.FrameClockSignal()
     frequency = sp.StaticSignal(0.1)
+    phase_position = sp.StripPositionPhaseSignal(len(pixels))
+    
     red_wave = sp.TransformedSignal(
-        sp.SineWaveSignal(time=clock, frequency=frequency),
+        sp.SineWaveSignal(time=clock, frequency=frequency, phase=phase_position),
         0, 255, discrete=True)
+
+    clock.update()
+    for i in range(len(pixels)):
+        phase_position.update(i)
+        red_value = red_wave()
+        color = (red_value, 0, 0)
+        pixels[i] = color
+
+    pixels.show()
+    time.sleep(frame_wait)
+
+
+
