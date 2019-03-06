@@ -6,14 +6,16 @@ import gc
 #webrepl.start()
 gc.collect()
 
+import time
 import board
 import mood_lamp
+from clear_boot import cb
 
 pixel_pin = board.GPIO2
-num_pixels = 35
+num_pixels = 49
 brightness = 1.0
 
 ml = mood_lamp.MoodLamp(pixel_pin, num_pixels, brightness)
+time.sleep(1.0)
 with ml.create_pixels() as pixels:
     ml.run(pixels)
-

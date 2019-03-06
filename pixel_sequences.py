@@ -12,6 +12,8 @@ GREEN = (0, 255, 0)
 CYAN = (0, 255, 255)
 BLUE = (0, 0, 255)
 PURPLE = (180, 0, 255)
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
 
 
 def wheel(pos):
@@ -68,11 +70,14 @@ def red_green_sin(pixels, frame_wait=0.0):
         sp.SineWaveSignal(time=clock, frequency=frequency, phase=math.pi),
         0, 255,  discrete=True)
 
+    blue_wave = sp.TransformedSignal(
+        sp.SineWaveSignal(time=clock, frequency=frequency, phase=math.pi/4),
+        0, 255,  discrete=True)
+
     clock.update()
-    color = (red_wave(), green_wave(), 0)
+    color = (red_wave(), green_wave(), blue_wave())
     pixels.fill(color)
     pixels.show()
-    print("freq={}\tr={}\tg={}\tb={}".format(frequency(), *color))
     time.sleep(frame_wait)
 
 def possig_test(pixels, frame_wait=0.0):
