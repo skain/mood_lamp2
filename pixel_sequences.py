@@ -60,7 +60,7 @@ def show_one_color(pixels, color, wait):
     time.sleep(wait)
 
 
-def red_green_sin(pixels, frame_wait=0.0):
+def red_green_blue_sin(pixels, frame_wait=0.0):
     clock = sp.FrameClockSignal()
     frequency = sp.StaticSignal(0.1)
     red_wave = sp.TransformedSignal(
