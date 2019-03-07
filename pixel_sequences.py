@@ -113,7 +113,6 @@ def color_sin_test(pixels, frame_wait=0.0):
 	for l in range(255):
 		clock.update()
 		color_wheel_index = color_wave()
-		print(color_wheel_index)
 		color = wheel(color_wheel_index)
 		pixels.fill(color)
 
