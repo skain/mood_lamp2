@@ -71,6 +71,7 @@ class SineWaveSignal(SignalBase):
 class FrameClockSignal(SignalBase):
 
     def __init__(self):
+        self._current_s = None
         self.update()
 
     def _seconds(self):

@@ -16,15 +16,23 @@ class MoodLamp():
     def run(self, pixels):
         while(True):
             # self.blink(pixels, 1, 0.1)
-            for i in range(len(pixels)):
-                pixel_sequences.red_green_blue_sin(pixels)
+            # print('red_green_blue_sin')
+            # for i in range(len(pixels)):
+            #     pixel_sequences.red_green_blue_sin(pixels)
 
             # # self.blink(pixels, 2, 0.1)
-            self._run_one_cycle(pixels)
+            # self._run_one_cycle(pixels)
 
             # self.blink(pixels, 3, 0.1)
-            for i in range(len(pixels) * 2):
-                pixel_sequences.possig_test(pixels)
+            # print('possig_test')
+            # for i in range(len(pixels) * 2):
+            # pixel_sequences.possig_test(pixels)
+
+            # print('color_sin_test')
+            # pixel_sequences.color_sin_test(pixels)
+
+            print('color_sin_pos_test')
+            pixel_sequences.color_sin_pos_test(pixels)
 
     def _run_one_cycle(self, pixels):
         self.show_rgb(pixels, 0.25)

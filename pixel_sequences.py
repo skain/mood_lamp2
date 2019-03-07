@@ -82,22 +82,65 @@ def red_green_blue_sin(pixels, frame_wait=0.0):
 
 def possig_test(pixels, frame_wait=0.0):
     clock = sp.FrameClockSignal()
-    frequency = sp.StaticSignal(0.1)
+    frequency = sp.StaticSignal(1.0)
     phase_position = sp.StripPositionPhaseSignal(len(pixels))
     
     red_wave = sp.TransformedSignal(
         sp.SineWaveSignal(time=clock, frequency=frequency, phase=phase_position),
         0, 255, discrete=True)
 
-    clock.update()
-    for i in range(len(pixels)):
-        phase_position.update(i)
-        red_value = red_wave()
-        color = (red_value, 0, 0)
-        pixels[i] = color
+    for l in range(100):
+        clock.update()
+        for i in range(len(pixels)):
+            phase_position.update(i)
+            red_value = red_wave()
+            color = (red_value, 0, 0)
+            pixels[i] = color
 
-    pixels.show()
-    time.sleep(frame_wait)
+        pixels.show()
+        time.sleep(frame_wait)
+
+def color_sin_test(pixels, frame_wait=0.0):
+    clock = sp.FrameClockSignal()
+    frequency = sp.StaticSignal(0.02)
+    phase_position = sp.StaticSignal(0.0)
+    # phase_position = sp.StripPositionPhaseSignal(len(pixels))
+    
+    color_wave = sp.TransformedSignal(
+        sp.SineWaveSignal(time=clock, frequency=frequency, phase=phase_position),
+        0, 255, discrete=True)
+
+    for l in range(255):
+        clock.update()
+        # for i in range(len(pixels)):
+            # phase_position.update(i)
+        color_wheel_index = color_wave()
+        print(color_wheel_index)
+        color = wheel(color_wheel_index)
+        pixels.fill(color)
+
+        pixels.show()
+        time.sleep(frame_wait)
+
+def color_sin_pos_test(pixels, frame_wait=0.0):
+    clock = sp.FrameClockSignal()
+    frequency = sp.StaticSignal(0.02)
+    phase_position = sp.StripPositionPhaseSignal(len(pixels))
+    
+    color_wave = sp.TransformedSignal(
+        sp.SineWaveSignal(time=clock, frequency=frequency, phase=phase_position),
+        0, 255, discrete=True)
+
+    for l in range(255):
+        clock.update()
+        for i in range(len(pixels)):
+            phase_position.update(i)
+            color_wheel_index = color_wave()
+            color = wheel(color_wheel_index)
+            pixels[i] = color
+
+        pixels.show()
+        time.sleep(frame_wait)
 
 
 
