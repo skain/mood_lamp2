@@ -1,73 +1,65 @@
 import neopixel
 import time
-import pixel_sequences
-
+import pixel_sequences as ps
 
 
 class MoodLamp():
-    def __init__(self, pixel_pin, num_pixels, brightness):
-        self.pixel_pin = pixel_pin
-        self.num_pixels = num_pixels
-        self.brightness = brightness
+	def __init__(self, pixel_pin, num_pixels, brightness):
+		self.pixel_pin = pixel_pin
+		self.num_pixels = num_pixels
+		self.brightness = brightness
 
-    def create_pixels(self):
-        return neopixel.NeoPixel(self.pixel_pin, self.num_pixels, brightness=self.brightness, auto_write=False)
+	def create_pixels(self):
+		return neopixel.NeoPixel(self.pixel_pin, self.num_pixels, brightness=self.brightness, auto_write=False)
 
-    def run(self, pixels):
-        while(True):
-            # self.blink(pixels, 1, 0.1)
-            # print('red_green_blue_sin')
-            # for i in range(len(pixels)):
-            #     pixel_sequences.red_green_blue_sin(pixels)
+	def run(self, pixels):
+		while(True):
+			print('red_green_blue_sin')
+			ps.red_green_blue_sin(pixels)
 
-            # # self.blink(pixels, 2, 0.1)
-            # self._run_one_cycle(pixels)
+			# self._run_one_cycle(pixels)
 
-            # self.blink(pixels, 3, 0.1)
-            # print('possig_test')
-            # for i in range(len(pixels) * 2):
-            # pixel_sequences.possig_test(pixels)
+			print('possig_test')
+			ps.possig_test(pixels)
 
-            # print('color_sin_test')
-            # pixel_sequences.color_sin_test(pixels)
+			print('color_sin_test')
+			ps.color_sin_test(pixels)
 
-            print('color_sin_pos_test')
-            pixel_sequences.color_sin_pos_test(pixels)
+			print('color_sin_pos_test')
+			ps.color_sin_pos_test(pixels)
 
-    def _run_one_cycle(self, pixels):
-        self.show_rgb(pixels, 0.25)
+	# def _run_one_cycle(self, pixels):
+	# 	self.show_rgb(pixels, 0.25)
 
-        self.show_color_chase(pixels, .01)
+	# 	self.show_color_chase(pixels, .01)
 
-        self.show_rainbow_cycle(pixels, 0)
+	# 	self.show_rainbow_cycle(pixels, 0)
 
-    def show_rainbow_cycle(self, pixels, wait):
-        print('rainbow cycle')
-        pixel_sequences.rainbow_cycle(pixels, wait)
+	# def show_rainbow_cycle(self, pixels, wait):
+	# 	print('rainbow cycle')
+	# 	ps.rainbow_cycle(pixels, wait)
 
-    def show_color_chase(self, pixels, wait):
-        print('show color chase')
-        pixel_sequences.color_chase(pixels, pixel_sequences.RED, wait)
-        pixel_sequences.color_chase(pixels, pixel_sequences.YELLOW, wait)
-        pixel_sequences.color_chase(pixels, pixel_sequences.GREEN, wait)
-        pixel_sequences.color_chase(pixels, pixel_sequences.CYAN, wait)
-        pixel_sequences.color_chase(pixels, pixel_sequences.BLUE, wait)
-        pixel_sequences.color_chase(pixels, pixel_sequences.PURPLE, wait)
+	# def show_color_chase(self, pixels, wait):
+	# 	print('show color chase')
+	# 	ps.color_chase(pixels, ps.RED, wait)
+	# 	ps.color_chase(pixels, ps.YELLOW, wait)
+	# 	ps.color_chase(pixels, ps.GREEN, wait)
+	# 	ps.color_chase(pixels, ps.CYAN, wait)
+	# 	ps.color_chase(pixels, ps.BLUE, wait)
+	# 	ps.color_chase(pixels, ps.PURPLE, wait)
 
-    def show_rgb(self, pixels, wait):
-        print('show rgb')
-        pixel_sequences.show_one_color(pixels, pixel_sequences.RED, wait)
-        pixel_sequences.show_one_color(pixels, pixel_sequences.GREEN, wait)
-        pixel_sequences.show_one_color(pixels, pixel_sequences.BLUE, wait)
+	# def show_rgb(self, pixels, wait):
+	# 	print('show rgb')
+	# 	ps.show_one_color(pixels, ps.RED, wait)
+	# 	ps.show_one_color(pixels, ps.GREEN, wait)
+	# 	ps.show_one_color(pixels, ps.BLUE, wait)
 
-    def blink(self, pixels, num_blinks, blink_time):
-        for i in range(num_blinks):
-            pixels.fill(pixel_sequences.WHITE)
-            pixels.show()
-            time.sleep(blink_time)
+	# def blink(self, pixels, num_blinks, blink_time):
+	# 	for i in range(num_blinks):
+	# 		pixels.fill(ps.WHITE)
+	# 		pixels.show()
+	# 		time.sleep(blink_time)
 
-            pixels.fill(pixel_sequences.BLACK)
-            pixels.show()
-            time.sleep(blink_time)
-
-
+	# 		pixels.fill(ps.BLACK)
+	# 		pixels.show()
+	# 		time.sleep(blink_time)
