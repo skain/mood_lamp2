@@ -34,30 +34,30 @@ def get_pixel_count(pixels):
 	return len(pixels)
 
 
-def color_chase(pixels, color, wait):
-	num_pixels = get_pixel_count(pixels)
-	for i in range(num_pixels):
-		pixels[i] = color
-		time.sleep(wait)
-		pixels.show()
-	# time.sleep(0.5)
+# def color_chase(pixels, color, wait):
+# 	num_pixels = get_pixel_count(pixels)
+# 	for i in range(num_pixels):
+# 		pixels[i] = color
+# 		time.sleep(wait)
+# 		pixels.show()
+# 	# time.sleep(0.5)
 
 
-def rainbow_cycle(pixels, wait):
-	num_pixels = get_pixel_count(pixels)
+# def rainbow_cycle(pixels, wait):
+# 	num_pixels = get_pixel_count(pixels)
 
-	for j in range(255):
-		for i in range(num_pixels):
-			rc_index = (i * 256 // num_pixels) + j
-			pixels[i] = wheel(rc_index & 255)
-		pixels.show()
-		time.sleep(wait)
+# 	for j in range(255):
+# 		for i in range(num_pixels):
+# 			rc_index = (i * 256 // num_pixels) + j
+# 			pixels[i] = wheel(rc_index & 255)
+# 		pixels.show()
+# 		time.sleep(wait)
 
 
-def show_one_color(pixels, color, wait):
-	pixels.fill(color)
-	pixels.show()
-	time.sleep(wait)
+# def show_one_color(pixels, color, wait):
+# 	pixels.fill(color)
+# 	pixels.show()
+# 	time.sleep(wait)
 
 
 def red_green_blue_sin(pixels, frame_wait=0.0):
@@ -136,6 +136,20 @@ def color_sin_pos_test(pixels, frame_wait=0.0):
 			color = wheel(color_wheel_index)
 			pixels[i] = color
 
+		pixels.show()
+		time.sleep(frame_wait)
+
+def square_test(pixels, frame_wait=0.0):
+	clock = sp.FrameClockSignal()
+	frequency = sp.StaticSignal(1.0)
+	red_wave = sp.TransformedSignal(
+		sp.SquareWaveSignal(time=clock, frequency=frequency),
+		0,255,discrete=True)
+
+	for i in range(255):
+		clock.update()
+		color = (red_wave(), 0, 0)
+		pixels.fill(color)
 		pixels.show()
 		time.sleep(frame_wait)
 

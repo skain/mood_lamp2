@@ -75,6 +75,16 @@ class SineWaveSignal(SignalBase):
 			math.sin(2*math.pi*self.frequency()*self.time() + self.phase())
 
 
+class SquareWaveSignal(SineWaveSignal):
+	def __init__(self, time=0.0, amplitude=1.0, frequency=1.0, phase=0.0):
+		self._sine_wave = SineWaveSignal(time, amplitude, frequency, phase)
+		self.value_range = (0, 1)
+
+	def __call__(self):
+		return 1 if self._sine_wave() >= 0 else 0
+
+
+
 class FrameClockSignal(SignalBase):
 	def __init__(self):
 		self._current_s = None
