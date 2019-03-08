@@ -60,90 +60,90 @@ def get_pixel_count(pixels):
 # 	time.sleep(wait)
 
 
-def red_green_blue_sin(pixels, frame_wait=0.0):
-	clock = sp.FrameClockSignal()
-	frequency = sp.StaticSignal(0.1)
-	red_wave = sp.TransformedSignal(
-		sp.SineWaveSignal(time=clock, frequency=frequency),
-		0,255,discrete=True)
-	green_wave = sp.TransformedSignal(
-		sp.SineWaveSignal(time=clock, frequency=frequency, phase=math.pi),
-		0, 255,  discrete=True)
+# def red_green_blue_sin(pixels, frame_wait=0.0):
+# 	clock = sp.FrameClockSignal()
+# 	frequency = sp.StaticSignal(0.1)
+# 	red_wave = sp.TransformedSignal(
+# 		sp.SineWaveSignal(time=clock, frequency=frequency),
+# 		0,255,discrete=True)
+# 	green_wave = sp.TransformedSignal(
+# 		sp.SineWaveSignal(time=clock, frequency=frequency, phase=math.pi),
+# 		0, 255,  discrete=True)
 
-	blue_wave = sp.TransformedSignal(
-		sp.SineWaveSignal(time=clock, frequency=frequency, phase=math.pi/4),
-		0, 255,  discrete=True)
+# 	blue_wave = sp.TransformedSignal(
+# 		sp.SineWaveSignal(time=clock, frequency=frequency, phase=math.pi/4),
+# 		0, 255,  discrete=True)
 
-	for i in range(255):
-		clock.update()
-		color = (red_wave(), green_wave(), blue_wave())
-		pixels.fill(color)
-		pixels.show()
-		time.sleep(frame_wait)
+# 	for i in range(255):
+# 		clock.update()
+# 		color = (red_wave(), green_wave(), blue_wave())
+# 		pixels.fill(color)
+# 		pixels.show()
+# 		time.sleep(frame_wait)
 
-def possig_test(pixels, frame_wait=0.0):
-	clock = sp.FrameClockSignal()
-	frequency = sp.StaticSignal(1.0)
-	phase_position = sp.StripPositionPhaseSignal(len(pixels))
+# def possig_test(pixels, frame_wait=0.0):
+# 	clock = sp.FrameClockSignal()
+# 	frequency = sp.StaticSignal(1.0)
+# 	phase_position = sp.StripPositionPhaseSignal(len(pixels))
 
-	red_wave = sp.TransformedSignal(
-		sp.SineWaveSignal(time=clock, frequency=frequency, phase=phase_position),
-		0, 255, discrete=True)
+# 	red_wave = sp.TransformedSignal(
+# 		sp.SineWaveSignal(time=clock, frequency=frequency, phase=phase_position),
+# 		0, 255, discrete=True)
 
-	for l in range(100):
-		clock.update()
-		for i in range(len(pixels)):
-			phase_position.update(i)
-			red_value = red_wave()
-			color = (red_value, 0, 0)
-			pixels[i] = color
+# 	for l in range(100):
+# 		clock.update()
+# 		for i in range(len(pixels)):
+# 			phase_position.update(i)
+# 			red_value = red_wave()
+# 			color = (red_value, 0, 0)
+# 			pixels[i] = color
 
-		pixels.show()
-		time.sleep(frame_wait)
+# 		pixels.show()
+# 		time.sleep(frame_wait)
 
-def color_sin_test(pixels, frame_wait=0.0):
-	clock = sp.FrameClockSignal()
-	frequency = sp.StaticSignal(0.02)
-	phase_position = sp.StaticSignal(0.0)
+# def color_sin_test(pixels, frame_wait=0.0):
+# 	clock = sp.FrameClockSignal()
+# 	frequency = sp.StaticSignal(0.02)
+# 	phase_position = sp.StaticSignal(0.0)
 
-	color_wave = sp.TransformedSignal(
-		sp.SineWaveSignal(time=clock, frequency=frequency, phase=phase_position),
-		0, 255, discrete=True)
+# 	color_wave = sp.TransformedSignal(
+# 		sp.SineWaveSignal(time=clock, frequency=frequency, phase=phase_position),
+# 		0, 255, discrete=True)
 
-	for l in range(255):
-		clock.update()
-		color_wheel_index = color_wave()
-		color = wheel(color_wheel_index)
-		pixels.fill(color)
+# 	for l in range(255):
+# 		clock.update()
+# 		color_wheel_index = color_wave()
+# 		color = wheel(color_wheel_index)
+# 		pixels.fill(color)
 
-		pixels.show()
-		time.sleep(frame_wait)
+# 		pixels.show()
+# 		time.sleep(frame_wait)
 
-def color_sin_pos_test(pixels, frame_wait=0.0):
-	clock = sp.FrameClockSignal()
-	frequency = sp.StaticSignal(0.02)
-	phase_position = sp.StripPositionPhaseSignal(len(pixels))
+# def color_sin_pos_test(pixels, frame_wait=0.0):
+# 	clock = sp.FrameClockSignal()
+# 	frequency = sp.StaticSignal(0.02)
+# 	phase_position = sp.StripPositionPhaseSignal(len(pixels))
 
-	color_wave = sp.TransformedSignal(
-		sp.SineWaveSignal(time=clock, frequency=frequency, phase=phase_position),
-		0, 255, discrete=True)
+# 	color_wave = sp.TransformedSignal(
+# 		sp.SineWaveSignal(time=clock, frequency=frequency, phase=phase_position),
+# 		0, 255, discrete=True)
 
-	for l in range(255):
-		clock.update()
-		for i in range(len(pixels)):
-			phase_position.update(i)
-			color_wheel_index = color_wave()
-			color = wheel(color_wheel_index)
-			pixels[i] = color
+# 	for l in range(255):
+# 		clock.update()
+# 		for i in range(len(pixels)):
+# 			phase_position.update(i)
+# 			color_wheel_index = color_wave()
+# 			color = wheel(color_wheel_index)
+# 			pixels[i] = color
 
-		pixels.show()
-		time.sleep(frame_wait)
+# 		pixels.show()
+# 		time.sleep(frame_wait)
 
 def square_test(pixels, frame_wait=0.0):
 	clock = sp.FrameClockSignal()
 	frequency = sp.StaticSignal(1.0)
 	red_wave = sp.TransformedSignal(
-		sp.SquareWaveSignal(time=clock, frequency=frequency),
+		sp.SquareWaveSignal(time=clock, frequency=frequency, duty_cycle=0.25),
 		0,255,discrete=True)
 
 	for i in range(255):
@@ -152,6 +152,3 @@ def square_test(pixels, frame_wait=0.0):
 		pixels.fill(color)
 		pixels.show()
 		time.sleep(frame_wait)
-
-
-

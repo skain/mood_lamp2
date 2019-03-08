@@ -76,12 +76,14 @@ class SineWaveSignal(SignalBase):
 
 
 class SquareWaveSignal(SineWaveSignal):
-	def __init__(self, time=0.0, amplitude=1.0, frequency=1.0, phase=0.0):
+	def __init__(self, time=0.0, amplitude=1.0, frequency=1.0, phase=0.0, duty_cycle=0.5):
 		self._sine_wave = SineWaveSignal(time, amplitude, frequency, phase)
 		self.value_range = (0, 1)
+		self.duty_cycle = duty_cycle
 
 	def __call__(self):
-		return 1 if self._sine_wave() >= 0 else 0
+		threshold = 1 - (self.duty_cycle * 2)
+		return 1 if self._sine_wave() > threshold else 0
 
 
 
