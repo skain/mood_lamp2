@@ -14,11 +14,14 @@ class MoodLamp():
 
 	def run(self, pixels):
 		while(True):
+			# print ('possig_3_wave_test')
+			# ps.possig_3_wave_test(pixels)
+
 			# print('red_green_blue_sin')
 			# ps.red_green_blue_sin(pixels)
 			
-			print('square_test')
-			ps.square_test(pixels)
+			# print('square_test')
+			# ps.square_test(pixels)
 
 			# self._run_one_cycle(pixels)
 
@@ -28,8 +31,8 @@ class MoodLamp():
 			# print('color_sin_test')
 			# ps.color_sin_test(pixels)
 
-			# print('color_sin_pos_test')
-			# ps.color_sin_pos_test(pixels)
+			print('color_sin_pos_test')
+			ps.color_sin_pos_test(pixels)
 
 	# def _run_one_cycle(self, pixels):
 	# 	self.show_rgb(pixels, 0.25)

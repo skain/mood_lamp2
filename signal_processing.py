@@ -27,8 +27,7 @@ class SignalBase(object):
 	def transform(self, y0, y1):
 		x = self()
 		if self.value_range is not None:
-			return y0 + (x-self.value_range[0]) * \
-						((y1-y0)/(self.value_range[1]-self.value_range[0]))
+			return y0 + (x-self.value_range[0]) * ((y1-y0)/(self.value_range[1]-self.value_range[0]))
 		else:
 			return max(y0, min(y1, x))
 
@@ -71,8 +70,7 @@ class SineWaveSignal(SignalBase):
 		self.phase = SignalSource(phase)
 
 	def __call__(self):
-		return self.amplitude() * \
-			math.sin(2*math.pi*self.frequency()*self.time() + self.phase())
+		return self.amplitude() * math.sin(2*math.pi*self.frequency()*self.time() + self.phase())
 
 
 class SquareWaveSignal(SineWaveSignal):
