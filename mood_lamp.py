@@ -1,5 +1,5 @@
 import neopixel
-import time
+# import time
 import pixel_sequences as ps
 
 
@@ -14,22 +14,22 @@ class MoodLamp():
 
 	def run(self, pixels):
 		while(True):
-			# print ('possig_3_wave_test')
-			# ps.possig_3_wave_test(pixels)
+			print ('possig_3_wave_test')
+			ps.possig_3_wave_test(pixels)
 
-			# print('red_green_blue_sin')
-			# ps.red_green_blue_sin(pixels)
+			print('red_green_blue_sin')
+			ps.red_green_blue_sin(pixels)
 			
-			# print('square_test')
-			# ps.square_test(pixels)
+			print('square_test')
+			ps.square_test(pixels)
 
 			# self._run_one_cycle(pixels)
 
-			# print('possig_test')
-			# ps.possig_test(pixels)
+			print('possig_test')
+			ps.possig_test(pixels)
 
-			# print('color_sin_test')
-			# ps.color_sin_test(pixels)
+			print('color_sin_test')
+			ps.color_sin_test(pixels)
 
 			print('color_sin_pos_test')
 			ps.color_sin_pos_test(pixels)
