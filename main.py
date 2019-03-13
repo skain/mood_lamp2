@@ -6,10 +6,6 @@ import mood_lamp
 import gc
 gc.collect()
 
-pixel_pin = board.D4
-num_pixels = 49
-brightness = 1.0
-
 
 def run():
 	ml = create_mood_lamp()
