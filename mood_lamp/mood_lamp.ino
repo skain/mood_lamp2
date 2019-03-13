@@ -46,9 +46,8 @@ void setup() {
 }
 
 void loop() {
-  
-//  red_green_blue_sin(5);
-  patterns[random(6)](15);
+  fm_sin_test(15);
+//  patterns[random(6)](15);
   // Some example procedures showing how to display to the pixels:
 //  colorWipe(strip.Color(255, 0, 0), 50); // Red
 //  colorWipe(strip.Color(0, 255, 0), 50); // Green
@@ -109,6 +108,18 @@ float square_to_255(float frequency, float phase, float t, float amplitude, floa
 float phase_from_pixel_index(int pixel_index, int num_pixels){
     float phase = interpolate(pixel_index, 0, num_pixels, 0, PI);
     return phase;
+}
+
+
+float compute_sin_fm_sin_wave(float mod_freq, float mod_phase, float t, float mod_amp, float mod_min, float mod_max, float sin_phase, float sin_amp) {
+  float mod_sin = compute_sin_wave(mod_freq, mod_phase, t, mod_amp);
+  float sin_freq = interpolate(mod_sin, -1.0f, 1.0f, mod_min, mod_max);
+  return compute_sin_wave(sin_freq, sin_phase, t, sin_amp);
+}
+
+float sin_fm_sin_to_255(float mod_freq, float mod_phase, float t, float mod_amp, float mod_min, float mod_max, float sin_phase, float sin_amp){
+  float sin_val = compute_sin_fm_sin_wave(mod_freq, mod_phase, t, mod_amp, mod_min, mod_max, sin_phase, sin_amp);
+  return interpolate(sin_val, -1.0f, 1.0f, 0, 255);
 }
 
 
@@ -250,7 +261,23 @@ void square_test(float run_time){
 }
 
 
-
+void fm_sin_test(float run_time){
+  float mod_freq = 0.1f;
+  float t;
+  float mod_sin, red_sin, red_freq;
+  float start_time = millis();
+  
+  while(true) {
+    t = millis();
+    red_sin = sin_fm_sin_to_255(mod_freq, 0.0f, t, 1.0f, .01f, .1f, 0.0f, 1.0f);
+    strip.fill(strip.Color(red_sin, 0, 0));
+    strip.show();
+    if (have_secs_elapsed(run_time, start_time)) {
+      break;
+    }
+    yield(); // this is here for the Feather HUZZAH's watchdog
+  }
+}
 
 
 
