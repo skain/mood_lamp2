@@ -37,11 +37,11 @@ void setup() {
 }
 
 void loop() {
-  red_green_blue_sin(5);
-  colorWipe(strip.Color(255, 0, 0), 50); // Red
+//  red_green_blue_sin(5);
+  square_test(15);
   // Some example procedures showing how to display to the pixels:
 //  colorWipe(strip.Color(255, 0, 0), 50); // Red
-//  colorWipe(strip.Color(0, 255, 0), 50); // Green
+  colorWipe(strip.Color(0, 255, 0), 50); // Green
 //  colorWipe(strip.Color(0, 0, 255), 50); // Blue
 ////colorWipe(strip.Color(0, 0, 0, 255), 50); // White RGBW
 //  // Send a theater pixel chase in...
@@ -129,9 +129,115 @@ void red_green_blue_sin(float run_time){
   }
 }
 
+void possig_test(float run_time){
+  float freq = 0.4f;
+  uint16_t num_pix = strip.numPixels();
+  float phase;
+  float cur_sin;
+  float start_time = millis();
+  while(true){
+    float t = millis();
+    for(uint16_t i=0; i<num_pix; i++) {
+      phase = phase_from_pixel_index(i, num_pix);
+      cur_sin = sin_to_255(freq, phase, t, 1.0f);
+      strip.setPixelColor(i, strip.Color(cur_sin, 0, 0));
+    }
 
+    strip.show();
+    if (have_secs_elapsed(run_time, start_time)) {
+      break;
+    }
+    yield();
+  }
+}
 
+void possig_3_wave_test(float run_time){
+  float red_freq = 0.2f;
+  float green_freq = 0.1f;
+  float blue_freq = 0.3f;
+  uint16_t num_pix = strip.numPixels();
+  float t, phase;
+  int red_val, green_val, blue_val;
+  float start_time = millis();
+  
+  while(true){
+    for(uint16_t i=0; i<num_pix; i++) {
+      t = millis();
+      phase = phase_from_pixel_index(i, num_pix);
+      red_val = sin_to_255(red_freq, phase, t, 1.0f);
+      green_val = sin_to_255(green_freq, phase, t, 1.0f);
+      blue_val = sin_to_255(blue_freq, phase, t, 1.0f);
+      strip.setPixelColor(i, strip.Color(red_val, green_val, blue_val));
+    }
 
+    strip.show();
+    if (have_secs_elapsed(run_time, start_time)) {
+      break;
+    }
+    yield();
+  }
+}
+
+void color_sin_test(float run_time){
+  float freq = 0.2f;
+  float t, start_time;
+  start_time = millis();
+  float color_wheel_index;
+  
+  while(true){
+    t = millis();
+    color_wheel_index = sin_to_255(freq, 0.0f, t, 1.0f);
+    strip.fill(Wheel(color_wheel_index));
+
+    strip.show();
+    if (have_secs_elapsed(run_time, start_time)) {
+      break;
+    }
+    yield();
+  }
+}
+
+void color_sin_pos_test(float run_time){
+  float amp = 1.0f;
+  float freq = 0.04f;
+  
+  uint16_t num_pix = strip.numPixels();
+  float t, start_time, phase, color_wheel_index;
+
+  start_time = millis();
+  while(true){
+    t = millis();
+    for(uint16_t i=0; i<num_pix; i++) {
+      phase = phase_from_pixel_index(i, num_pix);
+      color_wheel_index = sin_to_255(freq, phase, t, 1.0f);
+      strip.setPixelColor(i, Wheel(color_wheel_index));
+    }
+
+    strip.show();
+    if (have_secs_elapsed(run_time, start_time)) {
+      break;
+    }
+    yield();
+  }
+}
+
+void square_test(float run_time){
+  float freq = 1.0f;
+  float duty_cycle = 0.25f;
+  float start_time, t, red_val;
+
+  start_time = millis();
+  while(true){
+    t = millis();
+    red_val = square_to_255(freq, 0.0f, t, 1.0f, duty_cycle);
+    strip.fill(strip.Color(red_val, 0, 0));
+    strip.show();
+    if (have_secs_elapsed(run_time, start_time)) {
+      break;
+    }
+    yield();
+  }
+}
 
 
 
