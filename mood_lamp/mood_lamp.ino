@@ -15,39 +15,146 @@
 //   NEO_RGBW    Pixels are wired for RGBW bitstream (NeoPixel RGBW products)
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(49, PIN, NEO_GRB + NEO_KHZ800);
 
+uint32_t RED = strip.Color(255, 0, 0);
+uint32_t YELLOW = strip.Color(255, 150, 0);
+uint32_t GREEN = strip.Color(0, 255, 0);
+uint32_t CYAN = strip.Color(0, 255, 255);
+uint32_t BLUE = strip.Color(0, 0, 255);
+uint32_t PURPLE = strip.Color(180, 0, 255);
+uint32_t WHITE = strip.Color(255, 255, 255);
+uint32_t BLACK = strip.Color(0, 0, 0);
+
 // IMPORTANT: To reduce NeoPixel burnout risk, add 1000 uF capacitor across
 // pixel power leads, add 300 - 500 Ohm resistor on first pixel's data input
 // and minimize distance between Arduino and first pixel.  Avoid connecting
 // on a live circuit...if you must, connect GND first.
 
 void setup() {
-  // This is for Trinket 5V 16MHz, you can remove these three lines if you are not using a Trinket
-  #if defined (__AVR_ATtiny85__)
-    if (F_CPU == 16000000) clock_prescale_set(clock_div_1);
-  #endif
-  // End of trinket special code
-
   strip.begin();
-  strip.setBrightness(50);
+  strip.setBrightness(100);
   strip.show(); // Initialize all pixels to 'off'
+  Serial.begin(9600);
 }
 
 void loop() {
-  // Some example procedures showing how to display to the pixels:
+  red_green_blue_sin(5);
   colorWipe(strip.Color(255, 0, 0), 50); // Red
-  colorWipe(strip.Color(0, 255, 0), 50); // Green
-  colorWipe(strip.Color(0, 0, 255), 50); // Blue
-//colorWipe(strip.Color(0, 0, 0, 255), 50); // White RGBW
-  // Send a theater pixel chase in...
-  theaterChase(strip.Color(127, 127, 127), 50); // White
-  theaterChase(strip.Color(127, 0, 0), 50); // Red
-  theaterChase(strip.Color(0, 0, 127), 50); // Blue
-
-  rainbow(20);
-  rainbowCycle(20);
-  theaterChaseRainbow(50);
+  // Some example procedures showing how to display to the pixels:
+//  colorWipe(strip.Color(255, 0, 0), 50); // Red
+//  colorWipe(strip.Color(0, 255, 0), 50); // Green
+//  colorWipe(strip.Color(0, 0, 255), 50); // Blue
+////colorWipe(strip.Color(0, 0, 0, 255), 50); // White RGBW
+//  // Send a theater pixel chase in...
+//  theaterChase(strip.Color(127, 127, 127), 50); // White
+//  theaterChase(strip.Color(127, 0, 0), 50); // Red
+//  theaterChase(strip.Color(0, 0, 127), 50); // Blue
+//
+//  rainbow(20);
+//  rainbowCycle(20);
+//  theaterChaseRainbow(50);
 }
 
+// helpers
+float have_secs_elapsed(float secs, float start_time) {
+  float now = millis();
+  if ((now - start_time) > (secs * 1000)) {
+    return true;
+  }
+
+  return false;
+}
+
+float time_from_millis(float t){
+  return t / 1000.0f;
+}
+
+float compute_sin_wave(float frequency, float phase, float t, float amplitude) {
+  return amplitude * sin(TWO_PI * frequency * time_from_millis(t) + phase);
+}
+
+float compute_square_wave(float frequency, float phase, float t, float amplitude, float duty_cycle){
+  float threshold = 1 - (duty_cycle * 2);
+  float sin_val = compute_sin_wave(frequency, phase, t, amplitude);
+  if (sin_val > threshold) {
+    return 1.0f;
+  } 
+  
+  return 0.0f;
+}
+
+float interpolate(float val, float in_min, float in_max, float out_min, float out_max){
+  return out_min + (val-in_min) * ((out_max-out_min)/(in_max-in_min));
+}
+
+float sin_to_255(float frequency, float phase, float t, float amplitude){
+  float sin_val = compute_sin_wave(frequency, phase, t, amplitude);
+  return interpolate(sin_val, -1, 1, 0, 255);
+}
+
+float square_to_255(float frequency, float phase, float t, float amplitude, float duty_cycle){
+  float square_val = compute_square_wave(frequency, phase, t, amplitude, duty_cycle);
+  return interpolate(square_val, 0, 1, 0, 255);
+}
+
+float phase_from_pixel_index(int pixel_index, int num_pixels){
+    float phase = interpolate(pixel_index, 0, num_pixels, 0, PI);
+    return phase;
+}
+
+
+//sequences
+void red_green_blue_sin(float run_time){
+  float green_phase = PI;
+  float blue_phase = PI / 4.0f;
+  float red_f = 0.01f;
+  float green_f = 0.08f;
+  float blue_f = 0.04f;
+  float t;
+  float red_sin;
+  float green_sin;
+  float blue_sin;
+  float start_time = millis();
+  
+  while(true) {
+    t = millis();
+    red_sin = sin_to_255(red_f, 0.0f, t, 1.0f);
+    green_sin = sin_to_255(green_f, green_phase, t, 1.0f);
+    blue_sin = sin_to_255(blue_f, blue_phase, t, 1.0f);
+    strip.fill(strip.Color(red_sin, green_sin, blue_sin));
+    strip.show();
+    if (have_secs_elapsed(run_time, start_time)) {
+      break;
+    }
+    yield(); // this is here for the Feather HUZZAH's watchdog
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// adafruit sample code
 // Fill the dots one after the other with a color
 void colorWipe(uint32_t c, uint8_t wait) {
   for(uint16_t i=0; i<strip.numPixels(); i++) {
