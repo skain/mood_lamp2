@@ -24,6 +24,8 @@ uint32_t PURPLE = strip.Color(180, 0, 255);
 uint32_t WHITE = strip.Color(255, 255, 255);
 uint32_t BLACK = strip.Color(0, 0, 0);
 
+void (*patterns[6])(float);
+
 // IMPORTANT: To reduce NeoPixel burnout risk, add 1000 uF capacitor across
 // pixel power leads, add 300 - 500 Ohm resistor on first pixel's data input
 // and minimize distance between Arduino and first pixel.  Avoid connecting
@@ -33,15 +35,23 @@ void setup() {
   strip.begin();
   strip.setBrightness(100);
   strip.show(); // Initialize all pixels to 'off'
-  Serial.begin(9600);
+//  Serial.begin(9600);
+  randomSeed(analogRead(0));
+  patterns[0] = red_green_blue_sin;
+  patterns[1] = possig_test;
+  patterns[2] = possig_3_wave_test;
+  patterns[3] = color_sin_test;
+  patterns[4] = color_sin_pos_test;
+  patterns[5] = square_test;
 }
 
 void loop() {
+  
 //  red_green_blue_sin(5);
-  square_test(15);
+  patterns[random(6)](15);
   // Some example procedures showing how to display to the pixels:
 //  colorWipe(strip.Color(255, 0, 0), 50); // Red
-  colorWipe(strip.Color(0, 255, 0), 50); // Green
+//  colorWipe(strip.Color(0, 255, 0), 50); // Green
 //  colorWipe(strip.Color(0, 0, 255), 50); // Blue
 ////colorWipe(strip.Color(0, 0, 0, 255), 50); // White RGBW
 //  // Send a theater pixel chase in...
