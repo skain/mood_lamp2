@@ -24,7 +24,7 @@ uint32_t PURPLE = strip.Color(180, 0, 255);
 uint32_t WHITE = strip.Color(255, 255, 255);
 uint32_t BLACK = strip.Color(0, 0, 0);
 
-const int NUM_PATTERNS = 11;
+const int NUM_PATTERNS = 10;
 
 void (*patterns[NUM_PATTERNS])(float);
 
@@ -44,33 +44,40 @@ void setup() {
   patterns[2] = possig_3_wave_test;
   patterns[3] = color_sin_test;
   patterns[4] = color_sin_pos_test;
-  patterns[5] = square_test;
-  patterns[6] = fm_sin_test;
-  patterns[7] = fm_sin_3_wav_test;
-  patterns[8] = fm_sin_3_wav_possig_test;
-  patterns[9] = row_test;
-  patterns[10] = col_test;
+//  patterns[5] = square_test;
+//  patterns[6] = fm_sin_test;
+//  patterns[7] = fm_sin_3_wav_test;
+//  patterns[8] = fm_sin_3_wav_possig_test;
+  patterns[5] = row_test;
+  patterns[6] = col_test;
+  patterns[7] = odd_even_rgb_wave_test;
+  patterns[8] = row_rgb_wave_test;
+  patterns[9] = column_rgb_wave_test;
 }
 
 void loop() {
-  patterns[random(NUM_PATTERNS)](15);
-  colorWipe(strip.Color(0,0,0), 75);
-  // Some example procedures showing how to display to the pixels:
-//  colorWipe(strip.Color(255, 0, 0), 50); // Red
-//  colorWipe(strip.Color(0, 255, 0), 50); // Green
-//  colorWipe(strip.Color(0, 0, 255), 50); // Blue
-////colorWipe(strip.Color(0, 0, 0, 255), 50); // White RGBW
-//  // Send a theater pixel chase in...
-//  theaterChase(strip.Color(127, 127, 127), 50); // White
-//  theaterChase(strip.Color(127, 0, 0), 50); // Red
-//  theaterChase(strip.Color(0, 0, 127), 50); // Blue
-//
-//  rainbow(20);
-//  rainbowCycle(20);
-//  theaterChaseRainbow(50);
+//  column_rgb_wave_test(60);
+//  possig_3_wave_test(10);
+  patterns[random(NUM_PATTERNS)](60);
+//  colorWipe(strip.Color(0,0,0), 75);
 }
 
 // helpers
+// Input a value 0 to 255 to get a color value.
+// The colours are a transition r - g - b - back to r.
+uint32_t Wheel(byte WheelPos) {
+  WheelPos = 255 - WheelPos;
+  if(WheelPos < 85) {
+    return strip.Color(255 - WheelPos * 3, 0, WheelPos * 3);
+  }
+  if(WheelPos < 170) {
+    WheelPos -= 85;
+    return strip.Color(0, WheelPos * 3, 255 - WheelPos * 3);
+  }
+  WheelPos -= 170;
+  return strip.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
+}
+
 float have_secs_elapsed(float secs, float start_time) {
   float now = millis();
   if ((now - start_time) > (secs * 1000)) {
@@ -153,15 +160,42 @@ float phase_from_column_index(uint16_t pixel_index, uint16_t num_cols){
   return interpolate(col_index, 0, num_cols - 1, 0.0f, PI);
 }
 
+float get_random_frequency(float min, float max){
+  // allows for specification of min and max in Hz
+  int norm_min = min * 1000;
+  int norm_max = max * 1000;
+  long r = random(norm_min, norm_max);
+  float freq = r / 1000.0f;
+  return freq;
+}
+
+float get_random_phase(){
+  float r = random(0,4);
+  if (r == 0) {
+    return 0.0f;
+  }
+  return PI / r;
+}
+
 
 //sequences
+// Fill the dots one after the other with a color
+void colorWipe(uint32_t c, uint8_t wait) {
+  for(uint16_t i=0; i<strip.numPixels(); i++) {
+    strip.setPixelColor(i, c);
+    strip.show();
+    delay(wait);
+  }
+}
+
 void red_green_blue_sin(float run_time){
   Serial.println("red_green_blue_sin");
-  float green_phase = PI;
-  float blue_phase = PI / 4.0f;
-  float red_f = 0.01f;
-  float green_f = 0.08f;
-  float blue_f = 0.04f;
+  float red_phase = get_random_phase();
+  float green_phase = get_random_phase();
+  float blue_phase = get_random_phase();
+  float red_f = get_random_frequency(0.01f, 0.75f);
+  float green_f = get_random_frequency(0.01f, 0.75f);
+  float blue_f = get_random_frequency(0.01f, 0.75f);
   float t;
   float red_sin;
   float green_sin;
@@ -170,10 +204,11 @@ void red_green_blue_sin(float run_time){
   
   while(true) {
     t = millis() -  start_time;
-    red_sin = sin_to_255(red_f, 0.0f, t, 1.0f);
+    red_sin = sin_to_255(red_f, red_phase, t, 1.0f);
     green_sin = sin_to_255(green_f, green_phase, t, 1.0f);
     blue_sin = sin_to_255(blue_f, blue_phase, t, 1.0f);
     strip.fill(strip.Color(red_sin, green_sin, blue_sin));
+//    strip.fill(strip.Color(red_sin, 0, 0));
     strip.show();
     if (have_secs_elapsed(run_time, start_time)) {
       break;
@@ -184,13 +219,14 @@ void red_green_blue_sin(float run_time){
 
 void possig_test(float run_time){
   Serial.println("possig_test");
-  float freq = 0.4f;
+  float freq = get_random_frequency(0.2f, 2.0f);
   uint16_t num_pix = strip.numPixels();
   float phase;
   float cur_sin;
   float start_time = millis();
+  float t;
   while(true){
-    float t = millis() -  start_time;
+    t = millis() -  start_time;
     for(uint16_t i=0; i<num_pix; i++) {
       phase = phase_from_pixel_index(i, num_pix);
       cur_sin = sin_to_255(freq, phase, t, 1.0f);
@@ -207,9 +243,9 @@ void possig_test(float run_time){
 
 void possig_3_wave_test(float run_time){
   Serial.println("possig_3_wave_test");
-  float red_freq = 0.2f;
-  float green_freq = 0.1f;
-  float blue_freq = 0.3f;
+  float red_freq = get_random_frequency(0.2f, 2.0f);
+  float green_freq = get_random_frequency(0.2f, 2.0f);
+  float blue_freq = get_random_frequency(0.2f, 2.0f);
   uint16_t num_pix = strip.numPixels();
   float t, phase;
   int red_val, green_val, blue_val;
@@ -446,100 +482,87 @@ void col_test(float run_time){
   }
 }
 
+void odd_even_rgb_wave_test(float run_time){
+  Serial.println("odd_even_rgb_wave_test");
+  float red_freq = 0.2f;
+  float green_freq = 0.1f;
+  float blue_freq = 0.3f;
+  uint16_t num_pix = strip.numPixels();
+  float t, phase;
+  int red_val, green_val, blue_val;
+  float start_time = millis();
+  
+  while(true){
+    for(uint16_t i=0; i<num_pix; i++) {
+      t = millis() -  start_time;
+      phase = phase_from_odd_even_index(i);
+      red_val = sin_to_255(red_freq, phase, t, 1.0f);
+      green_val = sin_to_255(green_freq, phase, t, 1.0f);
+      blue_val = sin_to_255(blue_freq, phase, t, 1.0f);
+      strip.setPixelColor(i, strip.Color(red_val, green_val, blue_val));
+    }
 
-
-
-
-
-
-
-
-
-
-
-
-// adafruit sample code
-// Fill the dots one after the other with a color
-void colorWipe(uint32_t c, uint8_t wait) {
-  for(uint16_t i=0; i<strip.numPixels(); i++) {
-    strip.setPixelColor(i, c);
     strip.show();
-    delay(wait);
+    if (have_secs_elapsed(run_time, start_time)) {
+      break;
+    }
+    yield();
   }
 }
 
-void rainbow(uint8_t wait) {
-  uint16_t i, j;
 
-  for(j=0; j<256; j++) {
-    for(i=0; i<strip.numPixels(); i++) {
-      strip.setPixelColor(i, Wheel((i+j) & 255));
+void row_rgb_wave_test(float run_time){
+  Serial.println("row_rgb_wave_test");
+  float red_freq = 0.2f;
+  float green_freq = 0.1f;
+  float blue_freq = 0.3f;
+  uint16_t num_pix = strip.numPixels();
+  float t, phase;
+  int red_val, green_val, blue_val;
+  float start_time = millis();
+  
+  while(true){
+    for(uint16_t i=0; i<num_pix; i++) {
+      t = millis() -  start_time;
+      phase = phase_from_row_index(i, 7, 7);
+      red_val = sin_to_255(red_freq, phase, t, 1.0f);
+      green_val = sin_to_255(green_freq, phase, t, 1.0f);
+      blue_val = sin_to_255(blue_freq, phase, t, 1.0f);
+      strip.setPixelColor(i, strip.Color(red_val, green_val, blue_val));
     }
+
     strip.show();
-    delay(wait);
+    if (have_secs_elapsed(run_time, start_time)) {
+      break;
+    }
+    yield();
   }
 }
 
-// Slightly different, this makes the rainbow equally distributed throughout
-void rainbowCycle(uint8_t wait) {
-  uint16_t i, j;
-
-  for(j=0; j<256*5; j++) { // 5 cycles of all colors on wheel
-    for(i=0; i< strip.numPixels(); i++) {
-      strip.setPixelColor(i, Wheel(((i * 256 / strip.numPixels()) + j) & 255));
+void column_rgb_wave_test(float run_time){
+  Serial.println("column_rgb_wave_test");
+  float red_freq = 0.2f;
+  float green_freq = 0.1f;
+  float blue_freq = 0.3f;
+  uint16_t num_pix = strip.numPixels();
+  float t, phase;
+  int red_val, green_val, blue_val;
+  float start_time = millis();
+  
+  while(true){
+    for(uint16_t i=0; i<num_pix; i++) {
+      t = millis() -  start_time;
+      phase = phase_from_column_index(i, 7);
+      red_val = sin_to_255(red_freq, phase, t, 1.0f);
+      green_val = sin_to_255(green_freq, phase, t, 1.0f);
+      blue_val = sin_to_255(blue_freq, phase, t, 1.0f);
+      strip.setPixelColor(i, strip.Color(red_val, green_val, blue_val));
     }
+
     strip.show();
-    delay(wait);
-  }
-}
-
-//Theatre-style crawling lights.
-void theaterChase(uint32_t c, uint8_t wait) {
-  for (int j=0; j<10; j++) {  //do 10 cycles of chasing
-    for (int q=0; q < 3; q++) {
-      for (uint16_t i=0; i < strip.numPixels(); i=i+3) {
-        strip.setPixelColor(i+q, c);    //turn every third pixel on
-      }
-      strip.show();
-
-      delay(wait);
-
-      for (uint16_t i=0; i < strip.numPixels(); i=i+3) {
-        strip.setPixelColor(i+q, 0);        //turn every third pixel off
-      }
+    if (have_secs_elapsed(run_time, start_time)) {
+      break;
     }
+    yield();
   }
-}
-
-//Theatre-style crawling lights with rainbow effect
-void theaterChaseRainbow(uint8_t wait) {
-  for (int j=0; j < 256; j++) {     // cycle all 256 colors in the wheel
-    for (int q=0; q < 3; q++) {
-      for (uint16_t i=0; i < strip.numPixels(); i=i+3) {
-        strip.setPixelColor(i+q, Wheel( (i+j) % 255));    //turn every third pixel on
-      }
-      strip.show();
-
-      delay(wait);
-
-      for (uint16_t i=0; i < strip.numPixels(); i=i+3) {
-        strip.setPixelColor(i+q, 0);        //turn every third pixel off
-      }
-    }
-  }
-}
-
-// Input a value 0 to 255 to get a color value.
-// The colours are a transition r - g - b - back to r.
-uint32_t Wheel(byte WheelPos) {
-  WheelPos = 255 - WheelPos;
-  if(WheelPos < 85) {
-    return strip.Color(255 - WheelPos * 3, 0, WheelPos * 3);
-  }
-  if(WheelPos < 170) {
-    WheelPos -= 85;
-    return strip.Color(0, WheelPos * 3, 255 - WheelPos * 3);
-  }
-  WheelPos -= 170;
-  return strip.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
 }
