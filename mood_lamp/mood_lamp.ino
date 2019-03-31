@@ -25,8 +25,10 @@ uint32_t WHITE = strip.Color(255, 255, 255);
 uint32_t BLACK = strip.Color(0, 0, 0);
 
 const int NUM_PATTERNS = 10;
-
 void (*patterns[NUM_PATTERNS])(float);
+
+const int NUM_TRANSITIONS = 2;
+void (*transitions[NUM_TRANSITIONS])();
 
 // IMPORTANT: To reduce NeoPixel burnout risk, add 1000 uF capacitor across
 // pixel power leads, add 300 - 500 Ohm resistor on first pixel's data input
@@ -35,27 +37,35 @@ void (*patterns[NUM_PATTERNS])(float);
 
 void setup() {
   strip.begin();
-  strip.setBrightness(100);
+  strip.setBrightness(60);
   strip.show(); // Initialize all pixels to 'off'
   Serial.begin(9600);
   randomSeed(analogRead(0));
-  patterns[0] = red_green_blue_sin;
-  patterns[1] = possig_test;
-  patterns[2] = possig_3_wave_test;
-  patterns[3] = color_sin_test;
-  patterns[4] = color_sin_pos_test;
-//  patterns[5] = square_test;
-//  patterns[6] = fm_sin_test;
-//  patterns[7] = fm_sin_3_wav_test;
-//  patterns[8] = fm_sin_3_wav_possig_test;
-  patterns[5] = row_test;
-  patterns[6] = col_test;
-  patterns[7] = odd_even_rgb_wave_test;
-  patterns[8] = row_rgb_wave_test;
-  patterns[9] = col_rgb_wave_test;
+  setupPatterns();
+  setupTransitions();
 }
 
+void setupPatterns() {
+    patterns[0] = redGreenBlueSin;
+  patterns[1] = posSigTest;
+  patterns[2] = posSig3WaveTest;
+  patterns[3] = colorSinTest;
+  patterns[4] = colorSinPosTest;
+//  patterns[5] = squareTest;
+//  patterns[6] = fmSinTest;
+//  patterns[7] = fmSin3WaveTest;
+//  patterns[8] = fmSin3WavePosSigTest;
+  patterns[5] = rowTest;
+  patterns[6] = colTest;
+  patterns[7] = oddEvenRGBWaveTest;
+  patterns[8] = rowRGBWaveTest;
+  patterns[9] = colRGBWaveTest;
+}
 
+void setupTransitions() {
+  transitions[0] = wipeToBlack;
+  transitions[1] = wipeToRandom;
+}
 
 
 
@@ -70,11 +80,40 @@ void setup() {
 
 
 void loop() {
-//  col_rgb_wave_test(10);
-  patterns[random(NUM_PATTERNS)](60);
-  colorWipe(strip.Color(0,0,0), 75);
+//  colRGBWaveTest(10);
+  patterns[random(NUM_PATTERNS)](10);
+  transitions[random(NUM_TRANSITIONS)]();
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//transitions
+void wipeToBlack() {
+  randomTimeWipe(strip.Color(0,0,0));
+}
+
+void wipeToRandom() {
+  uint32_t c = getRandomColor();
+  randomTimeWipe(c);
+}
+
+void randomTimeWipe(uint32_t color) {  
+  int d = random(25, 100);
+  colorWipe(color, d);
+}
 
 
 
@@ -100,88 +139,88 @@ void colorWipe(uint32_t c, uint8_t wait) {
   }
 }
 
-void red_green_blue_sin(float run_time){
-  Serial.println("red_green_blue_sin");
-  float red_phase = get_random_phase();
-  float green_phase = get_random_phase();
-  float blue_phase = get_random_phase();
-  float red_f = get_random_float(0.01f, 0.75f);
-  float green_f = get_random_float(0.01f, 0.75f);
-  float blue_f = get_random_float(0.01f, 0.75f);
+void redGreenBlueSin(float runTime){
+  Serial.println("redGreenBlueSin");
+  float redPhase = getRandomPhase();
+  float greenPhase = getRandomPhase();
+  float bluePhase = getRandomPhase();
+  float redFreq = getRandomFloat(0.01f, 0.75f);
+  float greenFreq = getRandomFloat(0.01f, 0.75f);
+  float blueFreq = getRandomFloat(0.01f, 0.75f);
   float t;
-  float red_sin;
-  float green_sin;
-  float blue_sin;
-  float start_time = millis();
+  float redSin;
+  float greenSin;
+  float blueSin;
+  float startTime = millis();
   
   while(true) {
-    t = millis() -  start_time;
-    red_sin = sin_to_255(red_f, red_phase, t, 1.0f);
-    green_sin = sin_to_255(green_f, green_phase, t, 1.0f);
-    blue_sin = sin_to_255(blue_f, blue_phase, t, 1.0f);
-    strip.fill(strip.Color(red_sin, green_sin, blue_sin));
-//    strip.fill(strip.Color(red_sin, 0, 0));
+    t = millis() -  startTime;
+    redSin = sinTo255(redFreq, redPhase, t, 1.0f);
+    greenSin = sinTo255(greenFreq, greenPhase, t, 1.0f);
+    blueSin = sinTo255(blueFreq, bluePhase, t, 1.0f);
+    strip.fill(strip.Color(redSin, greenSin, blueSin));
+//    strip.fill(strip.Color(redSin, 0, 0));
     strip.show();
-    if (have_secs_elapsed(run_time, start_time)) {
+    if (haveSecsElapsed(runTime, startTime)) {
       break;
     }
     yield(); // this is here for the Feather HUZZAH's watchdog
   }
 }
 
-void possig_test(float run_time){
-  Serial.println("possig_test");
-  float freq = get_random_float(0.2f, 2.0f);
-  float red_scale = get_random_float(0.25f, 4.0f);
-//  float red_scale = 4.0f;
-  uint16_t num_pix = strip.numPixels();
+void posSigTest(float runTime){
+  Serial.println("posSigTest");
+  float freq = getRandomFloat(0.2f, 2.0f);
+  float redScale = getRandomFloat(0.25f, 4.0f);
+//  float redScale = 4.0f;
+  uint16_t numPixels = strip.numPixels();
   float phase;
-  float cur_sin;
-  float start_time = millis();
+  float curSin;
+  float startTime = millis();
   float t;
   while(true){
-    t = millis() -  start_time;
-    for(uint16_t i=0; i<num_pix; i++) {
-      phase = phase_from_pixel_index(i, num_pix, red_scale);
-      cur_sin = sin_to_255(freq, phase, t, 1.0f);
-      strip.setPixelColor(i, strip.Color(cur_sin, 0, 0));
+    t = millis() -  startTime;
+    for(uint16_t i=0; i<numPixels; i++) {
+      phase = phaseFromPixelIndex(i, numPixels, redScale);
+      curSin = sinTo255(freq, phase, t, 1.0f);
+      strip.setPixelColor(i, strip.Color(curSin, 0, 0));
     }
 
     strip.show();
-    if (have_secs_elapsed(run_time, start_time)) {
+    if (haveSecsElapsed(runTime, startTime)) {
       break;
     }
     yield();
   }
 }
 
-void possig_3_wave_test(float run_time){
-  Serial.println("possig_3_wave_test");
-  float red_freq = get_random_float(0.2f, 2.0f);
-  float green_freq = get_random_float(0.2f, 2.0f);
-  float blue_freq = get_random_float(0.2f, 2.0f);
-  float red_scale = get_random_float(0.2f, 2.0f);
-  float green_scale = get_random_float(0.2f, 2.0f);
-  float blue_scale = get_random_float(0.2f, 2.0f);
-  uint16_t num_pix = strip.numPixels();
-  float t, red_phase, green_phase, blue_phase;
-  int red_val, green_val, blue_val;
-  float start_time = millis();
+void posSig3WaveTest(float runTime){
+  Serial.println("posSig3WaveTest");
+  float redFreq = getRandomFloat(0.2f, 2.0f);
+  float greenFreq = getRandomFloat(0.2f, 2.0f);
+  float blueFreq = getRandomFloat(0.2f, 2.0f);
+  float redScale = getRandomFloat(0.2f, 2.0f);
+  float greenScale = getRandomFloat(0.2f, 2.0f);
+  float blueScale = getRandomFloat(0.2f, 2.0f);
+  uint16_t numPixels = strip.numPixels();
+  float t, redPhase, greenPhase, bluePhase;
+  int redVal, greenVal, blueVal;
+  float startTime = millis();
   
   while(true){
-    for(uint16_t i=0; i<num_pix; i++) {
-      t = millis() -  start_time;
-      red_phase = phase_from_pixel_index(i, num_pix, red_scale);
-      green_phase = phase_from_pixel_index(i, num_pix, green_scale);
-      blue_phase = phase_from_pixel_index(i, num_pix, blue_scale);
-      red_val = sin_to_255(red_freq, red_phase, t, 1.0f);
-      green_val = sin_to_255(green_freq, green_phase, t, 1.0f);
-      blue_val = sin_to_255(blue_freq, blue_phase, t, 1.0f);
-      strip.setPixelColor(i, strip.Color(red_val, green_val, blue_val));
+    for(uint16_t i=0; i<numPixels; i++) {
+      t = millis() -  startTime;
+      redPhase = phaseFromPixelIndex(i, numPixels, redScale);
+      greenPhase = phaseFromPixelIndex(i, numPixels, greenScale);
+      bluePhase = phaseFromPixelIndex(i, numPixels, blueScale);
+      redVal = sinTo255(redFreq, redPhase, t, 1.0f);
+      greenVal = sinTo255(greenFreq, greenPhase, t, 1.0f);
+      blueVal = sinTo255(blueFreq, bluePhase, t, 1.0f);
+      strip.setPixelColor(i, strip.Color(redVal, greenVal, blueVal));
     }
 
     strip.show();
-    if (have_secs_elapsed(run_time, start_time)) {
+    if (haveSecsElapsed(runTime, startTime)) {
       break;
     }
     yield();
@@ -190,102 +229,102 @@ void possig_3_wave_test(float run_time){
 
 
 
-void odd_even_square_test(float run_time) {
+void odd_even_squareTest(float runTime) {
   Serial.println("odd_even_test");
-  float t, phase, red_val;
-  uint16_t num_pix = strip.numPixels();
+  float t, phase, redVal;
+  uint16_t numPixels = strip.numPixels();
 //  float freq = 0.7f;
-  float freq = get_random_float(0.7f, 1.5f);
-  float duty_cycle = 0.25f;
-  float start_time = millis();
+  float freq = getRandomFloat(0.7f, 1.5f);
+  float dutyCycle = 0.25f;
+  float startTime = millis();
   while(true) {
-    t = millis() -  start_time;
-    for(uint16_t i=0; i<num_pix; i++) {
-      phase = phase_from_odd_even_index(i);
-      red_val = square_to_255(freq, phase, t, 1.0f, duty_cycle);
-      strip.setPixelColor(i, strip.Color(red_val, 0, 0));
+    t = millis() -  startTime;
+    for(uint16_t i=0; i<numPixels; i++) {
+      phase = phaseFromOddEvenIndex(i);
+      redVal = squareTo255(freq, phase, t, 1.0f, dutyCycle);
+      strip.setPixelColor(i, strip.Color(redVal, 0, 0));
     }
     strip.show();
-    if (have_secs_elapsed(run_time, start_time)) {
+    if (haveSecsElapsed(runTime, startTime)) {
       break;
     }
     yield(); // this is here for the Feather HUZZAH's watchdog
   }
 }
 
-void row_test(float run_time){
-  Serial.println("row_test");
-//  float red_f = 1.0f;
-//  float red_scale = 0.25f;
-  float red_scale = get_random_float(0.5f, 5.0f);
-  float red_f = get_random_float(0.5f, 3.0f);
-  float t, red_sin, phase;
-  uint16_t num_pix = strip.numPixels();
-  float start_time = millis();
+void rowTest(float runTime){
+  Serial.println("rowTest");
+//  float redFreq = 1.0f;
+//  float redScale = 0.25f;
+  float redScale = getRandomFloat(0.5f, 5.0f);
+  float redFreq = getRandomFloat(0.5f, 3.0f);
+  float t, redSin, phase;
+  uint16_t numPixels = strip.numPixels();
+  float startTime = millis();
   
   while(true) {
-    t = millis() -  start_time;
-    for(uint16_t i=0; i<num_pix; i++) {
-      phase = phase_from_row_index(i, 7, 7, red_scale);
-      red_sin = sin_to_255(red_f, phase, t, 1.0f);
-      strip.setPixelColor(i, strip.Color(red_sin, 0, 0));
+    t = millis() -  startTime;
+    for(uint16_t i=0; i<numPixels; i++) {
+      phase = phaseFromRowIndex(i, 7, 7, redScale);
+      redSin = sinTo255(redFreq, phase, t, 1.0f);
+      strip.setPixelColor(i, strip.Color(redSin, 0, 0));
     }
     strip.show();
-    if (have_secs_elapsed(run_time, start_time)) {
+    if (haveSecsElapsed(runTime, startTime)) {
       break;
     }
     yield(); // this is here for the Feather HUZZAH's watchdog
   }
 }
 
-void col_test(float run_time){
-  Serial.println("col_test");
-//  float red_f = 0.3f;
-  float red_scale = get_random_float(0.5f, 5.0f);
-  float red_f = get_random_float(0.3f, 3.0f);
-//  float red_f = get_random_float(0.3f, 4.0f);
-  float t, red_sin, phase;
-  uint16_t num_pix = strip.numPixels();
-  float start_time = millis();
+void colTest(float runTime){
+  Serial.println("colTest");
+//  float redFreq = 0.3f;
+  float redScale = getRandomFloat(0.5f, 5.0f);
+  float redFreq = getRandomFloat(0.3f, 3.0f);
+//  float redFreq = getRandomFloat(0.3f, 4.0f);
+  float t, redSin, phase;
+  uint16_t numPixels = strip.numPixels();
+  float startTime = millis();
   
   while(true) {
-    t = millis() -  start_time;
-    for(uint16_t i=0; i<num_pix; i++) {
-      phase = phase_from_column_index(i, 7, red_scale);
-      red_sin = sin_to_255(red_f, phase, t, 1.0f);
-      strip.setPixelColor(i, strip.Color(red_sin, 0, 0));
+    t = millis() -  startTime;
+    for(uint16_t i=0; i<numPixels; i++) {
+      phase = phaseFromColumnIndex(i, 7, redScale);
+      redSin = sinTo255(redFreq, phase, t, 1.0f);
+      strip.setPixelColor(i, strip.Color(redSin, 0, 0));
     }
     strip.show();
-    if (have_secs_elapsed(run_time, start_time)) {
+    if (haveSecsElapsed(runTime, startTime)) {
       break;
     }
     yield(); // this is here for the Feather HUZZAH's watchdog
   }
 }
 
-void odd_even_rgb_wave_test(float run_time){
-  Serial.println("odd_even_rgb_wave_test");
-  float red_freq = get_random_float(0.1f, 1.0f);
-  float green_freq = get_random_float(0.1f, 1.0f);
-  float blue_freq = get_random_float(0.1f, 1.0f);
-  uint16_t num_pix = strip.numPixels();
+void oddEvenRGBWaveTest(float runTime){
+  Serial.println("oddEvenRGBWaveTest");
+  float redFreq = getRandomFloat(0.1f, 1.0f);
+  float greenFreq = getRandomFloat(0.1f, 1.0f);
+  float blueFreq = getRandomFloat(0.1f, 1.0f);
+  uint16_t numPixels = strip.numPixels();
   float t, phase;
-  int red_val, green_val, blue_val;
-  float start_time = millis();
+  int redVal, greenVal, blueVal;
+  float startTime = millis();
   
   while(true){
-    for(uint16_t i=0; i<num_pix; i++) {
-      t = millis() -  start_time;
-      phase = phase_from_odd_even_index(i);
-      red_val = sin_to_255(red_freq, phase, t, 1.0f);
-      green_val = sin_to_255(green_freq, phase, t, 1.0f);
-      blue_val = sin_to_255(blue_freq, phase, t, 1.0f);
-//      strip.setPixelColor(i, strip.Color(red_val, 0, 0));
-      strip.setPixelColor(i, strip.Color(red_val, green_val, blue_val));
+    for(uint16_t i=0; i<numPixels; i++) {
+      t = millis() -  startTime;
+      phase = phaseFromOddEvenIndex(i);
+      redVal = sinTo255(redFreq, phase, t, 1.0f);
+      greenVal = sinTo255(greenFreq, phase, t, 1.0f);
+      blueVal = sinTo255(blueFreq, phase, t, 1.0f);
+//      strip.setPixelColor(i, strip.Color(redVal, 0, 0));
+      strip.setPixelColor(i, strip.Color(redVal, greenVal, blueVal));
     }
 
     strip.show();
-    if (have_secs_elapsed(run_time, start_time)) {
+    if (haveSecsElapsed(runTime, startTime)) {
       break;
     }
     yield();
@@ -293,66 +332,66 @@ void odd_even_rgb_wave_test(float run_time){
 }
 
 
-void row_rgb_wave_test(float run_time){
-  Serial.println("row_rgb_wave_test");
-  float red_freq = get_random_float(0.1f, 1.0f);
-  float green_freq = get_random_float(0.1f, 1.0f);
-  float blue_freq = get_random_float(0.1f, 1.0f);
-  float red_scale = get_random_float(0.2f, 2.0f);
-  float green_scale = get_random_float(0.2f, 2.0f);
-  float blue_scale = get_random_float(0.2f, 2.0f);
-  uint16_t num_pix = strip.numPixels();
-  float t, red_phase, green_phase, blue_phase;
-  int red_val, green_val, blue_val;
-  float start_time = millis();
+void rowRGBWaveTest(float runTime){
+  Serial.println("rowRGBWaveTest");
+  float redFreq = getRandomFloat(0.1f, 1.0f);
+  float greenFreq = getRandomFloat(0.1f, 1.0f);
+  float blueFreq = getRandomFloat(0.1f, 1.0f);
+  float redScale = getRandomFloat(0.2f, 2.0f);
+  float greenScale = getRandomFloat(0.2f, 2.0f);
+  float blueScale = getRandomFloat(0.2f, 2.0f);
+  uint16_t numPixels = strip.numPixels();
+  float t, redPhase, greenPhase, bluePhase;
+  int redVal, greenVal, blueVal;
+  float startTime = millis();
   
   while(true){
-    for(uint16_t i=0; i<num_pix; i++) {
-      t = millis() -  start_time;
-      red_phase = phase_from_row_index(i, 7, 7, red_scale);
-      green_phase = phase_from_row_index(i, 7, 7, green_scale);
-      blue_phase = phase_from_row_index(i, 7, 7, blue_scale);
-      red_val = sin_to_255(red_freq, red_phase, t, 1.0f);
-      green_val = sin_to_255(green_freq, green_phase, t, 1.0f);
-      blue_val = sin_to_255(blue_freq, blue_phase, t, 1.0f);
-      strip.setPixelColor(i, strip.Color(red_val, green_val, blue_val));
+    for(uint16_t i=0; i<numPixels; i++) {
+      t = millis() -  startTime;
+      redPhase = phaseFromRowIndex(i, 7, 7, redScale);
+      greenPhase = phaseFromRowIndex(i, 7, 7, greenScale);
+      bluePhase = phaseFromRowIndex(i, 7, 7, blueScale);
+      redVal = sinTo255(redFreq, redPhase, t, 1.0f);
+      greenVal = sinTo255(greenFreq, greenPhase, t, 1.0f);
+      blueVal = sinTo255(blueFreq, bluePhase, t, 1.0f);
+      strip.setPixelColor(i, strip.Color(redVal, greenVal, blueVal));
     }
 
     strip.show();
-    if (have_secs_elapsed(run_time, start_time)) {
+    if (haveSecsElapsed(runTime, startTime)) {
       break;
     }
     yield();
   }
 }
 
-void col_rgb_wave_test(float run_time){
+void colRGBWaveTest(float runTime){
   Serial.println("column_rgb_wave_test");
-  float red_freq = get_random_float(0.1f, 1.0f);
-  float green_freq = get_random_float(0.1f, 1.0f);
-  float blue_freq = get_random_float(0.1f, 1.0f);
-  float red_scale = get_random_float(0.2f, 2.0f);
-  float green_scale = get_random_float(0.2f, 2.0f);
-  float blue_scale = get_random_float(0.2f, 2.0f);
-  uint16_t num_pix = strip.numPixels();
-  float t, red_phase, green_phase, blue_phase;
-  int red_val, green_val, blue_val;
-  float start_time = millis();
+  float redFreq = getRandomFloat(0.1f, 1.0f);
+  float greenFreq = getRandomFloat(0.1f, 1.0f);
+  float blueFreq = getRandomFloat(0.1f, 1.0f);
+  float redScale = getRandomFloat(0.2f, 2.0f);
+  float greenScale = getRandomFloat(0.2f, 2.0f);
+  float blueScale = getRandomFloat(0.2f, 2.0f);
+  uint16_t numPixels = strip.numPixels();
+  float t, redPhase, greenPhase, bluePhase;
+  int redVal, greenVal, blueVal;
+  float startTime = millis();
   
   while(true){
-    for(uint16_t i=0; i<num_pix; i++) {
-      t = millis() -  start_time;
-      red_phase = phase_from_column_index(i, 7, red_scale);
-      green_phase = phase_from_column_index(i, 7, green_scale);
-      blue_phase = phase_from_column_index(i, 7, blue_scale);
-      red_val = sin_to_255(red_freq, red_phase, t, 1.0f);
-      green_val = sin_to_255(green_freq, green_phase, t, 1.0f);
-      blue_val = sin_to_255(blue_freq, blue_phase, t, 1.0f);
-      strip.setPixelColor(i, strip.Color(red_val, green_val, blue_val));
+    for(uint16_t i=0; i<numPixels; i++) {
+      t = millis() -  startTime;
+      redPhase = phaseFromColumnIndex(i, 7, redScale);
+      greenPhase = phaseFromColumnIndex(i, 7, greenScale);
+      bluePhase = phaseFromColumnIndex(i, 7, blueScale);
+      redVal = sinTo255(redFreq, redPhase, t, 1.0f);
+      greenVal = sinTo255(greenFreq, greenPhase, t, 1.0f);
+      blueVal = sinTo255(blueFreq, bluePhase, t, 1.0f);
+      strip.setPixelColor(i, strip.Color(redVal, greenVal, blueVal));
     }
 
     strip.show();
-    if (have_secs_elapsed(run_time, start_time)) {
+    if (haveSecsElapsed(runTime, startTime)) {
       break;
     }
     yield();
@@ -381,64 +420,64 @@ void col_rgb_wave_test(float run_time){
 
 
 
-void color_sin_test(float run_time){
-  Serial.println("color_sin_test");
+void colorSinTest(float runTime){
+  Serial.println("colorSinTest");
   float freq = 0.2f;
-  float t, start_time;
-  start_time = millis();
-  float color_wheel_index;
+  float t, startTime;
+  startTime = millis();
+  float color_wheelIndex;
   
   while(true){
-    t = millis() -  start_time;
-    color_wheel_index = sin_to_255(freq, 0.0f, t, 1.0f);
-    strip.fill(Wheel(color_wheel_index));
+    t = millis() -  startTime;
+    color_wheelIndex = sinTo255(freq, 0.0f, t, 1.0f);
+    strip.fill(Wheel(color_wheelIndex));
 
     strip.show();
-    if (have_secs_elapsed(run_time, start_time)) {
+    if (haveSecsElapsed(runTime, startTime)) {
       break;
     }
     yield();
   }
 }
 
-void color_sin_pos_test(float run_time){
-  Serial.println("color_sin_pos_test");
+void colorSinPosTest(float runTime){
+  Serial.println("colorSinPosTest");
   float amp = 1.0f;
   float freq = 0.09f;
   
-  uint16_t num_pix = strip.numPixels();
-  float t, start_time, phase, color_wheel_index;
+  uint16_t numPixels = strip.numPixels();
+  float t, startTime, phase, color_wheelIndex;
 
-  start_time = millis();
+  startTime = millis();
   while(true){
-    t = millis() -  start_time;
-    for(uint16_t i=0; i<num_pix; i++) {
-      phase = phase_from_pixel_index(i, num_pix, 1.0f);
-      color_wheel_index = sin_to_255(freq, phase, t, 1.0f);
-      strip.setPixelColor(i, Wheel(color_wheel_index));
+    t = millis() -  startTime;
+    for(uint16_t i=0; i<numPixels; i++) {
+      phase = phaseFromPixelIndex(i, numPixels, 1.0f);
+      color_wheelIndex = sinTo255(freq, phase, t, 1.0f);
+      strip.setPixelColor(i, Wheel(color_wheelIndex));
     }
 
     strip.show();
-    if (have_secs_elapsed(run_time, start_time)) {
+    if (haveSecsElapsed(runTime, startTime)) {
       break;
     }
     yield();
   }
 }
 
-void square_test(float run_time){
-  Serial.println("square_test");
+void squareTest(float runTime){
+  Serial.println("squareTest");
   float freq = 1.0f;
-  float duty_cycle = 0.25f;
-  float start_time, t, red_val;
+  float dutyCycle = 0.25f;
+  float startTime, t, redVal;
 
-  start_time = millis();
+  startTime = millis();
   while(true){
-    t = millis() -  start_time;
-    red_val = square_to_255(freq, 0.0f, t, 1.0f, duty_cycle);
-    strip.fill(strip.Color(red_val, 0, 0));
+    t = millis() -  startTime;
+    redVal = squareTo255(freq, 0.0f, t, 1.0f, dutyCycle);
+    strip.fill(strip.Color(redVal, 0, 0));
     strip.show();
-    if (have_secs_elapsed(run_time, start_time)) {
+    if (haveSecsElapsed(runTime, startTime)) {
       break;
     }
     yield();
@@ -446,80 +485,80 @@ void square_test(float run_time){
 }
 
 
-void fm_sin_test(float run_time){
-  Serial.println("fm_sin_test");
-  float mod_freq = 0.1f;
+void fmSinTest(float runTime){
+  Serial.println("fmSinTest");
+  float modFreq = 0.1f;
   float t;
-  float mod_sin, red_sin;
-  float start_time = millis();
+  float modSin, redSin;
+  float startTime = millis();
   
   while(true) {
-    t = millis() -  start_time;
-    red_sin = sin_fm_sin_to_255(mod_freq, 0.0f, t, 1.0f, .001f, .02f, 0.0f, 1.0f);
-    strip.fill(strip.Color(red_sin, 0, 0));
+    t = millis() -  startTime;
+    redSin = sinFmSinTo255(modFreq, 0.0f, t, 1.0f, .001f, .02f, 0.0f, 1.0f);
+    strip.fill(strip.Color(redSin, 0, 0));
     strip.show();
-    if (have_secs_elapsed(run_time, start_time)) {
+    if (haveSecsElapsed(runTime, startTime)) {
       break;
     }
     yield(); // this is here for the Feather HUZZAH's watchdog
   }
 }
 
-void fm_sin_3_wav_test(float run_time){
-  Serial.println("fm_sin_3_wav_test");
-  float red_mod_freq = 0.1f;
-  float green_mod_freq = 0.2f;
-  float blue_mod_freq = 0.3f;
-  float mod_amp = 1.0f;
-  float green_phase = PI/2.0f;
-  float blue_phase = green_phase / 3;
-  float mod_min = 0.001f;
-  float mod_max = 0.02f;
+void fmSin3WaveTest(float runTime){
+  Serial.println("fmSin3WaveTest");
+  float redModFreq = 0.1f;
+  float greenModFreq = 0.2f;
+  float blueModFreq = 0.3f;
+  float modAmp = 1.0f;
+  float greenPhase = PI/2.0f;
+  float bluePhase = greenPhase / 3;
+  float modMin = 0.001f;
+  float modMax = 0.02f;
   float t;
-  float mod_sin, red_sin, green_sin, blue_sin;
-  float start_time = millis();
+  float modSin, redSin, greenSin, blueSin;
+  float startTime = millis();
   
   while(true) {
-    t = millis() -  start_time;
-    red_sin = sin_fm_sin_to_255(red_mod_freq, 0.0f, t, mod_amp, mod_min, mod_max, 0.0f, 1.0f);
-    green_sin = sin_fm_sin_to_255(green_mod_freq, green_phase, t, mod_amp, mod_min, mod_max, green_phase, 1.0f); 
-    blue_sin = sin_fm_sin_to_255(blue_mod_freq, blue_phase, t, mod_amp, mod_min, mod_max, blue_phase, 1.0f);
-    strip.fill(strip.Color(red_sin, green_sin, blue_sin));
+    t = millis() -  startTime;
+    redSin = sinFmSinTo255(redModFreq, 0.0f, t, modAmp, modMin, modMax, 0.0f, 1.0f);
+    greenSin = sinFmSinTo255(greenModFreq, greenPhase, t, modAmp, modMin, modMax, greenPhase, 1.0f); 
+    blueSin = sinFmSinTo255(blueModFreq, bluePhase, t, modAmp, modMin, modMax, bluePhase, 1.0f);
+    strip.fill(strip.Color(redSin, greenSin, blueSin));
     strip.show();
-    if (have_secs_elapsed(run_time, start_time)) {
+    if (haveSecsElapsed(runTime, startTime)) {
       break;
     }
     yield(); // this is here for the Feather HUZZAH's watchdog
   }
 }
 
-void fm_sin_3_wav_possig_test(float run_time){
-  Serial.println("fm_sin_3_wav_possig_test");
-  float red_mod_freq = 0.1f;
-  float green_mod_freq = 0.2f;
-  float blue_mod_freq = 0.3f;
-  float mod_amp = 1.0f;
-  float green_phase = PI/2.0f;
-  float blue_phase = green_phase / 3;
-  float pixel_phase;  
-  float mod_min = 0.001f;
-  float mod_max = 0.02f;
+void fmSin3WavePosSigTest(float runTime){
+  Serial.println("fmSin3WavePosSigTest");
+  float redModFreq = 0.1f;
+  float greenModFreq = 0.2f;
+  float blueModFreq = 0.3f;
+  float modAmp = 1.0f;
+  float greenPhase = PI/2.0f;
+  float bluePhase = greenPhase / 3;
+  float pixelPhase;  
+  float modMin = 0.001f;
+  float modMax = 0.02f;
   float t;
-  float mod_sin, red_sin, green_sin, blue_sin;
-  uint16_t num_pix = strip.numPixels();
-  float start_time = millis();
+  float modSin, redSin, greenSin, blueSin;
+  uint16_t numPixels = strip.numPixels();
+  float startTime = millis();
   
   while(true) {
-    t = millis() -  start_time;
-    for(uint16_t i=0; i<num_pix; i++) {
-      pixel_phase = phase_from_pixel_index(i, num_pix, 1.0f);
-      red_sin = sin_fm_sin_to_255(red_mod_freq, 0.0f, t, mod_amp, mod_min, mod_max, pixel_phase, 1.0f);
-      green_sin = sin_fm_sin_to_255(green_mod_freq, green_phase, t, mod_amp, mod_min, mod_max, pixel_phase + green_phase, 1.0f); 
-      blue_sin = sin_fm_sin_to_255(blue_mod_freq, blue_phase, t, mod_amp, mod_min, mod_max, pixel_phase + blue_phase, 1.0f);
-      strip.setPixelColor(i, strip.Color(red_sin, green_sin, blue_sin));
+    t = millis() -  startTime;
+    for(uint16_t i=0; i<numPixels; i++) {
+      pixelPhase = phaseFromPixelIndex(i, numPixels, 1.0f);
+      redSin = sinFmSinTo255(redModFreq, 0.0f, t, modAmp, modMin, modMax, pixelPhase, 1.0f);
+      greenSin = sinFmSinTo255(greenModFreq, greenPhase, t, modAmp, modMin, modMax, pixelPhase + greenPhase, 1.0f); 
+      blueSin = sinFmSinTo255(blueModFreq, bluePhase, t, modAmp, modMin, modMax, pixelPhase + bluePhase, 1.0f);
+      strip.setPixelColor(i, strip.Color(redSin, greenSin, blueSin));
     }
     strip.show();
-    if (have_secs_elapsed(run_time, start_time)) {
+    if (haveSecsElapsed(runTime, startTime)) {
       break;
     }
     yield(); // this is here for the Feather HUZZAH's watchdog
@@ -548,101 +587,105 @@ uint32_t Wheel(byte WheelPos) {
   return strip.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
 }
 
-float have_secs_elapsed(float secs, float start_time) {
+float haveSecsElapsed(float secs, float startTime) {
   float now = millis();
-  if ((now - start_time) > (secs * 1000)) {
+  if ((now - startTime) > (secs * 1000)) {
     return true;
   }
 
   return false;
 }
 
-float time_from_millis(float t){
+float timeFromMillis(float t){
   return t / 1000.0f;
 }
 
-float compute_sin_wave(float frequency, float phase, float t, float amplitude) {
-  return amplitude * sin(TWO_PI * frequency * time_from_millis(t) + phase);
+float computeSinWave(float frequency, float phase, float t, float amplitude) {
+  return amplitude * sin(TWO_PI * frequency * timeFromMillis(t) + phase);
 }
 
-float compute_square_wave(float frequency, float phase, float t, float amplitude, float duty_cycle){
-  float threshold = 1 - (duty_cycle * 2);
-  float sin_val = compute_sin_wave(frequency, phase, t, amplitude);
-  if (sin_val > threshold) {
+float computeSquareWave(float frequency, float phase, float t, float amplitude, float dutyCycle){
+  float threshold = 1 - (dutyCycle * 2);
+  float sinVal = computeSinWave(frequency, phase, t, amplitude);
+  if (sinVal > threshold) {
     return 1.0f;
   } 
   
   return 0.0f;
 }
 
-float interpolate(float val, float in_min, float in_max, float out_min, float out_max){
-  return out_min + (val-in_min) * ((out_max-out_min)/(in_max-in_min));
+float interpolate(float val, float inMin, float inMax, float outMin, float outMax){
+  return outMin + (val - inMin) * ((outMax - outMin)/(inMax - inMin));
 }
 
-float sin_to_255(float frequency, float phase, float t, float amplitude){
-  float sin_val = compute_sin_wave(frequency, phase, t, amplitude);
-  return interpolate(sin_val, -1, 1, 0, 255);
+float sinTo255(float frequency, float phase, float t, float amplitude){
+  float sinVal = computeSinWave(frequency, phase, t, amplitude);
+  return interpolate(sinVal, -1, 1, 0, 255);
 }
 
-float square_to_255(float frequency, float phase, float t, float amplitude, float duty_cycle){
-  float square_val = compute_square_wave(frequency, phase, t, amplitude, duty_cycle);
-  return interpolate(square_val, 0, 1, 0, 255);
+float squareTo255(float frequency, float phase, float t, float amplitude, float dutyCycle){
+  float squareVal = computeSquareWave(frequency, phase, t, amplitude, dutyCycle);
+  return interpolate(squareVal, 0, 1, 0, 255);
 }
 
-float phase_from_pixel_index(float pixel_index, float num_pixels, float scale){
-    float phase = interpolate(pixel_index, 0, num_pixels * scale, 0, PI);
+float phaseFromPixelIndex(float pixelIndex, float numPixels, float scale){
+    float phase = interpolate(pixelIndex, 0, numPixels * scale, 0, PI);
     return phase;
 }
 
 
-float compute_sin_fm_sin_wave(float mod_freq, float mod_phase, float t, float mod_amp, float mod_min, float mod_max, float sin_phase, float sin_amp) {
-  float mod_sin = compute_sin_wave(mod_freq, mod_phase, t, mod_amp);
-  float sin_freq = interpolate(mod_sin, -1.0f, 1.0f, mod_min, mod_max);
-  return compute_sin_wave(sin_freq, sin_phase, t, sin_amp);
+float computeSinFmSinWave(float modFreq, float modPhase, float t, float modAmp, float modMin, float modMax, float sinPhase, float sinAmp) {
+  float modSin = computeSinWave(modFreq, modPhase, t, modAmp);
+  float sinFreq = interpolate(modSin, -1.0f, 1.0f, modMin, modMax);
+  return computeSinWave(sinFreq, sinPhase, t, sinAmp);
 }
 
-float sin_fm_sin_to_255(float mod_freq, float mod_phase, float t, float mod_amp, float mod_min, float mod_max, float sin_phase, float sin_amp){
-  float sin_val = compute_sin_fm_sin_wave(mod_freq, mod_phase, t, mod_amp, mod_min, mod_max, sin_phase, sin_amp);
-  return interpolate(sin_val, -1.0f, 1.0f, 0, 255);
+float sinFmSinTo255(float modFreq, float modPhase, float t, float modAmp, float modMin, float modMax, float sinPhase, float sinAmp){
+  float sinVal = computeSinFmSinWave(modFreq, modPhase, t, modAmp, modMin, modMax, sinPhase, sinAmp);
+  return interpolate(sinVal, -1.0f, 1.0f, 0, 255);
 }
 
-float phase_from_odd_even_index(uint16_t pixel_index) {
-  if (pixel_index % 2 == 0) {
+float phaseFromOddEvenIndex(uint16_t pixelIndex) {
+  if (pixelIndex % 2 == 0) {
     return 0.0f;
   } else {
     return PI;
   }
 }
 
-float phase_from_row_index(float pixel_index, float pixels_per_row, float num_rows, float scale){
-  if (pixel_index  == 0) {
+float phaseFromRowIndex(float pixelIndex, float pixelsPerRow, float numRows, float scale){
+  if (pixelIndex  == 0) {
     return 0;
   }
-  uint16_t row_index = pixel_index / pixels_per_row;
-  return interpolate(row_index, 0.0f, (num_rows - 1.0f) * scale, 0.0f, PI);
+  uint16_t rowIndex = pixelIndex / pixelsPerRow;
+  return interpolate(rowIndex, 0.0f, (numRows - 1.0f) * scale, 0.0f, PI);
 }
 
-float phase_from_column_index(uint16_t pixel_index, uint16_t num_cols, float scale){
-  if (pixel_index  == 0) {
+float phaseFromColumnIndex(uint16_t pixelIndex, uint16_t numCols, float scale){
+  if (pixelIndex  == 0) {
     return 0;
   }
-  uint16_t col_index = pixel_index % num_cols;
-  return interpolate(col_index, 0, (num_cols - 1) * scale, 0.0f, PI);
+  uint16_t colIndex = pixelIndex % numCols;
+  return interpolate(colIndex, 0, (numCols - 1) * scale, 0.0f, PI);
 }
 
-float get_random_float(float min, float max){
+float getRandomFloat(float min, float max){
   // this is not the greatest implementation but works in the situations I've got right now
-  int norm_min = min * 1000;
-  int norm_max = max * 1000;
-  long r = random(norm_min, norm_max);
+  int normMin = min * 1000;
+  int normMax = max * 1000;
+  long r = random(normMin, normMax);
   float freq = r / 1000.0f;
   return freq;
 }
 
-float get_random_phase(){
+float getRandomPhase(){
   float r = random(0,4);
   if (r == 0) {
     return 0.0f;
   }
   return PI / r;
+}
+
+uint32_t getRandomColor(){
+  return strip.Color(random(0,256), random(0,256), random(0,256));
 }
