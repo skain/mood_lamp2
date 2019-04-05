@@ -25,7 +25,7 @@ uint32_t PURPLE = strip.Color(180, 0, 255);
 uint32_t WHITE = strip.Color(255, 255, 255);
 uint32_t BLACK = strip.Color(0, 0, 0);
 
-const int NUM_PATTERNS = 12;
+const int NUM_PATTERNS = 10;
 void (*patterns[NUM_PATTERNS])(float);
 
 const int NUM_TRANSITIONS = 2;
@@ -50,19 +50,13 @@ void setupPatterns() {
     patterns[0] = redGreenBlueSin;
   patterns[1] = posSigTest;
   patterns[2] = posSig3WaveTest;
-  patterns[3] = colorSinTest;
-  patterns[4] = colorSinPosTest;
-//  patterns[5] = squareTest;
-//  patterns[6] = fmSinTest;
-//  patterns[7] = fmSin3WaveTest;
-//  patterns[8] = fmSin3WavePosSigTest;
-  patterns[5] = rowTest;
-  patterns[6] = colTest;
-  patterns[7] = oddEvenRGBWaveTest;
-  patterns[8] = rowRGBWaveTest;
-  patterns[9] = colRGBWaveTest;
-  patterns[10] = squarePosSigTest;
-  patterns[10] = squareRGBPosSigTest;
+  patterns[3] = rowTest;
+  patterns[4] = colTest;
+  patterns[5] = oddEvenRGBWaveTest;
+  patterns[6] = rowRGBWaveTest;
+  patterns[7] = colRGBWaveTest;
+  patterns[8] = squarePosSigTest;
+  patterns[9] = squareRGBPosSigTest;
 }
 
 void setupTransitions() {
@@ -84,7 +78,7 @@ void setupTransitions() {
 
 void loop() {
 //  test();
-//  squareTest(10);
+//  squareRGBPosSigTest(10);
   patterns[random(NUM_PATTERNS)](60);
   transitions[random(NUM_TRANSITIONS)]();
 }
@@ -110,22 +104,7 @@ void loop() {
 
 
 // helpers
-// Input a value 0 to 255 to get a color value.
-// The colours are a transition r - g - b - back to r.
-uint32_t Wheel(byte WheelPos) {
-  WheelPos = 255 - WheelPos;
-  if(WheelPos < 85) {
-    return strip.Color(255 - WheelPos * 3, 0, WheelPos * 3);
-  }
-  if(WheelPos < 170) {
-    WheelPos -= 85;
-    return strip.Color(0, WheelPos * 3, 255 - WheelPos * 3);
-  }
-  WheelPos -= 170;
-  return strip.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
-}
-
-float haveSecsElapsed(float secs, float startTime) {
+float haveSecsElapsed(float secs, unsigned long startTime) {
   float now = millis();
   if ((now - startTime) > (secs * 1000)) {
     return true;
@@ -138,62 +117,13 @@ float timeFromMillis(float t){
   return t / 1000.0f;
 }
 
-float computeSinWave(float frequency, float phase, float t, float amplitude) {
-  return amplitude * sin(TWO_PI * frequency * timeFromMillis(t) + phase);
-}
-
-float computeSquareWave(float frequency, float phase, float t, float amplitude, float dutyCycle){
-  float threshold = 1 - (dutyCycle * 2);
-  float sinVal = computeSinWave(frequency, phase, t, amplitude);
-  if (sinVal > threshold) {
-    return 1.0f;
-  } 
-  
-  return 0.0f;
-}
-
 float interpolate(float val, float inMin, float inMax, float outMin, float outMax){
   return outMin + (val - inMin) * ((outMax - outMin)/(inMax - inMin));
-}
-
-float sinTo255(float frequency, float phase, float t, float amplitude){
-  float sinVal = computeSinWave(frequency, phase, t, amplitude);
-  return interpolate(sinVal, -1, 1, 0, 255);
-}
-
-float squareTo255(float frequency, float phase, float t, float amplitude, float dutyCycle){
-  float squareVal = computeSquareWave(frequency, phase, t, amplitude, dutyCycle);
-  return interpolate(squareVal, 0, 1, 0, 255);
-}
-
-float phaseFromPixelIndex_old(float pixelIndex, float numPixels, float scale){
-    float phase = interpolate(pixelIndex, 0, numPixels * scale, 0, PI);
-    return phase;
 }
 
 float phaseFromPixelIndex(float pixelIndex, float numPixels, float scale) {
   int phase = interpolate(pixelIndex, 0, numPixels * scale, 0, 255);
   return phase;
-}
-
-
-float computeSinFmSinWave(float modFreq, float modPhase, float t, float modAmp, float modMin, float modMax, float sinPhase, float sinAmp) {
-  float modSin = computeSinWave(modFreq, modPhase, t, modAmp);
-  float sinFreq = interpolate(modSin, -1.0f, 1.0f, modMin, modMax);
-  return computeSinWave(sinFreq, sinPhase, t, sinAmp);
-}
-
-float sinFmSinTo255(float modFreq, float modPhase, float t, float modAmp, float modMin, float modMax, float sinPhase, float sinAmp){
-  float sinVal = computeSinFmSinWave(modFreq, modPhase, t, modAmp, modMin, modMax, sinPhase, sinAmp);
-  return interpolate(sinVal, -1.0f, 1.0f, 0, 255);
-}
-
-float phaseFromOddEvenIndex_old(uint16_t pixelIndex) {
-  if (pixelIndex % 2 == 0) {
-    return 0.0f;
-  } else {
-    return PI;
-  }
 }
 
 int phaseFromOddEvenIndex(uint16_t pixelIndex) {
@@ -204,28 +134,12 @@ int phaseFromOddEvenIndex(uint16_t pixelIndex) {
   }
 }
 
-float phaseFromRowIndex_old(float pixelIndex, float pixelsPerRow, float numRows, float scale){
-  if (pixelIndex  == 0) {
-    return 0;
-  }
-  uint16_t rowIndex = pixelIndex / pixelsPerRow;
-  return interpolate(rowIndex, 0.0f, (numRows - 1.0f) * scale, 0.0f, PI);
-}
-
 float phaseFromRowIndex(float pixelIndex, float pixelsPerRow, float numRows, float scale){
   if (pixelIndex  == 0) {
     return 0;
   }
   uint16_t rowIndex = pixelIndex / pixelsPerRow;
   return interpolate(rowIndex, 0.0f, (numRows - 1.0f) * scale, 0.0f, 255);
-}
-
-float phaseFromColumnIndex_old(uint16_t pixelIndex, uint16_t numCols, float scale){
-  if (pixelIndex  == 0) {
-    return 0;
-  }
-  uint16_t colIndex = pixelIndex % numCols;
-  return interpolate(colIndex, 0, (numCols - 1) * scale, 0.0f, PI);
 }
 
 float phaseFromColumnIndex(uint16_t pixelIndex, uint16_t numCols, float scale){
@@ -377,7 +291,7 @@ void posSig3WaveTest(float runTime){
   uint16_t numPixels = strip.numPixels();
   float redPhase, greenPhase, bluePhase;
   int redVal, greenVal, blueVal;
-  float startTime = millis();
+  unsigned long startTime = millis();
   
   while(true){
     for(uint16_t i=0; i<numPixels; i++) {
@@ -407,7 +321,7 @@ void rowTest(float runTime){
   int redFreq = random(10,100);
   float redSin, phase;
   uint16_t numPixels = strip.numPixels();
-  float startTime = millis();
+  unsigned long startTime = millis();
   
   while(true) {
     for(uint16_t i=0; i<numPixels; i++) {
@@ -429,7 +343,7 @@ void colTest(float runTime){
   float redFreq = random(10,100);
   float redSin, phase;
   uint16_t numPixels = strip.numPixels();
-  float startTime = millis();
+  unsigned long startTime = millis();
   
   while(true) {
     for(uint16_t i=0; i<numPixels; i++) {
@@ -457,7 +371,7 @@ void rowRGBWaveTest(float runTime){
   uint16_t numPixels = strip.numPixels();
   float redPhase, greenPhase, bluePhase;
   int redVal, greenVal, blueVal;
-  float startTime = millis();
+  unsigned long startTime = millis();
   
   while(true){
     for(uint16_t i=0; i<numPixels; i++) {
@@ -489,7 +403,7 @@ void colRGBWaveTest(float runTime){
   uint16_t numPixels = strip.numPixels();
   float redPhase, greenPhase, bluePhase;
   int redVal, greenVal, blueVal;
-  float startTime = millis();
+  unsigned long startTime = millis();
   
   while(true){
     for(uint16_t i=0; i<numPixels; i++) {
@@ -518,7 +432,7 @@ void oddEvenRGBWaveTest(float runTime){
   uint16_t numPixels = strip.numPixels();
   float phase;
   int redVal, greenVal, blueVal;
-  float startTime = millis();
+  unsigned long startTime = millis();
   
   while(true){
     for(uint16_t i=0; i<numPixels; i++) {
@@ -537,27 +451,17 @@ void oddEvenRGBWaveTest(float runTime){
   }
 }
 
-
-
-
-
-
-
-
-
 void odd_even_squareTest(float runTime) {
   Serial.println("odd_even_test");
-  float t, phase, redVal;
+  int phase, redVal;
   uint16_t numPixels = strip.numPixels();
-//  float freq = 0.7f;
-  float freq = getRandomFloat(0.7f, 1.5f);
-  float dutyCycle = 0.25f;
-  float startTime = millis();
+  int freq = random(10,100);
+  int pulseWidth = 255 * 0.25f;
+  unsigned long startTime = millis();
   while(true) {
-    t = millis() -  startTime;
     for(uint16_t i=0; i<numPixels; i++) {
-      phase = phaseFromOddEvenIndex_old(i);
-      redVal = squareTo255(freq, phase, t, 1.0f, dutyCycle);
+      phase = phaseFromOddEvenIndex(i);
+      redVal = beatsquare8(freq, 0, 255, startTime, phase, pulseWidth);
       strip.setPixelColor(i, strip.Color(redVal, 0, 0));
     }
     strip.show();
@@ -568,25 +472,20 @@ void odd_even_squareTest(float runTime) {
   }
 }
 
-
-
-
-
 void squarePosSigTest(float runTime){
   Serial.println("squareTest");
-  float freq = getRandomFloat(0.1f, 3.0f);
-//  freq = 1.0f;
+  int freq = random(10,100);
   uint16_t numPixels = strip.numPixels();
-  float dutyCycle = getRandomFloat(1 / numPixels, 0.85);
-  float startTime, t, redVal, curSin, phase;
+  int pulseWidth = 255 / random(2,numPixels);
+  unsigned long startTime;
+  int redVal, curSin, phase;
   float redScale = 1.0f;
 
   startTime = millis();
   while(true){
-    t = millis() -  startTime;
     for(uint16_t i=0; i<numPixels; i++) {
-      phase = phaseFromPixelIndex_old(i, numPixels, redScale);
-      curSin = squareTo255(freq, phase, t, 1.0f, dutyCycle);
+      phase = phaseFromPixelIndex(i, numPixels, redScale);
+      curSin = beatsquare8(freq, 0, 255, startTime, phase, pulseWidth);
       strip.setPixelColor(i, strip.Color(curSin, 0, 0));
     }
 
@@ -600,30 +499,28 @@ void squarePosSigTest(float runTime){
 
 void squareRGBPosSigTest(float runTime){
   Serial.println("squareTest");
-  float redFreq = getRandomFloat(0.1f, 3.0f);
-  float greenFreq = getRandomFloat(0.1f, 3.0f);
-  float blueFreq = getRandomFloat(0.1f, 3.0f);
-  float minDutyCycle = 1.0f / (float)strip.numPixels();
-//  freq = 1.0f;
+  int redFreq = random(10,100);
+  int greenFreq = random(10,100);
+  int blueFreq = random(10,100);
   uint16_t numPixels = strip.numPixels();
-  float redDutyCycle = getRandomFloat(minDutyCycle, 0.85);
-  float greenDutyCycle = getRandomFloat(minDutyCycle, 0.85);
-  float blueDutyCycle = getRandomFloat(minDutyCycle, 0.85);
-  float startTime, t, redVal, greenVal, blueVal, redSin, greenSin, blueSin, redPhase, greenPhase, bluePhase;
-  float redScale = 1.0f;
-  float greenScale = 1.0f;
-  float blueScale = 1.0f;
+  float redPulseWidth = 255 / random(2,numPixels);
+  float greenPulseWidth = 255 / random(2,numPixels);
+  float bluePulseWidth = 255 / random(2,numPixels);
+  unsigned long startTime;
+  int redVal, greenVal, blueVal, redSin, greenSin, blueSin, redPhase, greenPhase, bluePhase;
+  float redScale = getRandomFloat(0.1f, 4.0f);
+  float greenScale = getRandomFloat(0.1f, 4.0f);
+  float blueScale = getRandomFloat(0.1f, 4.0f);
 
   startTime = millis();
   while(true){
-    t = millis() -  startTime;
     for(uint16_t i=0; i<numPixels; i++) {
-      redPhase = phaseFromPixelIndex_old(i, numPixels, redScale);
-      greenPhase = phaseFromPixelIndex_old(i, numPixels, greenScale);
-      bluePhase = phaseFromPixelIndex_old(i, numPixels, blueScale);
-      redSin = squareTo255(redFreq, redPhase, t, 1.0f, redDutyCycle);
-      greenSin = squareTo255(greenFreq, greenPhase, t, 1.0f, greenDutyCycle);
-      blueSin = squareTo255(blueFreq, bluePhase, t, 1.0f, blueDutyCycle);
+      redPhase = phaseFromPixelIndex(i, numPixels, redScale);
+      greenPhase = phaseFromPixelIndex(i, numPixels, greenScale);
+      bluePhase = phaseFromPixelIndex(i, numPixels, blueScale);
+      redSin = beatsquare8(redFreq, 0, 255, startTime, redPhase, redPulseWidth);
+      greenSin = beatsquare8(greenFreq, 0, 255, startTime, greenPhase, greenPulseWidth);
+      blueSin = beatsquare8(blueFreq, 0, 255, startTime, bluePhase, bluePulseWidth);
       strip.setPixelColor(i, strip.Color(redSin, greenSin, blueSin));
     }
 
@@ -652,59 +549,12 @@ void squareRGBPosSigTest(float runTime){
 
 
 
-
-
-
-void colorSinTest(float runTime){
-  Serial.println("colorSinTest");
-  float freq = 0.2f;
-  float t, startTime;
-  startTime = millis();
-  float color_wheelIndex;
-  
-  while(true){
-    t = millis() -  startTime;
-    color_wheelIndex = sinTo255(freq, 0.0f, t, 1.0f);
-    strip.fill(Wheel(color_wheelIndex));
-
-    strip.show();
-    if (haveSecsElapsed(runTime, startTime)) {
-      break;
-    }
-    yield();
-  }
-}
-
-void colorSinPosTest(float runTime){
-  Serial.println("colorSinPosTest");
-  float amp = 1.0f;
-  float freq = 0.09f;
-  
-  uint16_t numPixels = strip.numPixels();
-  float t, startTime, phase, color_wheelIndex;
-
-  startTime = millis();
-  while(true){
-    t = millis() -  startTime;
-    for(uint16_t i=0; i<numPixels; i++) {
-      phase = phaseFromPixelIndex_old(i, numPixels, 1.0f);
-      color_wheelIndex = sinTo255(freq, phase, t, 1.0f);
-      strip.setPixelColor(i, Wheel(color_wheelIndex));
-    }
-
-    strip.show();
-    if (haveSecsElapsed(runTime, startTime)) {
-      break;
-    }
-    yield();
-  }
-}
-
+//unused sequences
 void squareTest(float runTime){
   Serial.println("squareTest");
   int freq = random(10,100);
   int pulseWidth = 255 * 0.5f;
-  float startTime, redVal;
+  unsigned long startTime, redVal;
 
   startTime = millis();
   while(true){
@@ -717,86 +567,5 @@ void squareTest(float runTime){
       break;
     }
     yield();
-  }
-}
-
-
-void fmSinTest(float runTime){
-  Serial.println("fmSinTest");
-  float modFreq = 0.1f;
-  float t;
-  float modSin, redSin;
-  float startTime = millis();
-  
-  while(true) {
-    t = millis() -  startTime;
-    redSin = sinFmSinTo255(modFreq, 0.0f, t, 1.0f, .001f, .02f, 0.0f, 1.0f);
-    strip.fill(strip.Color(redSin, 0, 0));
-    strip.show();
-    if (haveSecsElapsed(runTime, startTime)) {
-      break;
-    }
-    yield(); // this is here for the Feather HUZZAH's watchdog
-  }
-}
-
-void fmSin3WaveTest(float runTime){
-  Serial.println("fmSin3WaveTest");
-  float redModFreq = 0.1f;
-  float greenModFreq = 0.2f;
-  float blueModFreq = 0.3f;
-  float modAmp = 1.0f;
-  float greenPhase = PI/2.0f;
-  float bluePhase = greenPhase / 3;
-  float modMin = 0.001f;
-  float modMax = 0.02f;
-  float t;
-  float modSin, redSin, greenSin, blueSin;
-  float startTime = millis();
-  
-  while(true) {
-    t = millis() -  startTime;
-    redSin = sinFmSinTo255(redModFreq, 0.0f, t, modAmp, modMin, modMax, 0.0f, 1.0f);
-    greenSin = sinFmSinTo255(greenModFreq, greenPhase, t, modAmp, modMin, modMax, greenPhase, 1.0f); 
-    blueSin = sinFmSinTo255(blueModFreq, bluePhase, t, modAmp, modMin, modMax, bluePhase, 1.0f);
-    strip.fill(strip.Color(redSin, greenSin, blueSin));
-    strip.show();
-    if (haveSecsElapsed(runTime, startTime)) {
-      break;
-    }
-    yield(); // this is here for the Feather HUZZAH's watchdog
-  }
-}
-
-void fmSin3WavePosSigTest(float runTime){
-  Serial.println("fmSin3WavePosSigTest");
-  float redModFreq = 0.1f;
-  float greenModFreq = 0.2f;
-  float blueModFreq = 0.3f;
-  float modAmp = 1.0f;
-  float greenPhase = PI/2.0f;
-  float bluePhase = greenPhase / 3;
-  float pixelPhase;  
-  float modMin = 0.001f;
-  float modMax = 0.02f;
-  float t;
-  float modSin, redSin, greenSin, blueSin;
-  uint16_t numPixels = strip.numPixels();
-  float startTime = millis();
-  
-  while(true) {
-    t = millis() -  startTime;
-    for(uint16_t i=0; i<numPixels; i++) {
-      pixelPhase = phaseFromPixelIndex_old(i, numPixels, 1.0f);
-      redSin = sinFmSinTo255(redModFreq, 0.0f, t, modAmp, modMin, modMax, pixelPhase, 1.0f);
-      greenSin = sinFmSinTo255(greenModFreq, greenPhase, t, modAmp, modMin, modMax, pixelPhase + greenPhase, 1.0f); 
-      blueSin = sinFmSinTo255(blueModFreq, bluePhase, t, modAmp, modMin, modMax, pixelPhase + bluePhase, 1.0f);
-      strip.setPixelColor(i, strip.Color(redSin, greenSin, blueSin));
-    }
-    strip.show();
-    if (haveSecsElapsed(runTime, startTime)) {
-      break;
-    }
-    yield(); // this is here for the Feather HUZZAH's watchdog
   }
 }
