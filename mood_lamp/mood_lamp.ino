@@ -1,53 +1,51 @@
-#include <Adafruit_NeoPixel.h>
 #include <FastLED.h>
-#ifdef __AVR__
-  #include <avr/power.h>
-#endif
+#define FRAMES_PER_SECOND  120
 
-#define PIN 2
+#define DATA_PIN    2
+#define LED_TYPE    WS2811
+#define COLOR_ORDER GRB
+#define NUM_LEDS    49
+#define BRIGHTNESS          96
+CRGB leds[NUM_LEDS];
 
-// Parameter 1 = number of pixels in strip
-// Parameter 2 = Arduino pin number (most are valid)
-// Parameter 3 = pixel type flags, add together as needed:
-//   NEO_KHZ800  800 KHz bitstream (most NeoPixel products w/WS2812 LEDs)
-//   NEO_KHZ400  400 KHz (classic 'v1' (not v2) FLORA pixels, WS2811 drivers)
-//   NEO_GRB     Pixels are wired for GRB bitstream (most NeoPixel products)
-//   NEO_RGB     Pixels are wired for RGB bitstream (v1 FLORA pixels, not v2)
-//   NEO_RGBW    Pixels are wired for RGBW bitstream (NeoPixel RGBW products)
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(49, PIN, NEO_GRB + NEO_KHZ800);
-
-uint32_t RED = strip.Color(255, 0, 0);
-uint32_t YELLOW = strip.Color(255, 150, 0);
-uint32_t GREEN = strip.Color(0, 255, 0);
-uint32_t CYAN = strip.Color(0, 255, 255);
-uint32_t BLUE = strip.Color(0, 0, 255);
-uint32_t PURPLE = strip.Color(180, 0, 255);
-uint32_t WHITE = strip.Color(255, 255, 255);
-uint32_t BLACK = strip.Color(0, 0, 0);
+//uint32_t RED = strip.Color(255, 0, 0);
+//uint32_t YELLOW = strip.Color(255, 150, 0);
+//uint32_t GREEN = strip.Color(0, 255, 0);
+//uint32_t CYAN = strip.Color(0, 255, 255);
+//uint32_t BLUE = strip.Color(0, 0, 255);
+//uint32_t PURPLE = strip.Color(180, 0, 255);
+//uint32_t WHITE = strip.Color(255, 255, 255);
+//uint32_t BLACK = strip.Color(0, 0, 0);
 
 const int NUM_PATTERNS = 10;
 void (*patterns[NUM_PATTERNS])(float);
 
 const int NUM_TRANSITIONS = 2;
 void (*transitions[NUM_TRANSITIONS])();
+unsigned long patternStartTime;
 
 // IMPORTANT: To reduce NeoPixel burnout risk, add 1000 uF capacitor across
 // pixel power leads, add 300 - 500 Ohm resistor on first pixel's data input
 // and minimize distance between Arduino and first pixel.  Avoid connecting
 // on a live circuit...if you must, connect GND first.
 
-void setup() {
-  strip.begin();
-  strip.setBrightness(100);
-  strip.show(); // Initialize all pixels to 'off'
+void setup() {  
+  // tell FastLED about the LED strip configuration
+  FastLED.addLeds<LED_TYPE,DATA_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
+  //FastLED.addLeds<LED_TYPE,DATA_PIN,CLK_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
+
+  // set master brightness control
+  FastLED.setBrightness(BRIGHTNESS);
   Serial.begin(9600);
   randomSeed(analogRead(0));
+  patternStartTime = millis();
+  
   setupPatterns();
   setupTransitions();
 }
 
 void setupPatterns() {
-    patterns[0] = redGreenBlueSin;
+  patterns[0] = redGreenBlueSin;
   patterns[1] = posSigTest;
   patterns[2] = posSig3WaveTest;
   patterns[3] = rowTest;
@@ -78,23 +76,23 @@ void setupTransitions() {
 
 void loop() {
 //  test();
-//  squareRGBPosSigTest(10);
+//  squareTest(60);
   patterns[random(NUM_PATTERNS)](60);
   transitions[random(NUM_TRANSITIONS)]();
-}
 
-//void test() {
-//  float val, t;
-//  float start_time = millis();
-//  while(true){
-//    t = millis() - start_time;
-//    //computeSinWave(float frequency, float phase, float t, float amplitude)
-//    val = sinTo255(1.0f, 0.0f, t, 0.5f);
-//    Serial.println(val);
-//    
-//    yield();
-//  }
-//}
+  // Call the current pattern function once, updating the 'leds' array
+//  gPatterns[gCurrentPatternNumber]();
+
+  // send the 'leds' array out to the actual LED strip
+//  FastLED.show();  
+  // insert a delay to keep the framerate modest
+//  FastLED.delay(1000/FRAMES_PER_SECOND); 
+
+  // do some periodic updates
+//  EVERY_N_MILLISECONDS( 20 ) { gHue++; } // slowly cycle the "base color" through the rainbow
+//  EVERY_N_SECONDS( 10 ) { patternStartTime = millis(); patterns[random(NUM_PATTERNS)](60); transitions[random(NUM_TRANSITIONS)](); } // change patterns periodically
+
+}
 
 
 
@@ -160,15 +158,11 @@ float getRandomFloat(float min, float max){
 }
 
 float getRandomPhase(){
-  float r = random(0,4);
+  float r = random8(0,4);
   if (r == 0) {
     return 0.0f;
   }
   return PI / r;
-}
-
-uint32_t getRandomColor(){
-  return strip.Color(random(0,256), random(0,256), random(0,256));
 }
 
 uint16_t beatsquare8(accum88 beatsPerMinute, uint8_t lowest = 0, uint8_t highest = 255, uint32_t timeBase = 0, uint8_t phaseOffset = 0, uint8_t pulseWidth=128){
@@ -194,16 +188,15 @@ uint16_t beatsquare8(accum88 beatsPerMinute, uint8_t lowest = 0, uint8_t highest
 
 //transitions
 void wipeToBlack() {
-  randomTimeWipe(strip.Color(0,0,0));
+  randomTimeWipe(CRGB(0,0,0));
 }
 
 void wipeToRandom() {
-  uint32_t c = getRandomColor();
-  randomTimeWipe(c);
+  randomTimeWipe(CRGB(random8(), random8(), random8()));
 }
 
 void randomTimeWipe(uint32_t color) {  
-  int d = random(25, 100);
+  int d = random8(25, 100);
   colorWipe(color, d);
 }
 
@@ -224,21 +217,21 @@ void randomTimeWipe(uint32_t color) {
 //sequences
 // Fill the dots one after the other with a color
 void colorWipe(uint32_t c, uint8_t wait) {
-  for(uint16_t i=0; i<strip.numPixels(); i++) {
-    strip.setPixelColor(i, c);
-    strip.show();
+  for(uint16_t i=0; i<NUM_LEDS; i++) {
+    leds[i] = c;
+    FastLED.show();
     delay(wait);
   }
 }
 
 void redGreenBlueSin(float runTime){
   Serial.println("redGreenBlueSin");
-  int redPhase = random(0,255);
-  int greenPhase = random(0,255);
-  int bluePhase = random(0,255);
-  int redFreq = random(10,100);
-  int greenFreq = random(10,100);
-  int blueFreq = random(10,100);
+  int redPhase = random8();
+  int greenPhase = random8();
+  int bluePhase = random8();
+  int redFreq = random8(10,100);
+  int greenFreq = random8(10,100);
+  int blueFreq = random8(10,100);
   int redSin, greenSin, blueSin;
   unsigned long startTime = millis();
   
@@ -246,10 +239,9 @@ void redGreenBlueSin(float runTime){
     redSin = beatsin8(redFreq, 0, 255, startTime, redPhase);
     greenSin = beatsin8(greenFreq, 0, 255, startTime, greenPhase);
     blueSin = beatsin8(blueFreq, 0, 255, startTime, bluePhase);
-    strip.fill(strip.Color(redSin, greenSin, blueSin));
 //    Serial.println(redSin);
-//    strip.fill(strip.Color(redSin, 0, 0));
-    strip.show();
+    fill_solid(leds, NUM_LEDS, CRGB(redSin, greenSin, blueSin));
+    FastLED.show();
     if (haveSecsElapsed(runTime, startTime)) {
       break;
     }
@@ -259,20 +251,19 @@ void redGreenBlueSin(float runTime){
 
 void posSigTest(float runTime){
   Serial.println("posSigTest");
-  int freq = random(10,100);
-  float redScale = getRandomFloat(0.25f, 4.0f);  
-  uint16_t numPixels = strip.numPixels();
+  int freq = random8(10,100);
+  float redScale = getRandomFloat(0.25f, 4.0f);
   int phase;
   int curSin;
   unsigned long startTime = millis();
   while(true){
-    for(uint16_t i=0; i<numPixels; i++) {
-      phase = phaseFromPixelIndex(i, numPixels, redScale);
+    for(uint16_t i=0; i<NUM_LEDS; i++) {
+      phase = phaseFromPixelIndex(i, NUM_LEDS, redScale);
       curSin = beatsin8(freq, 0, 255, startTime, phase);
-      strip.setPixelColor(i, strip.Color(curSin, 0, 0));
+      leds[i] = CRGB(curSin, 0, 0);
     }
 
-    strip.show();
+    FastLED.show();
     if (haveSecsElapsed(runTime, startTime)) {
       break;
     }
@@ -282,29 +273,28 @@ void posSigTest(float runTime){
 
 void posSig3WaveTest(float runTime){
   Serial.println("posSig3WaveTest");
-  int redFreq = random(10,100);
-  int greenFreq = random(10,100);
-  int blueFreq = random(10,100);
+  int redFreq = random8(10,100);
+  int greenFreq = random8(10,100);
+  int blueFreq = random8(10,100);
   float redScale = getRandomFloat(0.2f, 2.0f);
   float greenScale = getRandomFloat(0.2f, 2.0f);
   float blueScale = getRandomFloat(0.2f, 2.0f);
-  uint16_t numPixels = strip.numPixels();
   float redPhase, greenPhase, bluePhase;
   int redVal, greenVal, blueVal;
   unsigned long startTime = millis();
   
   while(true){
-    for(uint16_t i=0; i<numPixels; i++) {
-      redPhase = phaseFromPixelIndex(i, numPixels, redScale);
-      greenPhase = phaseFromPixelIndex(i, numPixels, greenScale);
-      bluePhase = phaseFromPixelIndex(i, numPixels, blueScale);
+    for(uint16_t i=0; i<NUM_LEDS; i++) {
+      redPhase = phaseFromPixelIndex(i, NUM_LEDS, redScale);
+      greenPhase = phaseFromPixelIndex(i, NUM_LEDS, greenScale);
+      bluePhase = phaseFromPixelIndex(i, NUM_LEDS, blueScale);
       redVal = beatsin8(redFreq, 0, 255, startTime, redPhase);
       greenVal = beatsin8(greenFreq, 0, 255, startTime, greenPhase);
       blueVal = beatsin8(blueFreq, 0, 255, startTime, bluePhase);
-      strip.setPixelColor(i, strip.Color(redVal, greenVal, blueVal));
+      leds[i] = CRGB(redVal, greenVal, blueVal);
     }
 
-    strip.show();
+    FastLED.show();
     if (haveSecsElapsed(runTime, startTime)) {
       break;
     }
@@ -312,24 +302,20 @@ void posSig3WaveTest(float runTime){
   }
 }
 
-
-
-
 void rowTest(float runTime){
   Serial.println("rowTest");
   float redScale = getRandomFloat(0.5f, 5.0f);
-  int redFreq = random(10,100);
+  int redFreq = random8(10,100);
   float redSin, phase;
-  uint16_t numPixels = strip.numPixels();
   unsigned long startTime = millis();
   
   while(true) {
-    for(uint16_t i=0; i<numPixels; i++) {
+    for(uint16_t i=0; i<NUM_LEDS; i++) {
       phase = phaseFromRowIndex(i, 7, 7, redScale);
       redSin = beatsin8(redFreq, 0, 255, startTime, phase);
-      strip.setPixelColor(i, strip.Color(redSin, 0, 0));
+      leds[i] = CRGB(redSin, 0, 0);
     }
-    strip.show();
+    FastLED.show();
     if (haveSecsElapsed(runTime, startTime)) {
       break;
     }
@@ -340,18 +326,17 @@ void rowTest(float runTime){
 void colTest(float runTime){
   Serial.println("colTest");
   float redScale = getRandomFloat(0.5f, 5.0f);
-  float redFreq = random(10,100);
+  float redFreq = random8(10,100);
   float redSin, phase;
-  uint16_t numPixels = strip.numPixels();
   unsigned long startTime = millis();
   
   while(true) {
-    for(uint16_t i=0; i<numPixels; i++) {
+    for(uint16_t i=0; i<NUM_LEDS; i++) {
       phase = phaseFromColumnIndex(i, 7, redScale);
       redSin = beatsin8(redFreq, 0, 255, startTime, phase);
-      strip.setPixelColor(i, strip.Color(redSin, 0, 0));
+      leds[i] = CRGB(redSin, 0, 0);
     }
-    strip.show();
+    FastLED.show();
     if (haveSecsElapsed(runTime, startTime)) {
       break;
     }
@@ -362,29 +347,28 @@ void colTest(float runTime){
 
 void rowRGBWaveTest(float runTime){
   Serial.println("rowRGBWaveTest");
-  int redFreq = random(10,100);
-  int greenFreq = random(10,100);
-  int blueFreq = random(10,100);
+  int redFreq = random8(10,100);
+  int greenFreq = random8(10,100);
+  int blueFreq = random8(10,100);
   float redScale = getRandomFloat(0.2f, 2.0f);
   float greenScale = getRandomFloat(0.2f, 2.0f);
   float blueScale = getRandomFloat(0.2f, 2.0f);
-  uint16_t numPixels = strip.numPixels();
   float redPhase, greenPhase, bluePhase;
   int redVal, greenVal, blueVal;
   unsigned long startTime = millis();
   
   while(true){
-    for(uint16_t i=0; i<numPixels; i++) {
+    for(uint16_t i=0; i<NUM_LEDS; i++) {
       redPhase = phaseFromRowIndex(i, 7, 7, redScale);
       greenPhase = phaseFromRowIndex(i, 7, 7, greenScale);
       bluePhase = phaseFromRowIndex(i, 7, 7, blueScale);
       redVal = beatsin8(redFreq, 0, 255, startTime, redPhase);
       greenVal = beatsin8(greenFreq, 0, 255, startTime, greenPhase);
       blueVal = beatsin8(blueFreq, 0, 255, startTime, bluePhase);
-      strip.setPixelColor(i, strip.Color(redVal, greenVal, blueVal));
+      leds[i] = CRGB(redVal, greenVal, blueVal);
     }
 
-    strip.show();
+    FastLED.show();
     if (haveSecsElapsed(runTime, startTime)) {
       break;
     }
@@ -394,29 +378,28 @@ void rowRGBWaveTest(float runTime){
 
 void colRGBWaveTest(float runTime){
   Serial.println("column_rgb_wave_test");
-  int redFreq = random(10,100);
-  int greenFreq = random(10,100);
-  int blueFreq = random(10,100);
+  int redFreq = random8(10,100);
+  int greenFreq = random8(10,100);
+  int blueFreq = random8(10,100);
   float redScale = getRandomFloat(0.2f, 2.0f);
   float greenScale = getRandomFloat(0.2f, 2.0f);
   float blueScale = getRandomFloat(0.2f, 2.0f);
-  uint16_t numPixels = strip.numPixels();
   float redPhase, greenPhase, bluePhase;
   int redVal, greenVal, blueVal;
   unsigned long startTime = millis();
   
   while(true){
-    for(uint16_t i=0; i<numPixels; i++) {
+    for(uint16_t i=0; i<NUM_LEDS; i++) {
       redPhase = phaseFromColumnIndex(i, 7, redScale);
       greenPhase = phaseFromColumnIndex(i, 7, greenScale);
       bluePhase = phaseFromColumnIndex(i, 7, blueScale);
       redVal = beatsin8(redFreq, 0, 255, startTime, redPhase);
       greenVal = beatsin8(greenFreq, 0, 255, startTime, greenPhase);
       blueVal = beatsin8(blueFreq, 0, 255, startTime, bluePhase);
-      strip.setPixelColor(i, strip.Color(redVal, greenVal, blueVal));
+      leds[i] = CRGB(redVal, greenVal, blueVal);
     }
 
-    strip.show();
+    FastLED.show();
     if (haveSecsElapsed(runTime, startTime)) {
       break;
     }
@@ -426,24 +409,23 @@ void colRGBWaveTest(float runTime){
 
 void oddEvenRGBWaveTest(float runTime){
   Serial.println("oddEvenRGBWaveTest");
-  int redFreq = random(10,100);
-  int greenFreq = random(10,100);
-  int blueFreq = random(10,100);
-  uint16_t numPixels = strip.numPixels();
+  int redFreq = random8(10,100);
+  int greenFreq = random8(10,100);
+  int blueFreq = random8(10,100);
   float phase;
   int redVal, greenVal, blueVal;
   unsigned long startTime = millis();
   
   while(true){
-    for(uint16_t i=0; i<numPixels; i++) {
+    for(uint16_t i=0; i<NUM_LEDS; i++) {
       phase = phaseFromOddEvenIndex(i);   
       redVal = beatsin8(redFreq, 0, 255, startTime, phase);
       greenVal = beatsin8(greenFreq, 0, 255, startTime, phase);
       blueVal = beatsin8(blueFreq, 0, 255, startTime, phase);
-      strip.setPixelColor(i, strip.Color(redVal, greenVal, blueVal));
+      leds[i] = CRGB(redVal, greenVal, blueVal);
     }
 
-    strip.show();
+    FastLED.show();
     if (haveSecsElapsed(runTime, startTime)) {
       break;
     }
@@ -451,45 +433,25 @@ void oddEvenRGBWaveTest(float runTime){
   }
 }
 
-void odd_even_squareTest(float runTime) {
-  Serial.println("odd_even_test");
-  int phase, redVal;
-  uint16_t numPixels = strip.numPixels();
-  int freq = random(10,100);
-  int pulseWidth = 255 * 0.25f;
-  unsigned long startTime = millis();
-  while(true) {
-    for(uint16_t i=0; i<numPixels; i++) {
-      phase = phaseFromOddEvenIndex(i);
-      redVal = beatsquare8(freq, 0, 255, startTime, phase, pulseWidth);
-      strip.setPixelColor(i, strip.Color(redVal, 0, 0));
-    }
-    strip.show();
-    if (haveSecsElapsed(runTime, startTime)) {
-      break;
-    }
-    yield(); // this is here for the Feather HUZZAH's watchdog
-  }
-}
+
 
 void squarePosSigTest(float runTime){
   Serial.println("squareTest");
-  int freq = random(10,100);
-  uint16_t numPixels = strip.numPixels();
-  int pulseWidth = 255 / random(2,numPixels);
+  int freq = random8(10,100);
+  int pulseWidth = 255 / random(2,NUM_LEDS);
   unsigned long startTime;
   int redVal, curSin, phase;
   float redScale = 1.0f;
 
   startTime = millis();
   while(true){
-    for(uint16_t i=0; i<numPixels; i++) {
-      phase = phaseFromPixelIndex(i, numPixels, redScale);
+    for(uint16_t i=0; i<NUM_LEDS; i++) {
+      phase = phaseFromPixelIndex(i, NUM_LEDS, redScale);
       curSin = beatsquare8(freq, 0, 255, startTime, phase, pulseWidth);
-      strip.setPixelColor(i, strip.Color(curSin, 0, 0));
+      leds[i] = CRGB(curSin, 0, 0);
     }
 
-    strip.show();
+    FastLED.show();
     if (haveSecsElapsed(runTime, startTime)) {
       break;
     }
@@ -499,13 +461,12 @@ void squarePosSigTest(float runTime){
 
 void squareRGBPosSigTest(float runTime){
   Serial.println("squareTest");
-  int redFreq = random(10,100);
-  int greenFreq = random(10,100);
-  int blueFreq = random(10,100);
-  uint16_t numPixels = strip.numPixels();
-  float redPulseWidth = 255 / random(2,numPixels);
-  float greenPulseWidth = 255 / random(2,numPixels);
-  float bluePulseWidth = 255 / random(2,numPixels);
+  int redFreq = random8(10,100);
+  int greenFreq = random8(10,100);
+  int blueFreq = random8(10,100);
+  float redPulseWidth = 255 / random8(2,NUM_LEDS);
+  float greenPulseWidth = 255 / random8(2,NUM_LEDS);
+  float bluePulseWidth = 255 / random8(2,NUM_LEDS);
   unsigned long startTime;
   int redVal, greenVal, blueVal, redSin, greenSin, blueSin, redPhase, greenPhase, bluePhase;
   float redScale = getRandomFloat(0.1f, 4.0f);
@@ -514,17 +475,17 @@ void squareRGBPosSigTest(float runTime){
 
   startTime = millis();
   while(true){
-    for(uint16_t i=0; i<numPixels; i++) {
-      redPhase = phaseFromPixelIndex(i, numPixels, redScale);
-      greenPhase = phaseFromPixelIndex(i, numPixels, greenScale);
-      bluePhase = phaseFromPixelIndex(i, numPixels, blueScale);
+    for(uint16_t i=0; i<NUM_LEDS; i++) {
+      redPhase = phaseFromPixelIndex(i, NUM_LEDS, redScale);
+      greenPhase = phaseFromPixelIndex(i, NUM_LEDS, greenScale);
+      bluePhase = phaseFromPixelIndex(i, NUM_LEDS, blueScale);
       redSin = beatsquare8(redFreq, 0, 255, startTime, redPhase, redPulseWidth);
       greenSin = beatsquare8(greenFreq, 0, 255, startTime, greenPhase, greenPulseWidth);
       blueSin = beatsquare8(blueFreq, 0, 255, startTime, bluePhase, bluePulseWidth);
-      strip.setPixelColor(i, strip.Color(redSin, greenSin, blueSin));
+      leds[i] = CRGB(redSin, greenSin, blueSin);
     }
 
-    strip.show();
+    FastLED.show();
     if (haveSecsElapsed(runTime, startTime)) {
       break;
     }
@@ -552,20 +513,38 @@ void squareRGBPosSigTest(float runTime){
 //unused sequences
 void squareTest(float runTime){
   Serial.println("squareTest");
-  int freq = random(10,100);
+  int freq = random8(10,100);
   int pulseWidth = 255 * 0.5f;
   unsigned long startTime, redVal;
 
   startTime = millis();
   while(true){
-//    redVal = squareTo255(freq, 0.0f, t, 1.0f, dutyCycle);
     redVal = beatsquare8(freq, 0, 255, startTime, 0, pulseWidth);
-//    Serial.println(redVal);
-    strip.fill(strip.Color(redVal, 0, 0));
-    strip.show();
+    fill_solid(leds, NUM_LEDS, CRGB(redVal, 0, 0));
+    FastLED.show();
     if (haveSecsElapsed(runTime, startTime)) {
       break;
     }
     yield();
+  }
+}
+
+void odd_even_squareTest(float runTime) {
+  Serial.println("odd_even_test");
+  int phase, redVal;
+  int freq = random8(10,100);
+  int pulseWidth = 255 * 0.25f;
+  unsigned long startTime = millis();
+  while(true) {
+    for(uint16_t i=0; i<NUM_LEDS; i++) {
+      phase = phaseFromOddEvenIndex(i);
+      redVal = beatsquare8(freq, 0, 255, startTime, phase, pulseWidth);
+      leds[i] = CRGB(redVal, 0, 0);
+    }
+    FastLED.show();
+    if (haveSecsElapsed(runTime, startTime)) {
+      break;
+    }
+    yield(); // this is here for the Feather HUZZAH's watchdog
   }
 }
