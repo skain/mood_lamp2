@@ -18,7 +18,7 @@ CRGB leds[NUM_LEDS];
 //uint32_t BLACK = strip.Color(0, 0, 0);
 
 const int NUM_PATTERNS = 10;
-void (*patterns[NUM_PATTERNS])(float);
+void (*patterns[NUM_PATTERNS])();
 
 const int NUM_TRANSITIONS = 2;
 void (*transitions[NUM_TRANSITIONS])();
@@ -65,6 +65,18 @@ void setupTransitions() {
 
 
 
+// Global Variables
+bool g_patternsReset = true;
+unsigned long g_startTime;
+int g_phase1, g_phase2, g_phase3;
+int g_bpm1, g_bpm2, g_bpm3;
+int g_sin1, g_sin2, g_sin3;
+int g_scale1, g_scale2, g_scale3;
+int g_pulseWidth1, g_pulseWidth2, g_pulseWidth3;
+int g_patternIndex = 0;
+CRGB g_CRGB1;
+byte g_hue1;
+byte g_sat1;
 
 
 
@@ -75,28 +87,18 @@ void setupTransitions() {
 
 
 void loop() {
-//  test();
-//  squareTest(60);
-  patterns[random(NUM_PATTERNS)](60);
-  transitions[random(NUM_TRANSITIONS)]();
+  squarePosSigTest();
 
   // Call the current pattern function once, updating the 'leds' array
-//  gPatterns[gCurrentPatternNumber]();
-
-  // send the 'leds' array out to the actual LED strip
-//  FastLED.show();  
+//  patterns[g_patternIndex]();
+ 
   // insert a delay to keep the framerate modest
-//  FastLED.delay(1000/FRAMES_PER_SECOND); 
+  FastLED.delay(1000/FRAMES_PER_SECOND); 
 
   // do some periodic updates
-//  EVERY_N_MILLISECONDS( 20 ) { gHue++; } // slowly cycle the "base color" through the rainbow
-//  EVERY_N_SECONDS( 10 ) { patternStartTime = millis(); patterns[random(NUM_PATTERNS)](60); transitions[random(NUM_TRANSITIONS)](); } // change patterns periodically
+  EVERY_N_SECONDS( 10 ) { g_patternsReset = true;  transitions[random(NUM_TRANSITIONS)](); g_patternIndex = random(NUM_PATTERNS); } // change patterns periodically
 
 }
-
-
-
-
 
 
 
@@ -174,6 +176,10 @@ uint16_t beatsquare8(accum88 beatsPerMinute, uint8_t lowest = 0, uint8_t highest
     return result;
 }
 
+CRGB getRandomColor() {
+  return CRGB(random8(), random8(), random8());
+}
+
 
 
 
@@ -188,16 +194,19 @@ uint16_t beatsquare8(accum88 beatsPerMinute, uint8_t lowest = 0, uint8_t highest
 
 //transitions
 void wipeToBlack() {
-  randomTimeWipe(CRGB(0,0,0));
+  randomRGBTimeWipe(0,0,0);
 }
 
 void wipeToRandom() {
-  randomTimeWipe(CRGB(random8(), random8(), random8()));
+  int r = random8();
+  int g = random8();
+  int b = random8();
+  randomRGBTimeWipe(r, g, b);
 }
 
-void randomTimeWipe(uint32_t color) {  
+void randomRGBTimeWipe(byte r, byte g, byte b) {  
   int d = random8(25, 100);
-  colorWipe(color, d);
+  RGBWipe(r, g, b, d);
 }
 
 
@@ -216,281 +225,265 @@ void randomTimeWipe(uint32_t color) {
 
 //sequences
 // Fill the dots one after the other with a color
-void colorWipe(uint32_t c, uint8_t wait) {
+void RGBWipe(byte r, byte g, byte b, uint8_t wait) {
   for(uint16_t i=0; i<NUM_LEDS; i++) {
-    leds[i] = c;
+    leds[i] = CRGB(r, g, b);
     FastLED.show();
     delay(wait);
   }
 }
 
-void redGreenBlueSin(float runTime){
-  Serial.println("redGreenBlueSin");
-  int redPhase = random8();
-  int greenPhase = random8();
-  int bluePhase = random8();
-  int redFreq = random8(10,100);
-  int greenFreq = random8(10,100);
-  int blueFreq = random8(10,100);
-  int redSin, greenSin, blueSin;
-  unsigned long startTime = millis();
+void redGreenBlueSin(){
+  if (g_patternsReset) {
+    Serial.println("redGreenBlueSin");
+    g_phase1 = random8();
+    g_phase2 = random8();
+    g_phase3 = random8();
+    g_bpm1 = random8(10,100);
+    g_bpm2 = random8(10,100);
+    g_bpm3 = random8(10,100);
+    g_startTime = millis();
+    g_patternsReset = false;
+  }
   
-  while(true) {
-    redSin = beatsin8(redFreq, 0, 255, startTime, redPhase);
-    greenSin = beatsin8(greenFreq, 0, 255, startTime, greenPhase);
-    blueSin = beatsin8(blueFreq, 0, 255, startTime, bluePhase);
-//    Serial.println(redSin);
-    fill_solid(leds, NUM_LEDS, CRGB(redSin, greenSin, blueSin));
-    FastLED.show();
-    if (haveSecsElapsed(runTime, startTime)) {
-      break;
-    }
-    yield(); // this is here for the Feather HUZZAH's watchdog
-  }
+  int redSin = beatsin8(g_bpm1, 0, 255, g_startTime, g_phase1);
+  int greenSin = beatsin8(g_bpm2, 0, 255, g_startTime, g_phase2);
+  int blueSin = beatsin8(g_bpm3, 0, 255, g_startTime, g_phase3);
+  fill_solid(leds, NUM_LEDS, CRGB(redSin, greenSin, blueSin));
+  FastLED.show();
 }
 
-void posSigTest(float runTime){
-  Serial.println("posSigTest");
-  int freq = random8(10,100);
-  float redScale = getRandomFloat(0.25f, 4.0f);
-  int phase;
-  int curSin;
-  unsigned long startTime = millis();
-  while(true){
-    for(uint16_t i=0; i<NUM_LEDS; i++) {
-      phase = phaseFromPixelIndex(i, NUM_LEDS, redScale);
-      curSin = beatsin8(freq, 0, 255, startTime, phase);
-      leds[i] = CRGB(curSin, 0, 0);
-    }
-
-    FastLED.show();
-    if (haveSecsElapsed(runTime, startTime)) {
-      break;
-    }
-    yield();
+void posSigTest(){
+  if (g_patternsReset) {
+    Serial.println("posSigTest");
+    g_bpm1 = random8(10,100);
+    g_scale1 = getRandomFloat(0.25f, 4.0f);
+    g_hue1 = random8();
+    g_sat1 = random8(175,255);
+    g_startTime = millis();
+    g_patternsReset = false;
   }
+  
+  int phase, sinVal;
+  
+  for(uint16_t i=0; i<NUM_LEDS; i++) {
+    phase = phaseFromPixelIndex(i, NUM_LEDS, g_scale1);
+    sinVal = beatsin8(g_bpm1, 0, 255, g_startTime, phase);
+    leds[i] = CHSV(g_hue1, g_sat1, sinVal);
+  }
+
+  FastLED.show();
 }
 
-void posSig3WaveTest(float runTime){
-  Serial.println("posSig3WaveTest");
-  int redFreq = random8(10,100);
-  int greenFreq = random8(10,100);
-  int blueFreq = random8(10,100);
-  float redScale = getRandomFloat(0.2f, 2.0f);
-  float greenScale = getRandomFloat(0.2f, 2.0f);
-  float blueScale = getRandomFloat(0.2f, 2.0f);
+void posSig3WaveTest(){
+  if (g_patternsReset) {
+    Serial.println("posSig3WaveTest");
+    g_bpm1 = random8(10,100);
+    g_bpm2 = random8(10,100);
+    g_bpm3 = random8(10,100);
+    g_scale1 = getRandomFloat(0.2f, 2.0f);
+    g_scale2 = getRandomFloat(0.2f, 2.0f);
+    g_scale3 = getRandomFloat(0.2f, 2.0f);
+    g_startTime = millis();
+    g_patternsReset = false;
+  }
+  
   float redPhase, greenPhase, bluePhase;
   int redVal, greenVal, blueVal;
-  unsigned long startTime = millis();
   
-  while(true){
-    for(uint16_t i=0; i<NUM_LEDS; i++) {
-      redPhase = phaseFromPixelIndex(i, NUM_LEDS, redScale);
-      greenPhase = phaseFromPixelIndex(i, NUM_LEDS, greenScale);
-      bluePhase = phaseFromPixelIndex(i, NUM_LEDS, blueScale);
-      redVal = beatsin8(redFreq, 0, 255, startTime, redPhase);
-      greenVal = beatsin8(greenFreq, 0, 255, startTime, greenPhase);
-      blueVal = beatsin8(blueFreq, 0, 255, startTime, bluePhase);
-      leds[i] = CRGB(redVal, greenVal, blueVal);
-    }
-
-    FastLED.show();
-    if (haveSecsElapsed(runTime, startTime)) {
-      break;
-    }
-    yield();
+  for(uint16_t i=0; i<NUM_LEDS; i++) {
+    redPhase = phaseFromPixelIndex(i, NUM_LEDS, g_scale1);
+    greenPhase = phaseFromPixelIndex(i, NUM_LEDS, g_scale2);
+    bluePhase = phaseFromPixelIndex(i, NUM_LEDS, g_scale3);
+    redVal = beatsin8(g_bpm1, 0, 255, g_startTime, redPhase);
+    greenVal = beatsin8(g_bpm2, 0, 255, g_startTime, greenPhase);
+    blueVal = beatsin8(g_bpm3, 0, 255, g_startTime, bluePhase);
+    leds[i] = CRGB(redVal, greenVal, blueVal);
   }
+
+  FastLED.show();
 }
 
-void rowTest(float runTime){
-  Serial.println("rowTest");
-  float redScale = getRandomFloat(0.5f, 5.0f);
-  int redFreq = random8(10,100);
-  float redSin, phase;
-  unsigned long startTime = millis();
-  
-  while(true) {
-    for(uint16_t i=0; i<NUM_LEDS; i++) {
-      phase = phaseFromRowIndex(i, 7, 7, redScale);
-      redSin = beatsin8(redFreq, 0, 255, startTime, phase);
-      leds[i] = CRGB(redSin, 0, 0);
-    }
-    FastLED.show();
-    if (haveSecsElapsed(runTime, startTime)) {
-      break;
-    }
-    yield(); // this is here for the Feather HUZZAH's watchdog
+void rowTest(){
+  if (g_patternsReset) {
+    Serial.println("rowTest");
+    g_scale1 = getRandomFloat(0.5f, 5.0f);
+    g_bpm1 = random8(10,100);
+    g_hue1 = random8();
+    g_sat1 = random8(175,255);
+    g_startTime = millis();
+    g_patternsReset = false;
   }
+  
+  float sinVal, phase;
+  
+  for(uint16_t i=0; i<NUM_LEDS; i++) {
+    phase = phaseFromRowIndex(i, 7, 7, g_scale1);
+    sinVal = beatsin8(g_bpm1, 0, 255, g_startTime, phase);
+    leds[i] = CHSV(g_hue1, g_sat1, sinVal);
+  }
+    FastLED.show();
 }
 
-void colTest(float runTime){
-  Serial.println("colTest");
-  float redScale = getRandomFloat(0.5f, 5.0f);
-  float redFreq = random8(10,100);
-  float redSin, phase;
-  unsigned long startTime = millis();
-  
-  while(true) {
-    for(uint16_t i=0; i<NUM_LEDS; i++) {
-      phase = phaseFromColumnIndex(i, 7, redScale);
-      redSin = beatsin8(redFreq, 0, 255, startTime, phase);
-      leds[i] = CRGB(redSin, 0, 0);
-    }
-    FastLED.show();
-    if (haveSecsElapsed(runTime, startTime)) {
-      break;
-    }
-    yield(); // this is here for the Feather HUZZAH's watchdog
+void colTest(){
+  if (g_patternsReset) {
+    Serial.println("colTest");
+    g_scale1 = getRandomFloat(0.5f, 5.0f);
+    g_bpm1 = random8(10,100);
+    g_hue1 = random8();
+    g_sat1 = random8(175,255);
+    g_startTime = millis();
+    g_patternsReset = false;
   }
+  
+  float sinVal, phase;
+  
+  for(uint16_t i=0; i<NUM_LEDS; i++) {
+    phase = phaseFromColumnIndex(i, 7, g_scale1);
+    sinVal = beatsin8(g_bpm1, 0, 255, g_startTime, phase);
+    leds[i] = CHSV(g_hue1, g_sat1, sinVal);
+  }
+  FastLED.show();
 }
 
 
-void rowRGBWaveTest(float runTime){
-  Serial.println("rowRGBWaveTest");
-  int redFreq = random8(10,100);
-  int greenFreq = random8(10,100);
-  int blueFreq = random8(10,100);
-  float redScale = getRandomFloat(0.2f, 2.0f);
-  float greenScale = getRandomFloat(0.2f, 2.0f);
-  float blueScale = getRandomFloat(0.2f, 2.0f);
+void rowRGBWaveTest(){
+  if (g_patternsReset) {
+    Serial.println("rowRGBWaveTest");
+    g_bpm1 = random8(10,100);
+    g_bpm2 = random8(10,100);
+    g_bpm3 = random8(10,100);
+    g_scale1 = getRandomFloat(0.2f, 2.0f);
+    g_scale2 = getRandomFloat(0.2f, 2.0f);
+    g_scale3= getRandomFloat(0.2f, 2.0f);
+    g_startTime = millis();
+    g_patternsReset = false;
+  }
+  
   float redPhase, greenPhase, bluePhase;
   int redVal, greenVal, blueVal;
-  unsigned long startTime = millis();
   
-  while(true){
-    for(uint16_t i=0; i<NUM_LEDS; i++) {
-      redPhase = phaseFromRowIndex(i, 7, 7, redScale);
-      greenPhase = phaseFromRowIndex(i, 7, 7, greenScale);
-      bluePhase = phaseFromRowIndex(i, 7, 7, blueScale);
-      redVal = beatsin8(redFreq, 0, 255, startTime, redPhase);
-      greenVal = beatsin8(greenFreq, 0, 255, startTime, greenPhase);
-      blueVal = beatsin8(blueFreq, 0, 255, startTime, bluePhase);
-      leds[i] = CRGB(redVal, greenVal, blueVal);
-    }
-
-    FastLED.show();
-    if (haveSecsElapsed(runTime, startTime)) {
-      break;
-    }
-    yield();
+  for(uint16_t i=0; i<NUM_LEDS; i++) {
+    redPhase = phaseFromRowIndex(i, 7, 7, g_scale1);
+    greenPhase = phaseFromRowIndex(i, 7, 7, g_scale2);
+    bluePhase = phaseFromRowIndex(i, 7, 7, g_scale3);
+    redVal = beatsin8(g_bpm1, 0, 255, g_startTime, redPhase);
+    greenVal = beatsin8(g_bpm2, 0, 255, g_startTime, greenPhase);
+    blueVal = beatsin8(g_bpm3, 0, 255, g_startTime, bluePhase);
+    leds[i] = CRGB(redVal, greenVal, blueVal);
   }
+
+  FastLED.show();
 }
 
-void colRGBWaveTest(float runTime){
-  Serial.println("column_rgb_wave_test");
-  int redFreq = random8(10,100);
-  int greenFreq = random8(10,100);
-  int blueFreq = random8(10,100);
-  float redScale = getRandomFloat(0.2f, 2.0f);
-  float greenScale = getRandomFloat(0.2f, 2.0f);
-  float blueScale = getRandomFloat(0.2f, 2.0f);
+void colRGBWaveTest(){
+  if (g_patternsReset) {
+    Serial.println("column_rgb_wave_test");
+    g_bpm1 = random8(10,100);
+    g_bpm2 = random8(10,100);
+    g_bpm3 = random8(10,100);
+    g_scale1 = getRandomFloat(0.2f, 2.0f);
+    g_scale2 = getRandomFloat(0.2f, 2.0f);
+    g_scale3= getRandomFloat(0.2f, 2.0f);
+    g_startTime = millis();
+    g_patternsReset = false;
+  }
+
   float redPhase, greenPhase, bluePhase;
   int redVal, greenVal, blueVal;
-  unsigned long startTime = millis();
   
-  while(true){
-    for(uint16_t i=0; i<NUM_LEDS; i++) {
-      redPhase = phaseFromColumnIndex(i, 7, redScale);
-      greenPhase = phaseFromColumnIndex(i, 7, greenScale);
-      bluePhase = phaseFromColumnIndex(i, 7, blueScale);
-      redVal = beatsin8(redFreq, 0, 255, startTime, redPhase);
-      greenVal = beatsin8(greenFreq, 0, 255, startTime, greenPhase);
-      blueVal = beatsin8(blueFreq, 0, 255, startTime, bluePhase);
-      leds[i] = CRGB(redVal, greenVal, blueVal);
-    }
-
-    FastLED.show();
-    if (haveSecsElapsed(runTime, startTime)) {
-      break;
-    }
-    yield();
+  for(uint16_t i=0; i<NUM_LEDS; i++) {
+    redPhase = phaseFromColumnIndex(i, 7, g_scale1);
+    greenPhase = phaseFromColumnIndex(i, 7, g_scale2);
+    bluePhase = phaseFromColumnIndex(i, 7, g_scale3);
+    redVal = beatsin8(g_bpm1, 0, 255, g_startTime, redPhase);
+    greenVal = beatsin8(g_bpm2, 0, 255, g_startTime, greenPhase);
+    blueVal = beatsin8(g_bpm3, 0, 255, g_startTime, bluePhase);
+    leds[i] = CRGB(redVal, greenVal, blueVal);
   }
+
+  FastLED.show();
 }
 
-void oddEvenRGBWaveTest(float runTime){
-  Serial.println("oddEvenRGBWaveTest");
-  int redFreq = random8(10,100);
-  int greenFreq = random8(10,100);
-  int blueFreq = random8(10,100);
+void oddEvenRGBWaveTest(){
+  if (g_patternsReset) {
+    Serial.println("oddEvenRGBWaveTest");
+    g_bpm1 = random8(10,100);
+    g_bpm2 = random8(10,100);
+    g_bpm3 = random8(10,100);
+    g_startTime = millis();
+    g_patternsReset = false;
+  }
+  
   float phase;
   int redVal, greenVal, blueVal;
-  unsigned long startTime = millis();
   
-  while(true){
-    for(uint16_t i=0; i<NUM_LEDS; i++) {
-      phase = phaseFromOddEvenIndex(i);   
-      redVal = beatsin8(redFreq, 0, 255, startTime, phase);
-      greenVal = beatsin8(greenFreq, 0, 255, startTime, phase);
-      blueVal = beatsin8(blueFreq, 0, 255, startTime, phase);
-      leds[i] = CRGB(redVal, greenVal, blueVal);
-    }
-
-    FastLED.show();
-    if (haveSecsElapsed(runTime, startTime)) {
-      break;
-    }
-    yield();
+  for(uint16_t i=0; i<NUM_LEDS; i++) {
+    phase = phaseFromOddEvenIndex(i);   
+    redVal = beatsin8(g_bpm1, 0, 255, g_startTime, phase);
+    greenVal = beatsin8(g_bpm2, 0, 255, g_startTime, phase);
+    blueVal = beatsin8(g_bpm3, 0, 255, g_startTime, phase);
+    leds[i] = CRGB(redVal, greenVal, blueVal);
   }
+
+  FastLED.show();
 }
 
 
 
-void squarePosSigTest(float runTime){
-  Serial.println("squareTest");
-  int freq = random8(10,100);
-  int pulseWidth = 255 / random(2,NUM_LEDS);
-  unsigned long startTime;
-  int redVal, curSin, phase;
-  float redScale = 1.0f;
-
-  startTime = millis();
-  while(true){
-    for(uint16_t i=0; i<NUM_LEDS; i++) {
-      phase = phaseFromPixelIndex(i, NUM_LEDS, redScale);
-      curSin = beatsquare8(freq, 0, 255, startTime, phase, pulseWidth);
-      leds[i] = CRGB(curSin, 0, 0);
-    }
-
-    FastLED.show();
-    if (haveSecsElapsed(runTime, startTime)) {
-      break;
-    }
-    yield();
+void squarePosSigTest(){
+  if (g_patternsReset) {
+    Serial.println("squareTest");
+    g_bpm1 = random8(10,100);
+    g_scale1 = getRandomFloat(0.1f, 4.0f);
+    g_pulseWidth1 = 255 / random8(2,NUM_LEDS);
+    g_hue1 = random8();
+    g_sat1 = random8(175,255);
+    g_startTime = millis();
+    g_patternsReset = false;
   }
+  
+  int curSin, phase;
+  
+  for(uint16_t i=0; i<NUM_LEDS; i++) {
+    phase = phaseFromPixelIndex(i, NUM_LEDS, g_scale1);
+    curSin = beatsquare8(g_bpm1, 0, 255, g_startTime, phase, g_pulseWidth1);
+    leds[i] = CHSV(g_hue1, g_sat1, curSin);
+  }
+
+  FastLED.show();
 }
 
-void squareRGBPosSigTest(float runTime){
-  Serial.println("squareTest");
-  int redFreq = random8(10,100);
-  int greenFreq = random8(10,100);
-  int blueFreq = random8(10,100);
-  float redPulseWidth = 255 / random8(2,NUM_LEDS);
-  float greenPulseWidth = 255 / random8(2,NUM_LEDS);
-  float bluePulseWidth = 255 / random8(2,NUM_LEDS);
-  unsigned long startTime;
+void squareRGBPosSigTest(){
+  if (g_patternsReset) {
+    Serial.println("squareTest");
+    g_bpm1 = random8(10,100);
+    g_bpm2 = random8(10,100);
+    g_bpm3 = random8(10,100);
+    g_pulseWidth1 = 255 / random8(2,NUM_LEDS);
+    g_pulseWidth2 = 255 / random8(2,NUM_LEDS);
+    g_pulseWidth3 = 255 / random8(2,NUM_LEDS);
+    g_scale1 = getRandomFloat(0.1f, 4.0f);
+    g_scale2 = getRandomFloat(0.1f, 4.0f);
+    g_scale3 = getRandomFloat(0.1f, 4.0f);
+    g_startTime = millis();
+    g_patternsReset = false;
+  }
+
+  
   int redVal, greenVal, blueVal, redSin, greenSin, blueSin, redPhase, greenPhase, bluePhase;
-  float redScale = getRandomFloat(0.1f, 4.0f);
-  float greenScale = getRandomFloat(0.1f, 4.0f);
-  float blueScale = getRandomFloat(0.1f, 4.0f);
 
-  startTime = millis();
-  while(true){
-    for(uint16_t i=0; i<NUM_LEDS; i++) {
-      redPhase = phaseFromPixelIndex(i, NUM_LEDS, redScale);
-      greenPhase = phaseFromPixelIndex(i, NUM_LEDS, greenScale);
-      bluePhase = phaseFromPixelIndex(i, NUM_LEDS, blueScale);
-      redSin = beatsquare8(redFreq, 0, 255, startTime, redPhase, redPulseWidth);
-      greenSin = beatsquare8(greenFreq, 0, 255, startTime, greenPhase, greenPulseWidth);
-      blueSin = beatsquare8(blueFreq, 0, 255, startTime, bluePhase, bluePulseWidth);
-      leds[i] = CRGB(redSin, greenSin, blueSin);
-    }
-
-    FastLED.show();
-    if (haveSecsElapsed(runTime, startTime)) {
-      break;
-    }
-    yield();
+  for(uint16_t i=0; i<NUM_LEDS; i++) {
+    redPhase = phaseFromPixelIndex(i, NUM_LEDS, g_scale1);
+    greenPhase = phaseFromPixelIndex(i, NUM_LEDS, g_scale2);
+    bluePhase = phaseFromPixelIndex(i, NUM_LEDS, g_scale3);
+    redSin = beatsquare8(g_bpm1, 0, 255, g_startTime, redPhase, g_pulseWidth1);
+    greenSin = beatsquare8(g_bpm2, 0, 255, g_startTime, greenPhase, g_pulseWidth2);
+    blueSin = beatsquare8(g_bpm3, 0, 255, g_startTime, bluePhase, g_pulseWidth3);
+    leds[i] = CRGB(redSin, greenSin, blueSin);
   }
+
+  FastLED.show();
 }
 
 
