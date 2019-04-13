@@ -8,10 +8,10 @@
 #define BRIGHTNESS 100
 CRGB leds[NUM_LEDS];
 
-const int NUM_PATTERNS = 10;
+const int NUM_PATTERNS = 16;
 void (*patterns[NUM_PATTERNS])();
 
-const int NUM_TRANSITIONS = 2;
+const int NUM_TRANSITIONS = 3;
 void (*transitions[NUM_TRANSITIONS])();
 
 // IMPORTANT: To reduce NeoPixel burnout risk, add 1000 uF capacitor across
@@ -45,11 +45,18 @@ void setupPatterns() {
   patterns[7] = colRGBWaveTest;
   patterns[8] = squarePosSigTest;
   patterns[9] = squareRGBPosSigTest;
+  patterns[10] = rainbow;
+  patterns[11] = rainbowWithGlitter;
+  patterns[12] = confetti;
+  patterns[13] = sinelon;
+  patterns[14] = bpm;
+  patterns[15] = juggle;
 }
 
 void setupTransitions() {
   transitions[0] = wipeToBlack;
   transitions[1] = wipeToRandom;
+  transitions[2] = fadeOut;
 }
 
 
@@ -67,6 +74,8 @@ int g_patternIndex = random(NUM_PATTERNS);
 CRGB g_CRGB1;
 int g_hue1;
 int g_sat1;
+int g_glitterChance;
+bool g_addGlitter;
 
 
 
@@ -165,6 +174,11 @@ uint16_t beatsquare8(accum88 beatsPerMinute, uint8_t lowest = 0, uint8_t highest
     return result;
 }
 
+bool pctToBool(fract8 chance) {
+  //rolls a yes/no dice with the specified integer percent of being yes
+  return random8() < chance;
+}
+
 
 
 
@@ -187,6 +201,18 @@ void wipeToRandom() {
   int g = random8();
   int b = random8();
   randomRGBTimeWipe(r, g, b);
+}
+
+
+void fadeOut() {
+  for (int i=BRIGHTNESS; i > 0; i--) {
+    FastLED.setBrightness(i);
+    FastLED.show();
+    FastLED.delay(20);
+  }
+  fill_solid(0,0,0);
+  FastLED.setBrightness(BRIGHTNESS);
+  FastLED.show();
 }
 
 void randomRGBTimeWipe(byte r, byte g, byte b) {  
@@ -227,6 +253,8 @@ void redGreenBlueSin(){
     g_bpm1 = random8(2,80);
     g_bpm2 = random8(2,80);
     g_bpm3 = random8(2,80);
+    g_addGlitter = pctToBool(30);
+    g_glitterChance = 80;
     g_startTime = millis();
     g_patternsReset = false;
   }
@@ -235,6 +263,11 @@ void redGreenBlueSin(){
   int greenSin = beatsin8(g_bpm2, 0, 255, g_startTime, g_phase2);
   int blueSin = beatsin8(g_bpm3, 0, 255, g_startTime, g_phase3);
   fill_solid(leds, NUM_LEDS, CRGB(redSin, greenSin, blueSin));
+  
+  if (g_addGlitter) {    
+    addGlitter(g_glitterChance);
+  }
+  
   FastLED.show();
 }
 
@@ -242,9 +275,11 @@ void posSigTest(){
   if (g_patternsReset) {
     Serial.println("posSigTest");
     g_bpm1 = random8(2,80); //value sin
-    g_bpm2 = random(2,80); //hue sin
+    g_bpm2 = random(2,20); //hue sin
     g_scale1 = getRandomFloat(0.25f, 4.0f);
     g_sat1 = 255;
+    g_addGlitter = pctToBool(30);
+    g_glitterChance = 80;
     g_startTime = millis();
     g_patternsReset = false;
   }
@@ -258,7 +293,11 @@ void posSigTest(){
     sinVal = beatsin8(g_bpm1, 0, 255, g_startTime, phase);
     leds[i] = CHSV(hue, g_sat1, sinVal);
   }
-
+  
+  if (g_addGlitter) {    
+    addGlitter(g_glitterChance);
+  }
+  
   FastLED.show();
 }
 
@@ -271,6 +310,8 @@ void posSig3WaveTest(){
     g_scale1 = getRandomFloat(0.2f, 2.0f);
     g_scale2 = getRandomFloat(0.2f, 2.0f);
     g_scale3 = getRandomFloat(0.2f, 2.0f);
+    g_addGlitter = pctToBool(30);
+    g_glitterChance = 80;
     g_startTime = millis();
     g_patternsReset = false;
   }
@@ -288,6 +329,10 @@ void posSig3WaveTest(){
     leds[i] = CRGB(redVal, greenVal, blueVal);
   }
 
+  if (g_addGlitter) {    
+    addGlitter(g_glitterChance);
+  }
+  
   FastLED.show();
 }
 
@@ -296,8 +341,10 @@ void rowTest(){
     Serial.println("rowTest");
     g_scale1 = getRandomFloat(0.5f, 5.0f);
     g_bpm1 = random8(2,80); //value sin
-    g_bpm2 = random(2,80); //hue sin
+    g_bpm2 = random(2,20); //hue sin
     g_sat1 = 255;
+    g_addGlitter = pctToBool(30);
+    g_glitterChance = 80;
     g_startTime = millis();
     g_patternsReset = false;
   }
@@ -310,7 +357,12 @@ void rowTest(){
     sinVal = beatsin8(g_bpm1, 0, 255, g_startTime, phase);
     leds[i] = CHSV(hue, g_sat1, sinVal);
   }
-    FastLED.show();
+    
+  if (g_addGlitter) {    
+    addGlitter(g_glitterChance);
+  }
+  
+  FastLED.show();
 }
 
 void colTest(){
@@ -318,8 +370,10 @@ void colTest(){
     Serial.println("colTest");
     g_scale1 = getRandomFloat(0.5f, 5.0f);
     g_bpm1 = random8(2,80); //value sin
-    g_bpm2 = random(2,80); //hue sin
+    g_bpm2 = random(2,20); //hue sin
     g_sat1 = 255;
+    g_addGlitter = pctToBool(30);
+    g_glitterChance = 80;
     g_startTime = millis();
     g_patternsReset = false;
   }
@@ -333,6 +387,11 @@ void colTest(){
     sinVal = beatsin8(g_bpm1, 0, 255, g_startTime, phase);
     leds[i] = CHSV(hue, g_sat1, sinVal);
   }
+    
+  if (g_addGlitter) {    
+    addGlitter(g_glitterChance);
+  }
+  
   FastLED.show();
 }
 
@@ -346,6 +405,8 @@ void rowRGBWaveTest(){
     g_scale1 = getRandomFloat(0.2f, 2.0f);
     g_scale2 = getRandomFloat(0.2f, 2.0f);
     g_scale3= getRandomFloat(0.2f, 2.0f);
+    g_addGlitter = pctToBool(30);
+    g_glitterChance = 80;
     g_startTime = millis();
     g_patternsReset = false;
   }
@@ -362,7 +423,11 @@ void rowRGBWaveTest(){
     blueVal = beatsin8(g_bpm3, 0, 255, g_startTime, bluePhase);
     leds[i] = CRGB(redVal, greenVal, blueVal);
   }
-
+  
+  if (g_addGlitter) {    
+    addGlitter(g_glitterChance);
+  }
+  
   FastLED.show();
 }
 
@@ -375,6 +440,8 @@ void colRGBWaveTest(){
     g_scale1 = getRandomFloat(0.2f, 2.0f);
     g_scale2 = getRandomFloat(0.2f, 2.0f);
     g_scale3= getRandomFloat(0.2f, 2.0f);
+    g_addGlitter = pctToBool(30);
+    g_glitterChance = 80;
     g_startTime = millis();
     g_patternsReset = false;
   }
@@ -391,7 +458,11 @@ void colRGBWaveTest(){
     blueVal = beatsin8(g_bpm3, 0, 255, g_startTime, bluePhase);
     leds[i] = CRGB(redVal, greenVal, blueVal);
   }
-
+  
+  if (g_addGlitter) {    
+    addGlitter(g_glitterChance);
+  }
+  
   FastLED.show();
 }
 
@@ -401,6 +472,8 @@ void oddEvenRGBWaveTest(){
     g_bpm1 = random8(2,80);
     g_bpm2 = random8(2,80);
     g_bpm3 = random8(2,80);
+    g_addGlitter = pctToBool(30);
+    g_glitterChance = 80;
     g_startTime = millis();
     g_patternsReset = false;
   }
@@ -416,6 +489,7 @@ void oddEvenRGBWaveTest(){
     leds[i] = CRGB(redVal, greenVal, blueVal);
   }
 
+  addGlitter(g_glitterChance);
   FastLED.show();
 }
 
@@ -423,12 +497,14 @@ void oddEvenRGBWaveTest(){
 
 void squarePosSigTest(){
   if (g_patternsReset) {
-    Serial.println("squareTest");
+    Serial.println("squarePosSigTest");
     g_bpm1 = random8(2,80); //value sin
     g_bpm2 = random8(2,40); //hue sin
     g_scale1 = getRandomFloat(0.1f, 4.0f);
     g_pulseWidth1 = 255 / random8(2,NUM_LEDS);
     g_sat1 = 255;
+    g_addGlitter = pctToBool(30);
+    g_glitterChance = 80;
     g_startTime = millis();
     g_patternsReset = false;
   }
@@ -441,13 +517,17 @@ void squarePosSigTest(){
     curSin = beatsquare8(g_bpm1, 0, 255, g_startTime, phase, g_pulseWidth1);
     leds[i] = CHSV(hue, g_sat1, curSin);
   }
-
+  
+  if (g_addGlitter) {    
+    addGlitter(g_glitterChance);
+  }
+  
   FastLED.show();
 }
 
 void squareRGBPosSigTest(){
   if (g_patternsReset) {
-    Serial.println("squareTest");
+    Serial.println("squareRGBPosSigTest");
     g_bpm1 = random8(2,80);
     g_bpm2 = random8(2,80);
     g_bpm3 = random8(2,80);
@@ -457,6 +537,8 @@ void squareRGBPosSigTest(){
     g_scale1 = getRandomFloat(0.1f, 4.0f);
     g_scale2 = getRandomFloat(0.1f, 4.0f);
     g_scale3 = getRandomFloat(0.1f, 4.0f);
+    g_addGlitter = pctToBool(30);
+    g_glitterChance = 80;
     g_startTime = millis();
     g_patternsReset = false;
   }
@@ -473,11 +555,100 @@ void squareRGBPosSigTest(){
     blueSin = beatsquare8(g_bpm3, 0, 255, g_startTime, bluePhase, g_pulseWidth3);
     leds[i] = CRGB(redSin, greenSin, blueSin);
   }
-
+  
+  if (g_addGlitter) {    
+    addGlitter(g_glitterChance);
+  }
+  
   FastLED.show();
 }
 
+//from demo reel example
+void rainbow() 
+{
+  if (g_patternsReset) {
+    Serial.println("rainbow");
+    g_hue1 = random8();
+    g_patternsReset = false;
+  }
+  // FastLED's built-in rainbow generator
+  fill_rainbow( leds, NUM_LEDS, g_hue1, 7);
+}
 
+void rainbowWithGlitter() 
+{
+  if (g_patternsReset) {
+    g_hue1 = random8();
+    Serial.println("rainbowWithGlitter");
+    g_patternsReset = false;
+  }
+  // built-in FastLED rainbow, plus some random sparkly glitter
+  rainbow();
+  addGlitter(80);
+}
+
+void addGlitter( fract8 chanceOfGlitter) 
+{
+  if( random8() < chanceOfGlitter) {
+    leds[ random16(NUM_LEDS) ] += CRGB::White;
+  }
+}
+
+void confetti() 
+{
+  if (g_patternsReset) {
+    Serial.println("confetti");
+    g_hue1 = random8();
+    g_patternsReset = false;
+  }
+  // random colored speckles that blink in and fade smoothly
+  fadeToBlackBy( leds, NUM_LEDS, 10);
+  int pos = random16(NUM_LEDS);
+  leds[pos] += CHSV( g_hue1 + random8(64), 200, 255);
+}
+
+void sinelon()
+{
+  if (g_patternsReset) {
+    Serial.println("sinelon");
+    g_hue1 = random8();
+    g_patternsReset = false;
+  }
+  // a colored dot sweeping back and forth, with fading trails
+  fadeToBlackBy( leds, NUM_LEDS, 20);
+  int pos = beatsin16( 13, 0, NUM_LEDS-1 );
+  leds[pos] += CHSV( g_hue1, 255, 192);
+}
+
+void bpm()
+{
+  if (g_patternsReset) {
+    Serial.println("bpm");
+    g_hue1 = random8();
+    g_patternsReset = false;
+  }
+  // colored stripes pulsing at a defined Beats-Per-Minute (BPM)
+  uint8_t BeatsPerMinute = 62;
+  CRGBPalette16 palette = PartyColors_p;
+  uint8_t beat = beatsin8( BeatsPerMinute, 64, 255);
+  for( int i = 0; i < NUM_LEDS; i++) { //9948
+    leds[i] = ColorFromPalette(palette, g_hue1+(i*2), beat-g_hue1+(i*10));
+  }
+}
+
+void juggle() {
+  if (g_patternsReset) {
+    Serial.println("juggle");
+    g_patternsReset = false;
+  }
+  // eight colored dots, weaving in and out of sync with each other
+  fadeToBlackBy( leds, NUM_LEDS, 20);
+  byte dothue = 0;
+  for( int i = 0; i < 8; i++) {
+    leds[beatsin16( i+7, 0, NUM_LEDS-1 )] |= CHSV(dothue, 200, 255);
+    dothue += 32;
+  }
+}
 
 
 
