@@ -86,7 +86,7 @@ bool g_addGlitter;
 
 
 void loop() {
-//  squarePosSigTest();
+//  redGreenBlueSin();
 
 // Call the current pattern function once, updating the 'leds' array
   patterns[g_patternIndex]();
@@ -267,8 +267,6 @@ void redGreenBlueSin(){
   if (g_addGlitter) {    
     addGlitter(g_glitterChance);
   }
-  
-  FastLED.show();
 }
 
 void posSigTest(){
@@ -297,8 +295,6 @@ void posSigTest(){
   if (g_addGlitter) {    
     addGlitter(g_glitterChance);
   }
-  
-  FastLED.show();
 }
 
 void posSig3WaveTest(){
@@ -332,8 +328,6 @@ void posSig3WaveTest(){
   if (g_addGlitter) {    
     addGlitter(g_glitterChance);
   }
-  
-  FastLED.show();
 }
 
 void rowTest(){
@@ -361,8 +355,6 @@ void rowTest(){
   if (g_addGlitter) {    
     addGlitter(g_glitterChance);
   }
-  
-  FastLED.show();
 }
 
 void colTest(){
@@ -391,8 +383,6 @@ void colTest(){
   if (g_addGlitter) {    
     addGlitter(g_glitterChance);
   }
-  
-  FastLED.show();
 }
 
 
@@ -427,8 +417,6 @@ void rowRGBWaveTest(){
   if (g_addGlitter) {    
     addGlitter(g_glitterChance);
   }
-  
-  FastLED.show();
 }
 
 void colRGBWaveTest(){
@@ -462,8 +450,6 @@ void colRGBWaveTest(){
   if (g_addGlitter) {    
     addGlitter(g_glitterChance);
   }
-  
-  FastLED.show();
 }
 
 void oddEvenRGBWaveTest(){
@@ -490,7 +476,6 @@ void oddEvenRGBWaveTest(){
   }
 
   addGlitter(g_glitterChance);
-  FastLED.show();
 }
 
 
@@ -521,8 +506,6 @@ void squarePosSigTest(){
   if (g_addGlitter) {    
     addGlitter(g_glitterChance);
   }
-  
-  FastLED.show();
 }
 
 void squareRGBPosSigTest(){
@@ -559,8 +542,6 @@ void squareRGBPosSigTest(){
   if (g_addGlitter) {    
     addGlitter(g_glitterChance);
   }
-  
-  FastLED.show();
 }
 
 //from demo reel example
@@ -573,6 +554,7 @@ void rainbow()
   }
   // FastLED's built-in rainbow generator
   fill_rainbow( leds, NUM_LEDS, g_hue1, 7);
+  EVERY_N_MILLISECONDS( 20 ) { g_hue1++; }
 }
 
 void rainbowWithGlitter() 
@@ -605,6 +587,7 @@ void confetti()
   fadeToBlackBy( leds, NUM_LEDS, 10);
   int pos = random16(NUM_LEDS);
   leds[pos] += CHSV( g_hue1 + random8(64), 200, 255);
+  EVERY_N_MILLISECONDS( 20 ) { g_hue1++; }
 }
 
 void sinelon()
@@ -618,6 +601,7 @@ void sinelon()
   fadeToBlackBy( leds, NUM_LEDS, 20);
   int pos = beatsin16( 13, 0, NUM_LEDS-1 );
   leds[pos] += CHSV( g_hue1, 255, 192);
+  EVERY_N_MILLISECONDS( 20 ) { g_hue1++; }
 }
 
 void bpm()
@@ -634,6 +618,8 @@ void bpm()
   for( int i = 0; i < NUM_LEDS; i++) { //9948
     leds[i] = ColorFromPalette(palette, g_hue1+(i*2), beat-g_hue1+(i*10));
   }
+  
+  EVERY_N_MILLISECONDS( 20 ) { g_hue1++; }
 }
 
 void juggle() {
@@ -648,6 +634,8 @@ void juggle() {
     leds[beatsin16( i+7, 0, NUM_LEDS-1 )] |= CHSV(dothue, 200, 255);
     dothue += 32;
   }
+  
+  EVERY_N_MILLISECONDS( 20 ) { g_hue1++; }
 }
 
 
