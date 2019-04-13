@@ -72,10 +72,12 @@ int g_scale1, g_scale2, g_scale3;
 int g_pulseWidth1, g_pulseWidth2, g_pulseWidth3;
 int g_patternIndex = random(NUM_PATTERNS);
 CRGB g_CRGB1;
-int g_hue1;
+int g_hue1, g_hue2;
+int g_hueSteps1;
 int g_sat1;
-int g_glitterChance;
+int g_glitterChance, g_glitterPercent;
 bool g_addGlitter;
+int g_everyNMillis;
 
 
 
@@ -86,11 +88,13 @@ bool g_addGlitter;
 
 
 void loop() {
-//  redGreenBlueSin();
+//  juggle();
 
 // Call the current pattern function once, updating the 'leds' array
   patterns[g_patternIndex]();
- 
+  
+  // send the 'leds' array out to the actual LED strip
+  FastLED.show(); 
   // insert a delay to keep the framerate modest
   FastLED.delay(1000/FRAMES_PER_SECOND); 
 
@@ -549,24 +553,31 @@ void rainbow()
 {
   if (g_patternsReset) {
     Serial.println("rainbow");
-    g_hue1 = random8();
+    g_hue1 = random8(); //inital hue
+    g_hue2 = random8(5,254); //delta hue
+    g_everyNMillis = random8(100,1000);
+    g_hueSteps1 = random8(1,48);
     g_patternsReset = false;
   }
   // FastLED's built-in rainbow generator
-  fill_rainbow( leds, NUM_LEDS, g_hue1, 7);
-  EVERY_N_MILLISECONDS( 20 ) { g_hue1++; }
+  fill_rainbow( leds, NUM_LEDS, g_hue1, g_hue2);
+  EVERY_N_MILLISECONDS( g_everyNMillis ) { g_hue1+= g_hueSteps1; }
 }
 
 void rainbowWithGlitter() 
 {
   if (g_patternsReset) {
-    g_hue1 = random8();
     Serial.println("rainbowWithGlitter");
+    g_hue1 = random8();
+    g_hue2 = random8(5,254); //delta hue
+    g_everyNMillis = random8(100,1000);
+    g_hueSteps1 = random8(1,48);
+    g_glitterPercent = random8(40,80);
     g_patternsReset = false;
   }
-  // built-in FastLED rainbow, plus some random sparkly glitter
+
   rainbow();
-  addGlitter(80);
+  addGlitter(g_glitterPercent);
 }
 
 void addGlitter( fract8 chanceOfGlitter) 
@@ -581,13 +592,15 @@ void confetti()
   if (g_patternsReset) {
     Serial.println("confetti");
     g_hue1 = random8();
+    g_everyNMillis = random8(100,1000);
+    g_hueSteps1 = random8(1,48);
     g_patternsReset = false;
   }
   // random colored speckles that blink in and fade smoothly
   fadeToBlackBy( leds, NUM_LEDS, 10);
   int pos = random16(NUM_LEDS);
   leds[pos] += CHSV( g_hue1 + random8(64), 200, 255);
-  EVERY_N_MILLISECONDS( 20 ) { g_hue1++; }
+  EVERY_N_MILLISECONDS( g_everyNMillis ) { g_hue1+=g_hueSteps1; }
 }
 
 void sinelon()
@@ -595,13 +608,16 @@ void sinelon()
   if (g_patternsReset) {
     Serial.println("sinelon");
     g_hue1 = random8();
+    g_bpm1 = random8(5, 100);
+    g_everyNMillis = random8(100,1000);
+    g_hueSteps1 = random8(1,48);
     g_patternsReset = false;
   }
   // a colored dot sweeping back and forth, with fading trails
   fadeToBlackBy( leds, NUM_LEDS, 20);
-  int pos = beatsin16( 13, 0, NUM_LEDS-1 );
+  int pos = beatsin16( g_bpm1, 0, NUM_LEDS-1 );
   leds[pos] += CHSV( g_hue1, 255, 192);
-  EVERY_N_MILLISECONDS( 20 ) { g_hue1++; }
+  EVERY_N_MILLISECONDS( g_everyNMillis ) { g_hue1+=g_hueSteps1; }
 }
 
 void bpm()
@@ -609,22 +625,25 @@ void bpm()
   if (g_patternsReset) {
     Serial.println("bpm");
     g_hue1 = random8();
+    g_bpm1 = random8(10, 120);
+    g_everyNMillis = random8(100,1000);
+    g_hueSteps1 = random8(1,16);
     g_patternsReset = false;
   }
-  // colored stripes pulsing at a defined Beats-Per-Minute (BPM)
-  uint8_t BeatsPerMinute = 62;
   CRGBPalette16 palette = PartyColors_p;
-  uint8_t beat = beatsin8( BeatsPerMinute, 64, 255);
+  uint8_t beat = beatsin8( g_bpm1, 64, 255);
   for( int i = 0; i < NUM_LEDS; i++) { //9948
     leds[i] = ColorFromPalette(palette, g_hue1+(i*2), beat-g_hue1+(i*10));
   }
   
-  EVERY_N_MILLISECONDS( 20 ) { g_hue1++; }
+  EVERY_N_MILLISECONDS( g_everyNMillis ) { g_hue1+=g_hueSteps1; }
 }
 
 void juggle() {
   if (g_patternsReset) {
     Serial.println("juggle");
+    g_everyNMillis = random8(500,1000);
+    g_hueSteps1 = random8(1,12);
     g_patternsReset = false;
   }
   // eight colored dots, weaving in and out of sync with each other
@@ -635,7 +654,7 @@ void juggle() {
     dothue += 32;
   }
   
-  EVERY_N_MILLISECONDS( 20 ) { g_hue1++; }
+  EVERY_N_MILLISECONDS( g_everyNMillis ) { g_hue1+=g_hueSteps1; }
 }
 
 
