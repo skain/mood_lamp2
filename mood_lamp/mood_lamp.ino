@@ -5,10 +5,10 @@
 #define LED_TYPE WS2812B
 #define COLOR_ORDER GRB
 #define NUM_LEDS 49
-#define BRIGHTNESS 100
+#define BRIGHTNESS 50
 CRGB leds[NUM_LEDS];
 
-const int NUM_PATTERNS = 16;
+const int NUM_PATTERNS = 17;
 void (*patterns[NUM_PATTERNS])();
 
 const int NUM_TRANSITIONS = 3;
@@ -51,6 +51,7 @@ void setupPatterns() {
   patterns[13] = sinelon;
   patterns[14] = bpm;
   patterns[15] = juggle;
+  patterns[16] = paletteTest;
 }
 
 void setupTransitions() {
@@ -78,6 +79,9 @@ int g_sat1;
 int g_glitterChance, g_glitterPercent;
 bool g_addGlitter;
 int g_everyNMillis;
+CRGBPalette16 g_palette1;
+TBlendType    g_paletteBlending1;
+static uint8_t g_colorIndex;
 
 
 
@@ -88,7 +92,7 @@ int g_everyNMillis;
 
 
 void loop() {
-//  juggle();
+//  paletteTest();
 
 // Call the current pattern function once, updating the 'leds' array
   patterns[g_patternIndex]();
@@ -106,8 +110,8 @@ void loop() {
 
 
 // helpers
-float haveSecsElapsed(float secs, unsigned long startTime) {
-  float now = millis();
+float haveSecsElapsed(uint16_t secs, unsigned long startTime) {
+  unsigned long now = millis();
   if ((now - startTime) > (secs * 1000)) {
     return true;
   }
@@ -115,15 +119,11 @@ float haveSecsElapsed(float secs, unsigned long startTime) {
   return false;
 }
 
-float timeFromMillis(float t){
-  return t / 1000.0f;
-}
-
 float interpolate(float val, float inMin, float inMax, float outMin, float outMax){
   return outMin + (val - inMin) * ((outMax - outMin)/(inMax - inMin));
 }
 
-float phaseFromPixelIndex(float pixelIndex, float numPixels, float scale) {
+float phaseFromPixelIndex(uint16_t pixelIndex, uint16_t numPixels, float scale) {
   int phase = interpolate(pixelIndex, 0, numPixels * scale, 0, 255);
   return phase;
 }
@@ -136,7 +136,7 @@ int phaseFromOddEvenIndex(uint16_t pixelIndex) {
   }
 }
 
-float phaseFromRowIndex(float pixelIndex, float pixelsPerRow, float numRows, float scale){
+float phaseFromRowIndex(uint16_t pixelIndex, uint16_t pixelsPerRow, uint16_t numRows, float scale){
   if (pixelIndex  == 0) {
     return 0;
   }
@@ -181,6 +181,28 @@ uint16_t beatsquare8(accum88 beatsPerMinute, uint8_t lowest = 0, uint8_t highest
 bool pctToBool(fract8 chance) {
   //rolls a yes/no dice with the specified integer percent of being yes
   return random8() < chance;
+}
+
+CRGB getRandomColor() {
+  return CRGB(random8(), random8(), random8());
+}
+
+// This function fills the palette with totally random colors.
+void setupRandomPalette1()
+{
+//    for( int i = 0; i < 16; i++) {
+//      if (i == 0 || pctToBool(25)) {
+//        g_palette1[i] = CHSV( random8(), 255, random8(10,255));
+//      } else {
+//        g_palette1[i] = g_palette1[i-1];
+//      }
+//    }
+  CRGB c1, c2, c3, c4;
+  c1 = getRandomColor();
+  c2 = getRandomColor();
+  c3 = getRandomColor();
+  c4 = getRandomColor();
+  g_palette1 = CRGBPalette16(c1, c2, c3, c4);
 }
 
 
@@ -246,6 +268,21 @@ void RGBWipe(byte r, byte g, byte b, uint8_t wait) {
     FastLED.show();
     delay(wait);
   }
+}
+
+void paletteTest(){
+  if (g_patternsReset) {
+    Serial.println("paletteTest");
+    g_bpm1 = random8(2,20);
+    setupRandomPalette1();
+    g_paletteBlending1 = LINEARBLEND;
+    g_colorIndex = 0;
+    g_startTime = millis();
+    g_patternsReset = false;
+  }
+
+  int paletteSin = beatsin8(g_bpm1, 0, 255, g_startTime, 0);
+  fill_solid(leds, NUM_LEDS, ColorFromPalette( g_palette1, paletteSin, 255, g_paletteBlending1));
 }
 
 void redGreenBlueSin(){
@@ -425,7 +462,7 @@ void rowRGBWaveTest(){
 
 void colRGBWaveTest(){
   if (g_patternsReset) {
-    Serial.println("column_rgb_wave_test");
+    Serial.println("colRGBWaveTest");
     g_bpm1 = random8(2,80);
     g_bpm2 = random8(2,80);
     g_bpm3 = random8(2,80);
