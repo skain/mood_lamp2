@@ -38,7 +38,7 @@ int g_hueSteps1;
 int g_sat1;
 int g_glitterChance, g_glitterPercent;
 bool g_addGlitter;
-int g_everyNMillis;
+int g_everyNMillis, g_everyNSecs;
 CRGBPalette16 g_palette1;
 TBlendType    g_paletteBlending1;
 static uint8_t g_colorIndex;
@@ -137,6 +137,7 @@ void resetPatternGlobals() {
   g_hueSteps1 = random8(1,48);
   
   g_everyNMillis = random(100,1000);  
+  g_everyNSecs = random(3,15);
   setupRandomPalette1();
 }
 
@@ -237,7 +238,7 @@ void posSigTest(){
     g_patternsReset = false;
   }
 
-  EVERY_N_SECONDS(5) { g_reverse1 = !g_reverse1; Serial.println("reverse"); }
+  EVERY_N_SECONDS(g_everyNSecs) { g_reverse1 = !g_reverse1; }
   
   int phase, sinVal, hue;
 
@@ -279,6 +280,8 @@ void posSig3WaveTest(){
   if (g_addGlitter) {    
     addGlitter(g_glitterChance);
   }
+  
+  EVERY_N_SECONDS(g_everyNSecs) { g_reverse1 = !g_reverse1; }
 }
 
 void rowTest(){
@@ -301,6 +304,8 @@ void rowTest(){
   if (g_addGlitter) {    
     addGlitter(g_glitterChance);
   }
+
+  EVERY_N_SECONDS(g_everyNSecs) { g_reverse1 = !g_reverse1; }
 }
 
 void colTest(){
@@ -324,6 +329,8 @@ void colTest(){
   if (g_addGlitter) {    
     addGlitter(g_glitterChance);
   }
+
+  EVERY_N_SECONDS(g_everyNSecs) { g_reverse1 = !g_reverse1; }
 }
 
 
@@ -352,6 +359,8 @@ void rowRGBWaveTest(){
   if (g_addGlitter) {    
     addGlitter(g_glitterChance);
   }
+  
+  EVERY_N_SECONDS(g_everyNSecs) { g_reverse1 = !g_reverse1; }
 }
 
 void colRGBWaveTest(){
@@ -379,6 +388,8 @@ void colRGBWaveTest(){
   if (g_addGlitter) {    
     addGlitter(g_glitterChance);
   }
+  
+  EVERY_N_SECONDS(g_everyNSecs) { g_reverse1 = !g_reverse1; }
 }
 
 void oddEvenRGBWaveTest(){
@@ -423,6 +434,8 @@ void squarePosSigTest(){
   if (g_addGlitter) {    
     addGlitter(g_glitterChance);
   }
+  
+  EVERY_N_SECONDS(g_everyNSecs) { g_reverse1 = !g_reverse1; }
 }
 
 void squareRGBPosSigTest(){
@@ -450,6 +463,8 @@ void squareRGBPosSigTest(){
   if (g_addGlitter) {    
     addGlitter(g_glitterChance);
   }
+  
+  EVERY_N_SECONDS(g_everyNSecs) { g_reverse1 = !g_reverse1; }
 }
 
 //from demo reel example
