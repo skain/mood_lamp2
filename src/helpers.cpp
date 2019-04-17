@@ -87,6 +87,15 @@ uint16_t beatsquare8(accum88 beatsPerMinute, uint8_t lowest = 0, uint8_t highest
     return result;
 }
 
+uint8_t beatsaw8(accum88 beats_per_minute, uint8_t lowest = 0, uint8_t highest = 255, uint32_t timebase = 0, uint8_t phase_offset = 0) {
+  uint8_t beat = beat8(beats_per_minute, timebase);
+  uint8_t beatsaw = beat + phase_offset;
+  uint8_t rangewidth = highest - lowest;
+  uint8_t scaledbeat = scale8( beatsaw, rangewidth);
+  uint8_t result = lowest + scaledbeat;
+  return result;
+}
+
 bool pctToBool(fract8 chance) {
   //rolls a yes/no dice with the specified integer percent of being yes
   return random8() < chance;
