@@ -17,28 +17,26 @@
 
 CRGB leds[NUM_LEDS];
 
-const int NUM_PATTERNS = 18;
+const uint8_t NUM_PATTERNS = 19;
 void (*patterns[NUM_PATTERNS])();
 
-const int NUM_TRANSITIONS = 3;
+const uint8_t NUM_TRANSITIONS = 3;
 void (*transitions[NUM_TRANSITIONS])();
 
 // Shared Global Variables
 bool g_patternsReset = true;
 unsigned long g_startTime;
-int g_phase1, g_phase2, g_phase3;
-int g_bpm1, g_bpm2, g_bpm3;
-// int g_sin1, g_sin2, g_sin3;
+uint8_t g_phase1, g_phase2, g_phase3;
+uint8_t g_bpm1, g_bpm2, g_bpm3;
 float g_scale1, g_scale2, g_scale3;
-int g_pulseWidth1, g_pulseWidth2, g_pulseWidth3;
-int g_patternIndex = random(NUM_PATTERNS);
-// CRGB g_CRGB1;
-int g_hue1, g_hue2;
-int g_hueSteps1;
-int g_sat1;
-int g_glitterChance, g_glitterPercent;
+uint8_t g_pulseWidth1, g_pulseWidth2, g_pulseWidth3;
+uint8_t g_patternIndex = random(NUM_PATTERNS);
+uint8_t g_hue1, g_hue2;
+uint8_t g_hueSteps1;
+uint8_t g_sat1;
+uint8_t g_glitterChance, g_glitterPercent;
 bool g_addGlitter;
-int g_everyNMillis, g_everyNSecs;
+uint8_t g_everyNMillis, g_everyNSecs;
 CRGBPalette16 g_palette1;
 TBlendType    g_paletteBlending1;
 static uint8_t g_colorIndex;
@@ -50,15 +48,12 @@ bool g_reverse1;
 
 
 
-// void posSig3WaveSawTest();
+// void palettePosSigTest();
 void resetPatternGlobals();
 
 
-
-uint8_t g_tmp = 0;
-
 void loop() {
-//  posSig3WaveSawTest();
+//  palettePosSigTest();
 
 // Call the current pattern function once, updating the 'leds' array
   patterns[g_patternIndex]();
@@ -69,6 +64,7 @@ void loop() {
   FastLED.delay(1000/FRAMES_PER_SECOND); 
 
   // do some periodic updates
+  // EVERY_N_SECONDS( 2 ) { resetPatternGlobals();  transitions[random(NUM_TRANSITIONS)](); g_tmp ? Serial.println("g_16palette") : Serial.println("g_gradientPalette"); g_palette1 = g_tmp ? g_16palette : g_gradientPalette; g_tmp = !g_tmp; } // change patterns periodically
   EVERY_N_SECONDS( 20 ) { resetPatternGlobals();  transitions[random(NUM_TRANSITIONS)](); g_patternIndex = random(NUM_PATTERNS); } // change patterns periodically
 }
 
@@ -80,7 +76,7 @@ void loop() {
 // This function fills the palette with totally random colors.
 void setupRandomPalette1()
 {
-//    for( int i = 0; i < 16; i++) {
+//    for( uint8_t i = 0; i < 16; i++) {
 //      if (i == 0 || pctToBool(25)) {
 //        g_palette1[i] = CHSV( random8(), 255, random8(10,255));
 //      } else {
@@ -221,7 +217,7 @@ void RGBWipe(byte r, byte g, byte b, uint8_t wait, bool reverse) {
 }
 
 void randomRGBTimeWipe(byte r, byte g, byte b) {  
-  int d = random8(25, 100);
+  uint8_t d = random8(25, 100);
   bool reverse = pctToBool(50);
   // Serial.print("reverse: ");
   // Serial.println(reverse);
@@ -235,16 +231,16 @@ void wipeToBlack() {
 
 void wipeToRandom() {
   Serial.println("wipeToRandom");
-  int r = random8();
-  int g = random8();
-  int b = random8();
+  uint8_t r = random8();
+  uint8_t g = random8();
+  uint8_t b = random8();
   randomRGBTimeWipe(r, g, b);
 }
 
 
 void fadeOut() {
   Serial.println("fadeOut");
-  for (int i=BRIGHTNESS; i > 0; i--) {
+  for (uint8_t i=BRIGHTNESS; i > 0; i--) {
     FastLED.setBrightness(i);
     FastLED.show();
     FastLED.delay(20);
@@ -276,8 +272,29 @@ void paletteTest(){
     g_patternsReset = false;
   }
 
-  int paletteSin = beatsin8(g_bpm1, 0, 255, g_startTime, 0);
-  fill_solid(leds, NUM_LEDS, ColorFromPalette( g_palette1, paletteSin, 255, g_paletteBlending1));
+  uint8_t paletteSin = beatsin8(g_bpm1, 0, 255, g_startTime, 0);
+  fill_solid(leds, NUM_LEDS, ColorFromPalette(g_palette1, paletteSin, 255, g_paletteBlending1));
+}
+
+void palettePosSigTest() {
+ if (g_patternsReset) {
+    Serial.println("paletteTest");
+    g_bpm1 = random8(2,20);
+    g_patternsReset = false;
+  }
+
+  uint8_t sinVal, phase;
+  for(uint16_t i=0; i<NUM_LEDS; i++) {
+    phase = phaseFromPixelIndex(i, NUM_LEDS, g_scale1, g_reverse1);
+    sinVal = beatsin8(g_bpm1, 0, 255, g_startTime, phase);
+    leds[i] = ColorFromPalette(g_palette1, sinVal, 255, g_paletteBlending1);
+  }
+
+  // EVERY_N_SECONDS(g_everyNSecs) { g_reverse1 = !g_reverse1; }
+  
+  // if (g_addGlitter) {    
+  //   addGlitter(g_glitterChance);
+  // }
 }
 
 void redGreenBlueSin(){
@@ -286,9 +303,9 @@ void redGreenBlueSin(){
     g_patternsReset = false;
   }
   
-  int redSin = beatsin8(g_bpm1, 0, 255, g_startTime, g_phase1);
-  int greenSin = beatsin8(g_bpm2, 0, 255, g_startTime, g_phase2);
-  int blueSin = beatsin8(g_bpm3, 0, 255, g_startTime, g_phase3);
+  uint8_t redSin = beatsin8(g_bpm1, 0, 255, g_startTime, g_phase1);
+  uint8_t greenSin = beatsin8(g_bpm2, 0, 255, g_startTime, g_phase2);
+  uint8_t blueSin = beatsin8(g_bpm3, 0, 255, g_startTime, g_phase3);
   fill_solid(leds, NUM_LEDS, CRGB(redSin, greenSin, blueSin));
   
   if (g_addGlitter) {    
@@ -302,9 +319,9 @@ void redGreenBlueSaw(){
     g_patternsReset = false;
   }
   
-  int redSin = beatsaw8(g_bpm1, 0, 255, g_startTime, g_phase1);
-  int greenSin = beatsaw8(g_bpm2, 0, 255, g_startTime, g_phase2);
-  int blueSin = beatsaw8(g_bpm3, 0, 255, g_startTime, g_phase3);
+  uint8_t redSin = beatsaw8(g_bpm1, 0, 255, g_startTime, g_phase1);
+  uint8_t greenSin = beatsaw8(g_bpm2, 0, 255, g_startTime, g_phase2);
+  uint8_t blueSin = beatsaw8(g_bpm3, 0, 255, g_startTime, g_phase3);
   // fill_solid(leds, NUM_LEDS, CRGB(redSin, 0, 0));
   fill_solid(leds, NUM_LEDS, CRGB(redSin, greenSin, blueSin));
   
@@ -322,7 +339,7 @@ void posSigTest(){
 
   EVERY_N_SECONDS(g_everyNSecs) { g_reverse1 = !g_reverse1; }
   
-  int phase, sinVal, hue;
+  uint8_t phase, sinVal, hue;
 
   hue = beatsin8(g_bpm2, 0, 255, g_startTime, 0);
   
@@ -346,7 +363,7 @@ void posSigSawTest(){
 
   EVERY_N_SECONDS(g_everyNSecs) { g_reverse1 = !g_reverse1; }
   
-  int phase, sinVal, hue;
+  uint8_t phase, sinVal, hue;
 
   hue = beatsin8(g_bpm2, 0, 255, g_startTime, 0);
   
@@ -371,7 +388,7 @@ void posSig3WaveTest(){
   }
   
   float redPhase, greenPhase, bluePhase;
-  int redVal, greenVal, blueVal;
+  uint8_t redVal, greenVal, blueVal;
   
   for(uint16_t i=0; i<NUM_LEDS; i++) {
     redPhase = phaseFromPixelIndex(i, NUM_LEDS, g_scale1, g_reverse1);
@@ -400,7 +417,7 @@ void posSig3WaveSawTest(){
   }
   
   float redPhase, greenPhase, bluePhase;
-  int redVal, greenVal, blueVal;
+  uint8_t redVal, greenVal, blueVal;
   
   for(uint16_t i=0; i<NUM_LEDS; i++) {
     redPhase = phaseFromPixelIndex(i, NUM_LEDS, g_scale1, g_reverse1);
@@ -478,7 +495,7 @@ void rowRGBWaveTest(){
   }
   
   float redPhase, greenPhase, bluePhase;
-  int redVal, greenVal, blueVal;
+  uint8_t redVal, greenVal, blueVal;
   
   for(uint16_t i=0; i<NUM_LEDS; i++) {
     redPhase = phaseFromRowIndex(i, 7, 7, g_scale1, g_reverse1);
@@ -507,7 +524,7 @@ void colRGBWaveTest(){
   }
 
   float redPhase, greenPhase, bluePhase;
-  int redVal, greenVal, blueVal;
+  uint8_t redVal, greenVal, blueVal;
   
   for(uint16_t i=0; i<NUM_LEDS; i++) {
     redPhase = phaseFromColumnIndex(i, 7, g_scale1, g_reverse1);
@@ -533,7 +550,7 @@ void oddEvenRGBWaveTest(){
   }
   
   float phase;
-  int redVal, greenVal, blueVal;
+  uint8_t redVal, greenVal, blueVal;
   
   for(uint16_t i=0; i<NUM_LEDS; i++) {
     phase = phaseFromOddEvenIndex(i);   
@@ -556,7 +573,7 @@ void squarePosSigTest(){
     g_patternsReset = false;
   }
   
-  int curSin, phase, hue;
+  uint8_t curSin, phase, hue;
   hue = beatsin8(g_bpm2, 0, 255, g_startTime, 0);
   
   for(uint16_t i=0; i<NUM_LEDS; i++) {
@@ -582,7 +599,7 @@ void squareRGBPosSigTest(){
   }
 
   
-  int redSin, greenSin, blueSin, redPhase, greenPhase, bluePhase;
+  uint8_t redSin, greenSin, blueSin, redPhase, greenPhase, bluePhase;
 
   for(uint16_t i=0; i<NUM_LEDS; i++) {
     redPhase = phaseFromPixelIndex(i, NUM_LEDS, g_scale1, g_reverse1);
@@ -626,7 +643,7 @@ void confetti()
   }
   // random colored speckles that blink in and fade smoothly
   fadeToBlackBy( leds, NUM_LEDS, 10);
-  int pos = random16(NUM_LEDS);
+  uint8_t pos = random16(NUM_LEDS);
   leds[pos] += CHSV( g_hue1 + random8(64), 200, 255);
   EVERY_N_MILLISECONDS( g_everyNMillis ) { g_hue1+=g_hueSteps1; }
 
@@ -644,7 +661,7 @@ void sinelon()
   }
   // a colored dot sweeping back and forth, with fading trails
   fadeToBlackBy( leds, NUM_LEDS, 20);
-  int pos = beatsin16( g_bpm1, 0, NUM_LEDS-1 );
+  uint8_t pos = beatsin16( g_bpm1, 0, NUM_LEDS-1 );
   leds[pos] += CHSV( g_hue1, 255, 192);
   EVERY_N_MILLISECONDS( g_everyNMillis ) { g_hue1+=g_hueSteps1; }
   
@@ -663,7 +680,7 @@ void bpm()
   }
   CRGBPalette16 palette = PartyColors_p;
   uint8_t beat = beatsin8( g_bpm1, 64, 255);
-  for( int i = 0; i < NUM_LEDS; i++) { //9948
+  for( uint8_t i = 0; i < NUM_LEDS; i++) { //9948
     leds[i] = ColorFromPalette(palette, g_hue1+(i*2), beat-g_hue1+(i*10));
   }
   
@@ -684,7 +701,7 @@ void juggle() {
   // eight colored dots, weaving in and out of sync with each other
   fadeToBlackBy( leds, NUM_LEDS, 20);
   byte dothue = 0;
-  for( int i = 0; i < 8; i++) {
+  for( uint8_t i = 0; i < 8; i++) {
     leds[beatsin16( i+7, 0, NUM_LEDS-1 )] |= CHSV(dothue, 200, 255);
     dothue += 32;
   }
@@ -714,8 +731,8 @@ void juggle() {
 //unused sequences
 void squareTest(float runTime){
   Serial.println("squareTest");
-  int freq = random8(2,80);
-  int pulseWidth = 255 * 0.5f;
+  uint8_t freq = random8(2,80);
+  uint8_t pulseWidth = 255 * 0.5f;
   unsigned long startTime, redVal;
 
   startTime = millis();
@@ -732,9 +749,9 @@ void squareTest(float runTime){
 
 void odd_even_squareTest(float runTime) {
   Serial.println("odd_even_test");
-  int phase, redVal;
-  int freq = random8(2,80);
-  int pulseWidth = 255 * 0.25f;
+  uint8_t phase, redVal;
+  uint8_t freq = random8(2,80);
+  uint8_t pulseWidth = 255 * 0.25f;
   unsigned long startTime = millis();
   while(true) {
     for(uint16_t i=0; i<NUM_LEDS; i++) {
@@ -769,6 +786,7 @@ void setupPatterns() {
   patterns[15] = paletteTest;
   patterns[16] = posSigSawTest;
   patterns[17] = posSig3WaveSawTest;
+  patterns[18] = palettePosSigTest;
 }
 
 void setupTransitions() {

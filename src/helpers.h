@@ -23,4 +23,4 @@ uint8_t beatsaw8(accum88 beats_per_minute, uint8_t lowest = 0, uint8_t highest =
 
 bool pctToBool(fract8 chance);
 
-CRGB getRandomColor();
+CHSV getRandomColor();

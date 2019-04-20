@@ -101,6 +101,6 @@ bool pctToBool(fract8 chance) {
   return random8() < chance;
 }
 
-CRGB getRandomColor() {
-  return CRGB(random8(), random8(), random8());
+CHSV getRandomColor() {
+  return CHSV(random8(), random8(240, 255), random8());
 }
