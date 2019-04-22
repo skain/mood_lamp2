@@ -40,7 +40,7 @@ uint8_t g_everyNMillis, g_everyNSecs;
 CRGBPalette16 g_palette1;
 TBlendType    g_paletteBlending1;
 static uint8_t g_colorIndex;
-bool g_reverse1;
+bool g_reverse1, g_reverse2, g_reverse3;
 
 
 
@@ -48,12 +48,12 @@ bool g_reverse1;
 
 
 
-// void palettePosSigTest();
+// void posSig3WaveTest();
 void resetPatternGlobals();
 
 
 void loop() {
-//  palettePosSigTest();
+//  posSig3WaveTest();
 
 // Call the current pattern function once, updating the 'leds' array
   patterns[g_patternIndex]();
@@ -166,7 +166,9 @@ void resetPatternGlobals() {
 
   g_startTime = millis();
 
-  g_reverse1 = false;    
+  g_reverse1 = random8(2);
+  g_reverse2 = random8(2);  
+  g_reverse3 = random8(2);  
 
   g_phase1 = random8();
   g_phase2 = random8();
@@ -196,7 +198,11 @@ void resetPatternGlobals() {
   setupRandomPalette1();
 }
 
-
+void flipReverses() {
+  g_reverse1 = !g_reverse1;
+  g_reverse2 = !g_reverse2;
+  g_reverse3 = !g_reverse3;
+}
 
 
 
@@ -392,8 +398,8 @@ void posSig3WaveTest(){
   
   for(uint16_t i=0; i<NUM_LEDS; i++) {
     redPhase = phaseFromPixelIndex(i, NUM_LEDS, g_scale1, g_reverse1);
-    greenPhase = phaseFromPixelIndex(i, NUM_LEDS, g_scale2, g_reverse1);
-    bluePhase = phaseFromPixelIndex(i, NUM_LEDS, g_scale3, g_reverse1);
+    greenPhase = phaseFromPixelIndex(i, NUM_LEDS, g_scale2, g_reverse2);
+    bluePhase = phaseFromPixelIndex(i, NUM_LEDS, g_scale3, g_reverse3);
     redVal = beatsin8(g_bpm1, 0, 255, g_startTime, redPhase);
     greenVal = beatsin8(g_bpm2, 0, 255, g_startTime, greenPhase);
     blueVal = beatsin8(g_bpm3, 0, 255, g_startTime, bluePhase);
@@ -404,7 +410,7 @@ void posSig3WaveTest(){
     addGlitter(g_glitterChance);
   }
   
-  EVERY_N_SECONDS(g_everyNSecs) { g_reverse1 = !g_reverse1; }
+  EVERY_N_SECONDS(g_everyNSecs) { flipReverses(); }
 }
 
 void posSig3WaveSawTest(){
@@ -421,8 +427,8 @@ void posSig3WaveSawTest(){
   
   for(uint16_t i=0; i<NUM_LEDS; i++) {
     redPhase = phaseFromPixelIndex(i, NUM_LEDS, g_scale1, g_reverse1);
-    greenPhase = phaseFromPixelIndex(i, NUM_LEDS, g_scale2, g_reverse1);
-    bluePhase = phaseFromPixelIndex(i, NUM_LEDS, g_scale3, g_reverse1);
+    greenPhase = phaseFromPixelIndex(i, NUM_LEDS, g_scale2, g_reverse2);
+    bluePhase = phaseFromPixelIndex(i, NUM_LEDS, g_scale3, g_reverse3);
     redVal = beatsaw8(g_bpm1, 0, 255, g_startTime, redPhase);
     greenVal = beatsaw8(g_bpm2, 0, 255, g_startTime, greenPhase);
     blueVal = beatsaw8(g_bpm3, 0, 255, g_startTime, bluePhase);
@@ -433,7 +439,7 @@ void posSig3WaveSawTest(){
     addGlitter(g_glitterChance);
   }
   
-  EVERY_N_SECONDS(g_everyNSecs) { g_reverse1 = !g_reverse1; }
+  EVERY_N_SECONDS(g_everyNSecs) { flipReverses(); }
 }
 
 void rowTest(){
@@ -457,7 +463,7 @@ void rowTest(){
     addGlitter(g_glitterChance);
   }
 
-  EVERY_N_SECONDS(g_everyNSecs) { g_reverse1 = !g_reverse1; }
+  EVERY_N_SECONDS(g_everyNSecs) { flipReverses(); }
 }
 
 void colTest(){
@@ -481,7 +487,7 @@ void colTest(){
     addGlitter(g_glitterChance);
   }
 
-  // EVERY_N_SECONDS(g_everyNSecs) { g_reverse1 = !g_reverse1; }
+  EVERY_N_SECONDS(g_everyNSecs) { flipReverses(); }
 }
 
 
@@ -499,8 +505,8 @@ void rowRGBWaveTest(){
   
   for(uint16_t i=0; i<NUM_LEDS; i++) {
     redPhase = phaseFromRowIndex(i, 7, 7, g_scale1, g_reverse1);
-    greenPhase = phaseFromRowIndex(i, 7, 7, g_scale2, g_reverse1);
-    bluePhase = phaseFromRowIndex(i, 7, 7, g_scale3, g_reverse1);
+    greenPhase = phaseFromRowIndex(i, 7, 7, g_scale2, g_reverse2);
+    bluePhase = phaseFromRowIndex(i, 7, 7, g_scale3, g_reverse3);
     redVal = beatsin8(g_bpm1, 0, 255, g_startTime, redPhase);
     greenVal = beatsin8(g_bpm2, 0, 255, g_startTime, greenPhase);
     blueVal = beatsin8(g_bpm3, 0, 255, g_startTime, bluePhase);
@@ -511,7 +517,7 @@ void rowRGBWaveTest(){
     addGlitter(g_glitterChance);
   }
   
-  EVERY_N_SECONDS(g_everyNSecs) { g_reverse1 = !g_reverse1; }
+  EVERY_N_SECONDS(g_everyNSecs) { flipReverses(); }
 }
 
 void colRGBWaveTest(){
@@ -528,8 +534,8 @@ void colRGBWaveTest(){
   
   for(uint16_t i=0; i<NUM_LEDS; i++) {
     redPhase = phaseFromColumnIndex(i, 7, g_scale1, g_reverse1);
-    greenPhase = phaseFromColumnIndex(i, 7, g_scale2, g_reverse1);
-    bluePhase = phaseFromColumnIndex(i, 7, g_scale3, g_reverse1);
+    greenPhase = phaseFromColumnIndex(i, 7, g_scale2, g_reverse2);
+    bluePhase = phaseFromColumnIndex(i, 7, g_scale3, g_reverse3);
     redVal = beatsin8(g_bpm1, 0, 255, g_startTime, redPhase);
     greenVal = beatsin8(g_bpm2, 0, 255, g_startTime, greenPhase);
     blueVal = beatsin8(g_bpm3, 0, 255, g_startTime, bluePhase);
@@ -540,7 +546,7 @@ void colRGBWaveTest(){
     addGlitter(g_glitterChance);
   }
   
-  EVERY_N_SECONDS(g_everyNSecs) { g_reverse1 = !g_reverse1; }
+  EVERY_N_SECONDS(g_everyNSecs) { flipReverses(); }
 }
 
 void oddEvenRGBWaveTest(){
@@ -586,7 +592,7 @@ void squarePosSigTest(){
     addGlitter(g_glitterChance);
   }
   
-  EVERY_N_SECONDS(g_everyNSecs) { g_reverse1 = !g_reverse1; }
+  EVERY_N_SECONDS(g_everyNSecs) { flipReverses(); }
 }
 
 void squareRGBPosSigTest(){
@@ -603,8 +609,8 @@ void squareRGBPosSigTest(){
 
   for(uint16_t i=0; i<NUM_LEDS; i++) {
     redPhase = phaseFromPixelIndex(i, NUM_LEDS, g_scale1, g_reverse1);
-    greenPhase = phaseFromPixelIndex(i, NUM_LEDS, g_scale2, g_reverse1);
-    bluePhase = phaseFromPixelIndex(i, NUM_LEDS, g_scale3, g_reverse1);
+    greenPhase = phaseFromPixelIndex(i, NUM_LEDS, g_scale2, g_reverse2);
+    bluePhase = phaseFromPixelIndex(i, NUM_LEDS, g_scale3, g_reverse3);
     redSin = beatsquare8(g_bpm1, 0, 255, g_startTime, redPhase, g_pulseWidth1);
     greenSin = beatsquare8(g_bpm2, 0, 255, g_startTime, greenPhase, g_pulseWidth2);
     blueSin = beatsquare8(g_bpm3, 0, 255, g_startTime, bluePhase, g_pulseWidth3);
@@ -615,7 +621,7 @@ void squareRGBPosSigTest(){
     addGlitter(g_glitterChance);
   }
   
-  EVERY_N_SECONDS(g_everyNSecs) { g_reverse1 = !g_reverse1; }
+  EVERY_N_SECONDS(g_everyNSecs) { flipReverses(); }
 }
 
 //from demo reel example
