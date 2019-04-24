@@ -4,8 +4,8 @@
 #define FRAMES_PER_SECOND  120
 
 #define DATA_PIN 2
-#define LED_TYPE WS2812B
-#define COLOR_ORDER GRB
+#define LED_TYPE WS2811
+#define COLOR_ORDER RGB
 #define NUM_LEDS 49
 #define BRIGHTNESS 50
 
@@ -48,12 +48,12 @@ bool g_reverse1, g_reverse2, g_reverse3;
 
 
 
-// void posSig3WaveTest();
+// void redGreenBlueSin();
 void resetPatternGlobals();
 
 
 void loop() {
-//  posSig3WaveTest();
+//  redGreenBlueSin();
 
 // Call the current pattern function once, updating the 'leds' array
   patterns[g_patternIndex]();
@@ -153,6 +153,12 @@ void addGlitter( fract8 chanceOfGlitter)
 //   Serial.println(g_everyNSecs);
 // }
 
+void randomizeReverses() {
+  g_reverse1 = random8(2);
+  g_reverse2 = random8(2);  
+  g_reverse3 = random8(2);  
+}
+
 void resetPatternGlobals() {
   // set up our global variables with sane values. These values may be overridden by pattern functions as needed.
 	g_patternsReset = true;
@@ -166,9 +172,7 @@ void resetPatternGlobals() {
 
   g_startTime = millis();
 
-  g_reverse1 = random8(2);
-  g_reverse2 = random8(2);  
-  g_reverse3 = random8(2);  
+  randomizeReverses();
 
   g_phase1 = random8();
   g_phase2 = random8();
@@ -197,14 +201,6 @@ void resetPatternGlobals() {
   g_everyNSecs = random(3,15);
   setupRandomPalette1();
 }
-
-void flipReverses() {
-  g_reverse1 = !g_reverse1;
-  g_reverse2 = !g_reverse2;
-  g_reverse3 = !g_reverse3;
-}
-
-
 
 
 
@@ -410,7 +406,7 @@ void posSig3WaveTest(){
     addGlitter(g_glitterChance);
   }
   
-  EVERY_N_SECONDS(g_everyNSecs) { flipReverses(); }
+  EVERY_N_SECONDS(g_everyNSecs) { randomizeReverses(); }
 }
 
 void posSig3WaveSawTest(){
@@ -439,7 +435,7 @@ void posSig3WaveSawTest(){
     addGlitter(g_glitterChance);
   }
   
-  EVERY_N_SECONDS(g_everyNSecs) { flipReverses(); }
+  EVERY_N_SECONDS(g_everyNSecs) { randomizeReverses(); }
 }
 
 void rowTest(){
@@ -463,7 +459,7 @@ void rowTest(){
     addGlitter(g_glitterChance);
   }
 
-  EVERY_N_SECONDS(g_everyNSecs) { flipReverses(); }
+  EVERY_N_SECONDS(g_everyNSecs) { randomizeReverses(); }
 }
 
 void colTest(){
@@ -487,7 +483,7 @@ void colTest(){
     addGlitter(g_glitterChance);
   }
 
-  EVERY_N_SECONDS(g_everyNSecs) { flipReverses(); }
+  EVERY_N_SECONDS(g_everyNSecs) { randomizeReverses(); }
 }
 
 
@@ -517,7 +513,7 @@ void rowRGBWaveTest(){
     addGlitter(g_glitterChance);
   }
   
-  EVERY_N_SECONDS(g_everyNSecs) { flipReverses(); }
+  EVERY_N_SECONDS(g_everyNSecs) { randomizeReverses(); }
 }
 
 void colRGBWaveTest(){
@@ -546,7 +542,7 @@ void colRGBWaveTest(){
     addGlitter(g_glitterChance);
   }
   
-  EVERY_N_SECONDS(g_everyNSecs) { flipReverses(); }
+  EVERY_N_SECONDS(g_everyNSecs) { randomizeReverses(); }
 }
 
 void oddEvenRGBWaveTest(){
@@ -592,7 +588,7 @@ void squarePosSigTest(){
     addGlitter(g_glitterChance);
   }
   
-  EVERY_N_SECONDS(g_everyNSecs) { flipReverses(); }
+  EVERY_N_SECONDS(g_everyNSecs) { randomizeReverses(); }
 }
 
 void squareRGBPosSigTest(){
@@ -621,7 +617,7 @@ void squareRGBPosSigTest(){
     addGlitter(g_glitterChance);
   }
   
-  EVERY_N_SECONDS(g_everyNSecs) { flipReverses(); }
+  EVERY_N_SECONDS(g_everyNSecs) { randomizeReverses(); }
 }
 
 //from demo reel example
