@@ -48,15 +48,15 @@ bool g_reverse1, g_reverse2, g_reverse3;
 
 
 
-// void redGreenBlueSin();
+void redGreenBlueSin();
 void resetPatternGlobals();
 
 
 void loop() {
-//  redGreenBlueSin();
+ redGreenBlueSin();
 
 // Call the current pattern function once, updating the 'leds' array
-  patterns[g_patternIndex]();
+  // patterns[g_patternIndex]();
   
   // send the 'leds' array out to the actual LED strip
   FastLED.show(); 
@@ -64,7 +64,6 @@ void loop() {
   FastLED.delay(1000/FRAMES_PER_SECOND); 
 
   // do some periodic updates
-  // EVERY_N_SECONDS( 2 ) { resetPatternGlobals();  transitions[random(NUM_TRANSITIONS)](); g_tmp ? Serial.println("g_16palette") : Serial.println("g_gradientPalette"); g_palette1 = g_tmp ? g_16palette : g_gradientPalette; g_tmp = !g_tmp; } // change patterns periodically
   EVERY_N_SECONDS( 20 ) { resetPatternGlobals();  transitions[random(NUM_TRANSITIONS)](); g_patternIndex = random(NUM_PATTERNS); } // change patterns periodically
 }
 
@@ -260,7 +259,18 @@ void fadeOut() {
 
 
 
+// color strategies
+CRGB getCurrentColorFromPalette() {  
+  uint8_t paletteSin = beatsin8(g_bpm1, 0, 255, g_startTime, 0);
+  return ColorFromPalette(g_palette1, paletteSin, 255, g_paletteBlending1);
+}
 
+CRGB getCurrentColorFromRGBSins() {
+  uint8_t redSin = beatsin8(g_bpm1, 0, 255, g_startTime, g_phase1);
+  uint8_t greenSin = beatsin8(g_bpm2, 0, 255, g_startTime, g_phase2);
+  uint8_t blueSin = beatsin8(g_bpm3, 0, 255, g_startTime, g_phase3);
+  return CRGB(redSin, greenSin, blueSin);
+}
 
 
 
@@ -274,8 +284,9 @@ void paletteTest(){
     g_patternsReset = false;
   }
 
-  uint8_t paletteSin = beatsin8(g_bpm1, 0, 255, g_startTime, 0);
-  fill_solid(leds, NUM_LEDS, ColorFromPalette(g_palette1, paletteSin, 255, g_paletteBlending1));
+  // uint8_t paletteSin = beatsin8(g_bpm1, 0, 255, g_startTime, 0);
+  // fill_solid(leds, NUM_LEDS, ColorFromPalette(g_palette1, paletteSin, 255, g_paletteBlending1));
+  fill_solid(leds, NUM_LEDS, getCurrentColorFromPalette());
 }
 
 void palettePosSigTest() {
@@ -292,11 +303,11 @@ void palettePosSigTest() {
     leds[i] = ColorFromPalette(g_palette1, sinVal, 255, g_paletteBlending1);
   }
 
-  // EVERY_N_SECONDS(g_everyNSecs) { g_reverse1 = !g_reverse1; }
+  EVERY_N_SECONDS(g_everyNSecs) { g_reverse1 = !g_reverse1; }
   
-  // if (g_addGlitter) {    
-  //   addGlitter(g_glitterChance);
-  // }
+  if (g_addGlitter) {    
+    addGlitter(g_glitterChance);
+  }
 }
 
 void redGreenBlueSin(){
@@ -305,10 +316,11 @@ void redGreenBlueSin(){
     g_patternsReset = false;
   }
   
-  uint8_t redSin = beatsin8(g_bpm1, 0, 255, g_startTime, g_phase1);
-  uint8_t greenSin = beatsin8(g_bpm2, 0, 255, g_startTime, g_phase2);
-  uint8_t blueSin = beatsin8(g_bpm3, 0, 255, g_startTime, g_phase3);
-  fill_solid(leds, NUM_LEDS, CRGB(redSin, greenSin, blueSin));
+  // uint8_t redSin = beatsin8(g_bpm1, 0, 255, g_startTime, g_phase1);
+  // uint8_t greenSin = beatsin8(g_bpm2, 0, 255, g_startTime, g_phase2);
+  // uint8_t blueSin = beatsin8(g_bpm3, 0, 255, g_startTime, g_phase3);
+  // fill_solid(leds, NUM_LEDS, CRGB(redSin, greenSin, blueSin));
+  fill_solid(leds, NUM_LEDS, getCurrentColorFromRGBSins());
   
   if (g_addGlitter) {    
     addGlitter(g_glitterChance);
@@ -331,6 +343,7 @@ void redGreenBlueSaw(){
     addGlitter(g_glitterChance);
   }
 }
+
 
 void posSigTest(){
   if (g_patternsReset) {
