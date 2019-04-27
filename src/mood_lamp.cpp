@@ -6,8 +6,8 @@
 #define DATA_PIN 2
 #define LED_TYPE WS2811
 #define COLOR_ORDER RGB
-#define NUM_LEDS 49
-#define BRIGHTNESS 50
+#define NUM_LEDS 50
+#define BRIGHTNESS 175
 
 // IMPORTANT: To reduce NeoPixel burnout risk, add 1000 uF capacitor across
 // pixel power leads, add 300 - 500 Ohm resistor on first pixel's data input
@@ -17,7 +17,7 @@
 
 CRGB leds[NUM_LEDS];
 
-const uint8_t NUM_PATTERNS = 19;
+const uint8_t NUM_PATTERNS = 22;
 void (*patterns[NUM_PATTERNS])();
 
 const uint8_t NUM_TRANSITIONS = 3;
@@ -48,12 +48,12 @@ bool g_reverse1, g_reverse2, g_reverse3;
 
 
 
-// void redGreenBlueSin();
+// void colPaletteTest();
 void resetPatternGlobals();
 
 
 void loop() {
-//  redGreenBlueSin();
+//  colPaletteTest();
 
 // Call the current pattern function once, updating the 'leds' array
   patterns[g_patternIndex]();
@@ -292,11 +292,103 @@ void palettePosSigTest() {
     leds[i] = ColorFromPalette(g_palette1, sinVal, 255, g_paletteBlending1);
   }
 
-  // EVERY_N_SECONDS(g_everyNSecs) { g_reverse1 = !g_reverse1; }
+  EVERY_N_SECONDS(g_everyNSecs) { g_reverse1 = !g_reverse1; }
   
-  // if (g_addGlitter) {    
-  //   addGlitter(g_glitterChance);
-  // }
+  if (g_addGlitter) {    
+    addGlitter(g_glitterChance);
+  }
+}
+
+void posSigSawPaletteTest(){
+  if (g_patternsReset) {
+    Serial.println("posSigSawPaletteTest");
+    g_bpm2 = random(2,20); //hue sin
+    g_patternsReset = false;
+  }
+
+  EVERY_N_SECONDS(g_everyNSecs) { g_reverse1 = !g_reverse1; }
+  
+  uint8_t phase, sinVal;
+  
+  for(uint16_t i=0; i<NUM_LEDS; i++) {
+    phase = phaseFromPixelIndex(i, NUM_LEDS, g_scale1, g_reverse1);
+    sinVal = beatsaw8(g_bpm1, 0, 255, g_startTime, phase);
+    leds[i] = ColorFromPalette(g_palette1, sinVal, 255, g_paletteBlending1);
+  }
+  
+  if (g_addGlitter) {    
+    addGlitter(g_glitterChance);
+  }
+}
+
+void rowPaletteTest(){
+  if (g_patternsReset) {
+    Serial.println("rowPaletteTest");
+    g_scale1 = getRandomFloat(0.5f, 5.0f);
+    g_bpm2 = random(2,20); //hue sin
+    g_patternsReset = false;
+  }
+  
+  float sinVal, phase;
+  
+  for(uint16_t i=0; i<NUM_LEDS; i++) {
+    phase = phaseFromRowIndex(i, 7, 7, g_scale1, g_reverse1);
+    sinVal = beatsin8(g_bpm1, 0, 255, g_startTime, phase);
+    leds[i] = ColorFromPalette(g_palette1, sinVal, 255, g_paletteBlending1);
+  }
+    
+  if (g_addGlitter) {    
+    addGlitter(g_glitterChance);
+  }
+
+  EVERY_N_SECONDS(g_everyNSecs) { randomizeReverses(); }
+}
+
+void colPaletteTest(){
+  if (g_patternsReset) {
+    Serial.println("colPaletteTest");
+    g_scale1 = getRandomFloat(0.5f, 5.0f);
+    g_bpm2 = random(2,20); //hue sin
+    g_patternsReset = false;
+  }
+  
+  float sinVal, phase; 
+  
+  for(uint16_t i=0; i<NUM_LEDS; i++) {
+    phase = phaseFromColumnIndex(i, 7, g_scale1, g_reverse1);
+    sinVal = beatsin8(g_bpm1, 0, 255, g_startTime, phase);
+    leds[i] = ColorFromPalette(g_palette1, sinVal, 255, g_paletteBlending1);
+  }
+    
+  if (g_addGlitter) {    
+    addGlitter(g_glitterChance);
+  }
+
+  EVERY_N_SECONDS(g_everyNSecs) { randomizeReverses(); }
+}
+
+// I think there's a problem with this one...
+void squarePosSigPaletteTest(){
+  if (g_patternsReset) {
+    Serial.println("squarePosSigTest");
+    g_bpm2 = random8(2,40); //hue sin
+    g_scale1 = getRandomFloat(0.1f, 4.0f);
+    g_patternsReset = false;
+  }
+  
+  uint8_t curSin, phase;
+  
+  for(uint16_t i=0; i<NUM_LEDS; i++) {
+    phase = phaseFromPixelIndex(i, NUM_LEDS, g_scale1, g_reverse1);
+    curSin = beatsquare8(g_bpm1, 0, 255, g_startTime, phase, g_pulseWidth1);
+    leds[i] = ColorFromPalette(g_palette1, curSin, 255, g_paletteBlending1);
+  }
+  
+  if (g_addGlitter) {    
+    addGlitter(g_glitterChance);
+  }
+  
+  EVERY_N_SECONDS(g_everyNSecs) { randomizeReverses(); }
 }
 
 void redGreenBlueSin(){
@@ -789,6 +881,9 @@ void setupPatterns() {
   patterns[16] = posSigSawTest;
   patterns[17] = posSig3WaveSawTest;
   patterns[18] = palettePosSigTest;
+  patterns[19] = posSigSawPaletteTest;
+  patterns[20] = rowPaletteTest;
+  patterns[21] = colPaletteTest;
 }
 
 void setupTransitions() {
@@ -807,6 +902,8 @@ void setup() {
   FastLED.setBrightness(BRIGHTNESS);
   Serial.begin(9600);
   randomSeed(analogRead(0));
+  random16_set_seed(8934);
+  random16_add_entropy(analogRead(3));
   
   setupPatterns();
   setupTransitions();
