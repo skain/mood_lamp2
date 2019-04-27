@@ -292,11 +292,11 @@ void palettePosSigTest() {
     leds[i] = ColorFromPalette(g_palette1, sinVal, 255, g_paletteBlending1);
   }
 
-  // EVERY_N_SECONDS(g_everyNSecs) { g_reverse1 = !g_reverse1; }
+  EVERY_N_SECONDS(g_everyNSecs) { g_reverse1 = !g_reverse1; }
   
-  // if (g_addGlitter) {    
-  //   addGlitter(g_glitterChance);
-  // }
+  if (g_addGlitter) {    
+    addGlitter(g_glitterChance);
+  }
 }
 
 void redGreenBlueSin(){
@@ -411,7 +411,7 @@ void posSig3WaveTest(){
 
 void posSig3WaveSawTest(){
   if (g_patternsReset) {
-    Serial.println("posSig3WaveTest");
+    Serial.println("posSig3WaveSawTest");
     g_scale1 = getRandomFloat(0.2f, 2.0f);
     g_scale2 = getRandomFloat(0.2f, 2.0f);
     g_scale3 = getRandomFloat(0.2f, 2.0f);
