@@ -14,10 +14,10 @@ float interpolate(float val, float inMin, float inMax, float outMin, float outMa
   return outMin + (val - inMin) * ((outMax - outMin)/(inMax - inMin));
 }
 
-float phaseFromPixelIndex(uint16_t pixelIndex, uint16_t numPixels, float scale, bool reverse_ptn) {
+float phaseFromPixelIndex(uint16_t pixelIndex, uint16_t numPixels, float scale, bool reversePattern) {
   uint16_t fromMin = 0;
   uint16_t fromMax = numPixels * scale;
-  if (reverse_ptn) {
+  if (reversePattern) {
 	  fromMin = fromMax;
 	  fromMax = 0;
   }
@@ -33,28 +33,28 @@ int phaseFromOddEvenIndex(uint16_t pixelIndex) {
   }
 }
 
-float phaseFromRowIndex(uint16_t pixelIndex, uint16_t pixelsPerRow, uint16_t numRows, float scale, bool reverse_ptn){
+float phaseFromRowIndex(uint16_t pixelIndex, uint16_t pixelsPerRow, uint16_t numRows, float scale, bool reversePattern){
   if (pixelIndex  == 0) {
     return 0;
   }
   uint16_t rowIndex = pixelIndex / pixelsPerRow;
   uint16_t fromMin = 0;
   uint16_t fromMax = (numRows - 1) * scale;
-  if (reverse_ptn) {
+  if (reversePattern) {
 	  fromMin = fromMax;
 	  fromMax = 0;
   }
   return interpolate(rowIndex, fromMin, fromMax, 0, 255);
 }
 
-float phaseFromColumnIndex(uint16_t pixelIndex, uint16_t numCols, float scale, bool reverse_ptn){
+float phaseFromColumnIndex(uint16_t pixelIndex, uint16_t numCols, float scale, bool reversePattern){
   if (pixelIndex  == 0) {
     return 0;
   }
   uint16_t colIndex = pixelIndex % numCols;
   uint16_t fromMin = 0;
   uint16_t fromMax = (numCols - 1) * scale;
-  if (reverse_ptn) {
+  if (reversePattern) {
 	  fromMin = fromMax;
 	  fromMax = 0;
   }
