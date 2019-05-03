@@ -74,9 +74,9 @@ void setBrightnessFromKnob() {
 }
 
 
-void strategyRGBSawTest();
+void strategyRGBSquareTest();
 void loop() {
-  strategyRGBSawTest();
+  strategyRGBSquareTest();
 
   // Call the current pattern function once, updating the 'leds' array
   // patterns[g_patternIndex]();
@@ -507,9 +507,6 @@ void strategyRGBSawTest(){
     g_scale2 = getRandomFloat(0.2f, 2.0f);
     g_scale3 = getRandomFloat(0.2f, 2.0f);
     g_patternsReset = false;
-    // g_pixelIndexStrategy = 2;
-    // g_addGlitter = false;
-    // g_scale1 = g_scale2 = g_scale3 = 1.0f;
   }
   
   float redPhase, greenPhase, bluePhase;
@@ -532,24 +529,25 @@ void strategyRGBSawTest(){
   EVERY_N_SECONDS(g_everyNSecs) { randomizeReverses(); }
 }
 
-
-
-void squareRGBPosSigTest(){
+void strategyRGBSquareTest(){
   if (g_patternsReset) {
-    Serial.println("squareRGBPosSigTest");    
+    Serial.println("strategyRGBSquareTest");    
     g_scale1 = getRandomFloat(0.1f, 4.0f);
     g_scale2 = getRandomFloat(0.1f, 4.0f);
     g_scale3 = getRandomFloat(0.1f, 4.0f);
     g_patternsReset = false;
+    // g_pixelIndexStrategy = 3;
+    // g_addGlitter = false;
+    // g_scale1 = g_scale2 = g_scale3 = 1.0f;
   }
 
   
   uint8_t redSin, greenSin, blueSin, redPhase, greenPhase, bluePhase;
 
   for(uint16_t i=0; i<NUM_LEDS; i++) {
-    redPhase = phaseFromPixelIndex(i, NUM_LEDS, g_scale1, g_reverse1);
-    greenPhase = phaseFromPixelIndex(i, NUM_LEDS, g_scale2, g_reverse2);
-    bluePhase = phaseFromPixelIndex(i, NUM_LEDS, g_scale3, g_reverse3);
+    redPhase = executePixelPhaseStrategy(i, g_scale1, g_reverse1);
+    greenPhase = executePixelPhaseStrategy(i, g_scale2, g_reverse2);
+    bluePhase = executePixelPhaseStrategy(i, g_scale3, g_reverse3);
     redSin = beatsquare8(g_bpm1, 0, 255, g_startTime, redPhase, g_pulseWidth1);
     greenSin = beatsquare8(g_bpm2, 0, 255, g_startTime, greenPhase, g_pulseWidth2);
     blueSin = beatsquare8(g_bpm3, 0, 255, g_startTime, bluePhase, g_pulseWidth3);
@@ -562,6 +560,8 @@ void squareRGBPosSigTest(){
   
   EVERY_N_SECONDS(g_everyNSecs) { randomizeReverses(); }
 }
+
+
 
 
 
@@ -691,7 +691,7 @@ void setupPatterns() {
   patterns[6] = juggle;
   patterns[7] = paletteTest;
   patterns[8] = strategySinTest;
-  patterns[9] = squareRGBPosSigTest;
+  patterns[9] = strategyRGBSquareTest;
   patterns[10] = rainbow;
   patterns[11] = confetti;
   patterns[12] = sinelon;
