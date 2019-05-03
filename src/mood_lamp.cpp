@@ -74,9 +74,9 @@ void setBrightnessFromKnob() {
 }
 
 
-void strategyRGBSinTest();
+void strategyRGBSawTest();
 void loop() {
-  strategyRGBSinTest();
+  strategyRGBSawTest();
 
   // Call the current pattern function once, updating the 'leds' array
   // patterns[g_patternIndex]();
@@ -478,9 +478,6 @@ void strategyRGBSinTest(){
     g_scale2 = getRandomFloat(0.2f, 2.0f);
     g_scale3 = getRandomFloat(0.2f, 2.0f);
     g_patternsReset = false;
-    // g_pixelIndexStrategy = 3;
-    // g_addGlitter = false;
-    // g_scale1 = g_scale2 = g_scale3 = 1.0f;
   }
   
   float redPhase, greenPhase, bluePhase;
@@ -503,51 +500,25 @@ void strategyRGBSinTest(){
   EVERY_N_SECONDS(g_everyNSecs) { randomizeReverses(); }
 }
 
-// void posSig3WaveTest(){
-//   if (g_patternsReset) {
-//     Serial.println("posSig3WaveTest");
-//     g_scale1 = getRandomFloat(0.2f, 2.0f);
-//     g_scale2 = getRandomFloat(0.2f, 2.0f);
-//     g_scale3 = getRandomFloat(0.2f, 2.0f);
-//     g_patternsReset = false;
-//   }
-  
-//   float redPhase, greenPhase, bluePhase;
-//   uint8_t redVal, greenVal, blueVal;
-  
-//   for(uint16_t i=0; i<NUM_LEDS; i++) {
-//     redPhase = phaseFromPixelIndex(i, NUM_LEDS, g_scale1, g_reverse1);
-//     greenPhase = phaseFromPixelIndex(i, NUM_LEDS, g_scale2, g_reverse2);
-//     bluePhase = phaseFromPixelIndex(i, NUM_LEDS, g_scale3, g_reverse3);
-//     redVal = beatsin8(g_bpm1, 0, 255, g_startTime, redPhase);
-//     greenVal = beatsin8(g_bpm2, 0, 255, g_startTime, greenPhase);
-//     blueVal = beatsin8(g_bpm3, 0, 255, g_startTime, bluePhase);
-//     leds[i] = CRGB(redVal, greenVal, blueVal);
-//   }
-
-//   if (g_addGlitter) {    
-//     addGlitter(g_glitterChance);
-//   }
-  
-//   EVERY_N_SECONDS(g_everyNSecs) { randomizeReverses(); }
-// }
-
-void posSig3WaveSawTest(){
+void strategyRGBSawTest(){
   if (g_patternsReset) {
-    Serial.println("posSig3WaveSawTest");
+    Serial.println("strategyRGBSawTest");
     g_scale1 = getRandomFloat(0.2f, 2.0f);
     g_scale2 = getRandomFloat(0.2f, 2.0f);
     g_scale3 = getRandomFloat(0.2f, 2.0f);
     g_patternsReset = false;
+    // g_pixelIndexStrategy = 2;
+    // g_addGlitter = false;
+    // g_scale1 = g_scale2 = g_scale3 = 1.0f;
   }
   
   float redPhase, greenPhase, bluePhase;
   uint8_t redVal, greenVal, blueVal;
   
   for(uint16_t i=0; i<NUM_LEDS; i++) {
-    redPhase = phaseFromPixelIndex(i, NUM_LEDS, g_scale1, g_reverse1);
-    greenPhase = phaseFromPixelIndex(i, NUM_LEDS, g_scale2, g_reverse2);
-    bluePhase = phaseFromPixelIndex(i, NUM_LEDS, g_scale3, g_reverse3);
+    redPhase = executePixelPhaseStrategy(i, g_scale1, g_reverse1);
+    greenPhase = executePixelPhaseStrategy(i, g_scale2, g_reverse2);
+    bluePhase = executePixelPhaseStrategy(i, g_scale3, g_reverse3);
     redVal = beatsaw8(g_bpm1, 0, 255, g_startTime, redPhase);
     greenVal = beatsaw8(g_bpm2, 0, 255, g_startTime, greenPhase);
     blueVal = beatsaw8(g_bpm3, 0, 255, g_startTime, bluePhase);
@@ -561,83 +532,7 @@ void posSig3WaveSawTest(){
   EVERY_N_SECONDS(g_everyNSecs) { randomizeReverses(); }
 }
 
-// void rowRGBWaveTest(){
-//   if (g_patternsReset) {
-//     Serial.println("rowRGBWaveTest");
-//     g_scale1 = getRandomFloat(0.2f, 2.0f);
-//     g_scale2 = getRandomFloat(0.2f, 2.0f);
-//     g_scale3 = getRandomFloat(0.2f, 2.0f);
-//     g_patternsReset = false;
-//   }
-  
-//   float redPhase, greenPhase, bluePhase;
-//   uint8_t redVal, greenVal, blueVal;
-  
-//   for(uint16_t i=0; i<NUM_LEDS; i++) {
-//     redPhase = phaseFromRowIndex(i, 7, 7, g_scale1, g_reverse1);
-//     greenPhase = phaseFromRowIndex(i, 7, 7, g_scale2, g_reverse2);
-//     bluePhase = phaseFromRowIndex(i, 7, 7, g_scale3, g_reverse3);
-//     redVal = beatsin8(g_bpm1, 0, 255, g_startTime, redPhase);
-//     greenVal = beatsin8(g_bpm2, 0, 255, g_startTime, greenPhase);
-//     blueVal = beatsin8(g_bpm3, 0, 255, g_startTime, bluePhase);
-//     leds[i] = CRGB(redVal, greenVal, blueVal);
-//   }
-  
-//   if (g_addGlitter) {    
-//     addGlitter(g_glitterChance);
-//   }
-  
-//   EVERY_N_SECONDS(g_everyNSecs) { randomizeReverses(); }
-// }
 
-// void colRGBWaveTest(){
-//   if (g_patternsReset) {
-//     Serial.println("colRGBWaveTest");
-//     g_scale1 = getRandomFloat(0.2f, 2.0f);
-//     g_scale2 = getRandomFloat(0.2f, 2.0f);
-//     g_scale3= getRandomFloat(0.2f, 2.0f);
-//     g_patternsReset = false;
-//   }
-
-//   float redPhase, greenPhase, bluePhase;
-//   uint8_t redVal, greenVal, blueVal;
-  
-//   for(uint16_t i=0; i<NUM_LEDS; i++) {
-//     redPhase = phaseFromColumnIndex(i, 7, g_scale1, g_reverse1);
-//     greenPhase = phaseFromColumnIndex(i, 7, g_scale2, g_reverse2);
-//     bluePhase = phaseFromColumnIndex(i, 7, g_scale3, g_reverse3);
-//     redVal = beatsin8(g_bpm1, 0, 255, g_startTime, redPhase);
-//     greenVal = beatsin8(g_bpm2, 0, 255, g_startTime, greenPhase);
-//     blueVal = beatsin8(g_bpm3, 0, 255, g_startTime, bluePhase);
-//     leds[i] = CRGB(redVal, greenVal, blueVal);
-//   }
-  
-//   if (g_addGlitter) {    
-//     addGlitter(g_glitterChance);
-//   }
-  
-//   EVERY_N_SECONDS(g_everyNSecs) { randomizeReverses(); }
-// }
-
-// void oddEvenRGBWaveTest(){
-//   if (g_patternsReset) {
-//     Serial.println("oddEvenRGBWaveTest");
-//     g_patternsReset = false;
-//   }
-  
-//   float phase;
-//   uint8_t redVal, greenVal, blueVal;
-  
-//   for(uint16_t i=0; i<NUM_LEDS; i++) {
-//     phase = phaseFromOddEvenIndex(i);   
-//     redVal = beatsin8(g_bpm1, 0, 255, g_startTime, phase);
-//     greenVal = beatsin8(g_bpm2, 0, 255, g_startTime, phase);
-//     blueVal = beatsin8(g_bpm3, 0, 255, g_startTime, phase);
-//     leds[i] = CRGB(redVal, greenVal, blueVal);
-//   }
-
-//   addGlitter(g_glitterChance);
-// }
 
 void squareRGBPosSigTest(){
   if (g_patternsReset) {
@@ -788,7 +683,7 @@ void juggle() {
 //setup
 void setupPatterns() {
   patterns[0] = redGreenBlueSin;
-  patterns[1] = posSig3WaveSawTest;
+  patterns[1] = strategyRGBSawTest;
   patterns[2] = strategyRGBSinTest;
   patterns[3] = strategySawTest;
   patterns[4] = strategySquareTest;
