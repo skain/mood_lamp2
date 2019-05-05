@@ -18,20 +18,27 @@
 CRGB leds[NUM_LEDS];
 
 // consts
-const uint8_t NUM_PATTERNS = 14;
+const uint8_t NUM_PATTERNS = 13;
 // const uint8_t NUM_TRANSITIONS = 3;
 const uint8_t NUM_ROWS = 7;
 const uint8_t NUM_COLUMNS = 7;
 const uint8_t PIXELS_PER_ROW = NUM_LEDS / NUM_COLUMNS;
+
 // the strategy consts are just here to try and make the code more legible
 const uint8_t COLOR_STRATEGY_HSV_HUE_AND_POSITION = 0; // HSV with hue for hue and postion for value
 const uint8_t COLOR_STRATEGY_PALETTE_HUE_AND_POSITION = 1; // Random palette with hue for wheel position and position for brightness
 const uint8_t COLOR_STRATEGY_HSV_POSITION_FOR_HUE = 2; // HSV with position for hue, 255 for value (hue is ignored)
 const uint8_t COLOR_STRATEGY_PALETTE_POSITION_FOR_HUE = 3; // Palette with position for wheel position, 255 for brightness (hue is ignored)
+
 const uint8_t PHASE_STRATEGY_ROWS = 0; // Phase calculated by row
 const uint8_t PHASE_STRATEGY_COLUMNS = 1; // Phase calculated by column
 const uint8_t PHASE_STRATEGY_ODD_EVEN = 2; // Phase calculated by pixelIndex % 2
 const uint8_t PHASE_STRATEGY_STRIP_INDEX = 3; // Phase calculated directly by pixel location on strip
+
+const uint8_t WAVE_STRATEGY_SIN = 0; // basic sin
+const uint8_t WAVE_STRATEGY_SAW = 1; // basic sawtooth
+const uint8_t WAVE_STRATEGY_TRIANGLE = 2; // basic triangle (linear slopes)
+const uint8_t WAVE_STRATEGY_CUBIC = 3; // basic cubic (spends more time at limits than sine)
 
 
 
@@ -62,6 +69,7 @@ bool g_reverse1, g_reverse2, g_reverse3;
 const uint8_t NUM_COLOR_STRATEGIES = 4;
 uint8_t g_colorStrategy;
 uint8_t g_pixelIndexStrategy;
+uint8_t g_waveStrategy1, g_waveStrategy2, g_waveStrategy3;
 
 
 
@@ -87,9 +95,9 @@ void setBrightnessFromKnob() {
 }
 
 
-// void strategyRGBSquareTest();
+// void strategyRGBWaveTest();
 void loop() {
-  // strategyRGBSquareTest();
+  // strategyRGBWaveTest();
 
   // Call the current pattern function once, updating the 'leds' array
   patterns[g_patternIndex]();
@@ -245,6 +253,9 @@ void resetPatternGlobals() {
   g_everyNSecs = random8(3,15);
   g_colorStrategy = random8(0,4);
   g_pixelIndexStrategy = random8(0,4);
+  g_waveStrategy1 = random8(0,4);
+  g_waveStrategy2 = random8(0,4);
+  g_waveStrategy3 = random8(0,4);
   setupRandomPalette1();
 }
 
@@ -289,7 +300,24 @@ uint8_t executePixelPhaseStrategy(uint16_t pixelIndex, float scale, bool reverse
   return phase;
 }
 
+uint8_t executeWaveStrategy(uint8_t waveStrategy, uint8_t bpm, unsigned long startTime, uint8_t phase) {
+  uint8_t waveValue = 0;
+  switch(waveStrategy) {
+    case WAVE_STRATEGY_SIN:
+      waveValue = beatsin8(bpm, 0, 255, startTime, phase);
+      break;
+    case WAVE_STRATEGY_SAW:
+      waveValue = beatsaw8(bpm, 0, 255, startTime, phase);
+      break;
+    case WAVE_STRATEGY_TRIANGLE:
+      waveValue = beattriwave8(bpm, 0, 255, startTime, phase);
+      break;
+    case WAVE_STRATEGY_CUBIC:
+      waveValue = beatcubicwave8(bpm, 9, 255, startTime, phase);
+  }
 
+  return waveValue;
+}
 
 
 
@@ -353,6 +381,7 @@ void fadeOut() {
 
 
 //sequences
+//solids
 void paletteTest(){
   if (g_patternsReset) {
     Serial.println("paletteTest");
@@ -362,17 +391,21 @@ void paletteTest(){
 
   uint8_t paletteSin = beatsin8(g_bpm1, 0, 255, g_startTime, 0);
   fill_solid(leds, NUM_LEDS, ColorFromPalette(g_palette1, paletteSin, 255, g_paletteBlending1));
+
+  if (g_addGlitter) {    
+    addGlitter(g_glitterChance);
+  }
 }
 
-void RGBSinTest(){
+void strategyRGBWaveTest(){
   if (g_patternsReset) {
-    Serial.println("RGBSinTest");
+    Serial.println("strategyRGBWaveTest");
     g_patternsReset = false;
   }
   
-  uint8_t redSin = beatsin8(g_bpm1, 0, 255, g_startTime, g_phase1);
-  uint8_t greenSin = beatsin8(g_bpm2, 0, 255, g_startTime, g_phase2);
-  uint8_t blueSin = beatsin8(g_bpm3, 0, 255, g_startTime, g_phase3);
+  uint8_t redSin = executeWaveStrategy(g_waveStrategy1, g_bpm1, g_startTime, g_phase1);
+  uint8_t greenSin = executeWaveStrategy(g_waveStrategy2, g_bpm2, g_startTime, g_phase2);
+  uint8_t blueSin = executeWaveStrategy(g_waveStrategy3, g_bpm3, g_startTime, g_phase3);  
   fill_solid(leds, NUM_LEDS, CRGB(redSin, greenSin, blueSin));
   
   if (g_addGlitter) {    
@@ -380,22 +413,39 @@ void RGBSinTest(){
   }
 }
 
-void RGBSawTest(){
-  if (g_patternsReset) {
-    Serial.println("RGBSawTest");
-    g_patternsReset = false;
-  }
+// void RGBSinTest(){
+//   if (g_patternsReset) {
+//     Serial.println("RGBSinTest");
+//     g_patternsReset = false;
+//   }
   
-  uint8_t redSin = beatsaw8(g_bpm1, 0, 255, g_startTime, g_phase1);
-  uint8_t greenSin = beatsaw8(g_bpm2, 0, 255, g_startTime, g_phase2);
-  uint8_t blueSin = beatsaw8(g_bpm3, 0, 255, g_startTime, g_phase3);
-  fill_solid(leds, NUM_LEDS, CRGB(redSin, greenSin, blueSin));
+//   uint8_t redSin = beatsin8(g_bpm1, 0, 255, g_startTime, g_phase1);
+//   uint8_t greenSin = beatsin8(g_bpm2, 0, 255, g_startTime, g_phase2);
+//   uint8_t blueSin = beatsin8(g_bpm3, 0, 255, g_startTime, g_phase3);
+//   fill_solid(leds, NUM_LEDS, CRGB(redSin, greenSin, blueSin));
   
-  if (g_addGlitter) {    
-    addGlitter(g_glitterChance);
-  }
-}
+//   if (g_addGlitter) {    
+//     addGlitter(g_glitterChance);
+//   }
+// }
 
+// void RGBSawTest(){
+//   if (g_patternsReset) {
+//     Serial.println("RGBSawTest");
+//     g_patternsReset = false;
+//   }
+  
+//   uint8_t redSin = beatsaw8(g_bpm1, 0, 255, g_startTime, g_phase1);
+//   uint8_t greenSin = beatsaw8(g_bpm2, 0, 255, g_startTime, g_phase2);
+//   uint8_t blueSin = beatsaw8(g_bpm3, 0, 255, g_startTime, g_phase3);
+//   fill_solid(leds, NUM_LEDS, CRGB(redSin, greenSin, blueSin));
+  
+//   if (g_addGlitter) {    
+//     addGlitter(g_glitterChance);
+//   }
+// }
+
+//patterns
 void strategySinTest() {
   if (g_patternsReset) {
     Serial.println("strategySinTest");
@@ -694,7 +744,7 @@ void juggle() {
 
 //setup
 void setupPatterns() {
-  patterns[0] = RGBSinTest;
+  patterns[0] = strategyRGBWaveTest;
   patterns[1] = strategyRGBSawTest;
   patterns[2] = strategyRGBSinTest;
   patterns[3] = strategySawTest;
@@ -707,7 +757,6 @@ void setupPatterns() {
   patterns[10] = rainbow;
   patterns[11] = confetti;
   patterns[12] = sinelon;
-  patterns[13] = RGBSawTest;
 }
 
 // void setupTransitions() {

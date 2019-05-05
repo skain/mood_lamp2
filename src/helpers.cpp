@@ -96,6 +96,24 @@ uint8_t beatsaw8(accum88 beats_per_minute, uint8_t lowest = 0, uint8_t highest =
   return result;
 }
 
+uint16_t beattriwave8(accum88 beatsPerMinute, uint8_t lowest = 0, uint8_t highest = 255, uint32_t timeBase = 0, uint8_t phaseOffset = 0){
+    uint8_t beat = beat8(beatsPerMinute, timeBase);
+    uint8_t beatSquare = triwave8(beat + phaseOffset);
+    uint8_t rangewidth = highest - lowest;
+    uint8_t scaledbeat = scale8(beatSquare, rangewidth);
+    uint8_t result = lowest + scaledbeat;
+    return result;
+}
+
+uint16_t beatcubicwave8(accum88 beatsPerMinute, uint8_t lowest = 0, uint8_t highest = 255, uint32_t timeBase = 0, uint8_t phaseOffset = 0){
+    uint8_t beat = beat8(beatsPerMinute, timeBase);
+    uint8_t beatSquare = cubicwave8(beat + phaseOffset);
+    uint8_t rangewidth = highest - lowest;
+    uint8_t scaledbeat = scale8(beatSquare, rangewidth);
+    uint8_t result = lowest + scaledbeat;
+    return result;
+}
+
 bool pctToBool(fract8 chance) {
   //rolls a yes/no dice with the specified integer percent of being yes
   return random8() < chance;
