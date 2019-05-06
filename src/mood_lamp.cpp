@@ -439,9 +439,9 @@ void strategyColorAndPositionWaveTest() {
   }
 }
 
-void strategySquareTest(){
+void strategyHueWaveWithSquareTest(){
   if (g_patternsReset) {
-    Serial.println("strategySquareTest");
+    Serial.println("strategyHueWaveWithSquareTest");
     g_bpm2 = random8(2,40); //hue sin
     g_scale1 = getRandomFloat(0.1f, 4.0f);
     switch(g_colorStrategy) { // strats 2 and 3 don't work with this pattern
@@ -472,9 +472,9 @@ void strategySquareTest(){
   EVERY_N_SECONDS(g_everyNSecs) { randomizeReverses(); }
 }
 
-void strategyRGBAndPositionWaveTest(){
+void strategyRGBWaveAndPhase(){
   if (g_patternsReset) {
-    Serial.println("strategyRGBAndPositionWaveTest");
+    Serial.println("strategyRGBWaveAndPhase");
     g_scale1 = getRandomFloat(0.2f, 2.0f);
     g_scale2 = getRandomFloat(0.2f, 2.0f);
     g_scale3 = getRandomFloat(0.2f, 2.0f);
@@ -501,9 +501,9 @@ void strategyRGBAndPositionWaveTest(){
   EVERY_N_SECONDS(g_everyNSecs) { randomizeReverses(); }
 }
 
-void strategyRGBSquareTest(){
+void strategyPhaseWithRGBSquare(){
   if (g_patternsReset) {
-    Serial.println("strategyRGBSquareTest");    
+    Serial.println("strategyPhaseWithRGBSquare");    
     g_scale1 = getRandomFloat(0.1f, 4.0f);
     g_scale2 = getRandomFloat(0.1f, 4.0f);
     g_scale3 = getRandomFloat(0.1f, 4.0f);
@@ -652,15 +652,15 @@ void juggle() {
 //setup
 void setupPatterns() {
   patterns[0] = strategySolidRGBWaveTest;
-  patterns[1] = strategyRGBAndPositionWaveTest;
+  patterns[1] = strategyRGBWaveAndPhase;
   patterns[2] = confetti;
   patterns[3] = strategyColorAndPositionWaveTest;
-  patterns[4] = strategySquareTest;
+  patterns[4] = strategyHueWaveWithSquareTest;
   patterns[5] = bpm;
   patterns[6] = juggle;
   patterns[7] = strategySolidPaletteWaveTest;
   patterns[8] = sinelon;
-  patterns[9] = strategyRGBSquareTest;
+  patterns[9] = strategyPhaseWithRGBSquare;
   patterns[10] = rainbow;
 }
 
