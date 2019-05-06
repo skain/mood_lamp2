@@ -381,9 +381,9 @@ void fadeOut() {
 
 
 //sequences
-void strategySolidPaletteWaveTest(){
+void strategySolidPaletteWave(){
   if (g_patternsReset) {
-    Serial.println("strategySolidPaletteWaveTest");
+    Serial.println("strategySolidPaletteWave");
     g_bpm1 = random8(5,15);
     g_patternsReset = false;
   }
@@ -396,9 +396,9 @@ void strategySolidPaletteWaveTest(){
   }
 }
 
-void strategySolidRGBWaveTest(){
+void strategySolidRGBWave(){
   if (g_patternsReset) {
-    Serial.println("strategySolidRGBWaveTest");
+    Serial.println("strategySolidRGBWave");
     g_patternsReset = false;
   }
   
@@ -412,9 +412,9 @@ void strategySolidRGBWaveTest(){
   }
 }
 
-void strategyColorAndPositionWaveTest() {
+void strategyColorAndPositionWave() {
   if (g_patternsReset) {
-    Serial.println("strategyColorAndPositionWaveTest");
+    Serial.println("strategyColorAndPositionWave");
     g_bpm1 = random8(2,20);
     g_bpm2 = random(2,20); //hue sin
     g_patternsReset = false;
@@ -439,9 +439,9 @@ void strategyColorAndPositionWaveTest() {
   }
 }
 
-void strategyHueWaveWithSquareTest(){
+void strategyHueWaveWithSquare(){
   if (g_patternsReset) {
-    Serial.println("strategyHueWaveWithSquareTest");
+    Serial.println("strategyHueWaveWithSquare");
     g_bpm2 = random8(2,40); //hue sin
     g_scale1 = getRandomFloat(0.1f, 4.0f);
     switch(g_colorStrategy) { // strats 2 and 3 don't work with this pattern
@@ -651,14 +651,14 @@ void juggle() {
 
 //setup
 void setupPatterns() {
-  patterns[0] = strategySolidRGBWaveTest;
+  patterns[0] = strategySolidRGBWave;
   patterns[1] = strategyRGBWaveAndPhase;
   patterns[2] = confetti;
-  patterns[3] = strategyColorAndPositionWaveTest;
-  patterns[4] = strategyHueWaveWithSquareTest;
+  patterns[3] = strategyColorAndPositionWave;
+  patterns[4] = strategyHueWaveWithSquare;
   patterns[5] = bpm;
   patterns[6] = juggle;
-  patterns[7] = strategySolidPaletteWaveTest;
+  patterns[7] = strategySolidPaletteWave;
   patterns[8] = sinelon;
   patterns[9] = strategyPhaseWithRGBSquare;
   patterns[10] = rainbow;
