@@ -92,12 +92,12 @@ void setBrightnessFromKnob() {
 }
 
 
-// void strategyPhaseWithRGBSquare();
+void offsetFill();
 void loop() {
-  // strategyPhaseWithRGBSquare();
+  offsetFill();
 
   // Call the current pattern function once, updating the 'leds' array
-  patterns[g_patternIndex]();
+  // patterns[g_patternIndex]();
 
   // send the 'leds' array out to the actual LED strip
   FastLED.show(); 
@@ -469,15 +469,19 @@ void strategyPhaseWithRGBSquare(){
 
 
 //from demo reel example
-void rainbow() 
+void offsetFill() 
 {
   if (g_patternsReset) {
-    Serial.println("rainbow");
-    g_hue2 = random8(5,255); //delta hue
+    Serial.println("offsetFill");
+    g_hue2 = random8(1,150); //delta hue
     g_patternsReset = false;
   }
-  // FastLED's built-in rainbow generator
-  fill_rainbow( leds, NUM_LEDS, g_hue1, g_hue2);
+
+  if (g_reverse1) {
+    fill_rainbow( leds, NUM_LEDS, g_hue1, g_hue2);
+  } else {
+    fill_palette(leds, NUM_LEDS, g_hue1, g_hue2, g_palette1, 255, g_paletteBlending1);
+  }
   EVERY_N_MILLISECONDS( g_everyNMillis ) { g_hue1+= g_hueSteps1; }
 
   if (g_addGlitter) {    
@@ -494,7 +498,7 @@ void confetti()
   // random colored speckles that blink in and fade smoothly
   fadeToBlackBy( leds, NUM_LEDS, 10);
   uint8_t pos = random16(NUM_LEDS);
-  leds[pos] += CHSV( g_hue1 + random8(64), 200, 255);
+  leds[pos] += executeColorStrategy(g_hue1 + random8(64), 255);
   EVERY_N_MILLISECONDS( g_everyNMillis ) { g_hue1+=g_hueSteps1; }
 
   if (g_addGlitter) {    
@@ -506,13 +510,13 @@ void sinelon()
 {
   if (g_patternsReset) {
     Serial.println("sinelon");
-    g_bpm1 = random8(5, 100);
+    g_bpm1 = random8(5, 80);
     g_patternsReset = false;
   }
   // a colored dot sweeping back and forth, with fading trails
   fadeToBlackBy( leds, NUM_LEDS, 20);
   uint8_t pos = beatsin16( g_bpm1, 0, NUM_LEDS-1 );
-  leds[pos] += CHSV( g_hue1, 255, 192);
+  leds[pos] += executeColorStrategy(g_hue1, 255);
   EVERY_N_MILLISECONDS( g_everyNMillis ) { g_hue1+=g_hueSteps1; }
   
   if (g_addGlitter) {    
@@ -531,7 +535,7 @@ void bpm()
   // CRGBPalette16 palette = PartyColors_p;
   uint8_t beat = beatsin8( g_bpm1, 64, 255);
   for( uint8_t i = 0; i < NUM_LEDS; i++) { //9948
-    leds[i] = ColorFromPalette(g_palette1, g_hue1+(i*2), beat-g_hue1+(i*10));
+    leds[i] = executeColorStrategy(g_hue1+(i*2), beat-g_hue1+(i*10));
   }
   
   EVERY_N_MILLISECONDS( g_everyNMillis ) { g_hue1+=g_hueSteps1; }
@@ -552,7 +556,7 @@ void juggle() {
   fadeToBlackBy( leds, NUM_LEDS, 20);
   byte dothue = 0;
   for( uint8_t i = 0; i < 8; i++) {
-    leds[beatsin16( i+7, 0, NUM_LEDS-1 )] |= CHSV(dothue, 200, 255);
+    leds[beatsin16( i+7, 0, NUM_LEDS-1 )] |= executeColorStrategy(dothue, 255);
     dothue += 32;
   }
   
@@ -586,7 +590,7 @@ void setupPatterns() {
   patterns[4] = strategyHueWaveWithSquare;
   patterns[5] = bpm;
   patterns[6] = juggle;
-  patterns[7] = rainbow;
+  patterns[7] = offsetFill;
   patterns[8] = sinelon;
 }
 
