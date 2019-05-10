@@ -18,8 +18,7 @@
 CRGB leds[NUM_LEDS];
 
 // consts
-const uint8_t NUM_PATTERNS = 11;
-// const uint8_t NUM_TRANSITIONS = 3;
+const uint8_t NUM_PATTERNS = 9;
 const uint8_t NUM_ROWS = 7;
 const uint8_t NUM_COLUMNS = 7;
 const uint8_t PIXELS_PER_ROW = NUM_LEDS / NUM_COLUMNS;
@@ -34,6 +33,7 @@ const uint8_t PHASE_STRATEGY_ROWS = 0; // Phase calculated by row
 const uint8_t PHASE_STRATEGY_COLUMNS = 1; // Phase calculated by column
 const uint8_t PHASE_STRATEGY_ODD_EVEN = 2; // Phase calculated by pixelIndex % 2
 const uint8_t PHASE_STRATEGY_STRIP_INDEX = 3; // Phase calculated directly by pixel location on strip
+const uint8_t PHASE_STRATEGY_SOLID = 4; // All pixels assigned a phase of 0
 
 const uint8_t WAVE_STRATEGY_SIN = 0; // basic sin
 const uint8_t WAVE_STRATEGY_SAW = 1; // basic sawtooth
@@ -68,7 +68,7 @@ static uint8_t g_colorIndex;
 bool g_reverse1, g_reverse2, g_reverse3;
 const uint8_t NUM_COLOR_STRATEGIES = 4;
 uint8_t g_colorStrategy;
-uint8_t g_pixelIndexStrategy;
+uint8_t g_phaseStrategy;
 uint8_t g_waveStrategy1, g_waveStrategy2, g_waveStrategy3;
 
 
@@ -81,10 +81,6 @@ void resetPatternGlobals();
 
 void doPeriodicUpdates() {
   resetPatternGlobals();  
-  // uint8_t i = random(NUM_TRANSITIONS);
-  // Serial.print("transition: ");
-  // Serial.println(i);
-  // transitions[i](); 
   uint8_t i = random(NUM_PATTERNS);
   g_patternIndex = i;
 }
@@ -92,12 +88,13 @@ void doPeriodicUpdates() {
 void setBrightnessFromKnob() {
   uint8_t val = interpolate(analogRead(A0), 0, 1023, 30, 255);
   FastLED.setBrightness(val);
+  // EVERY_N_SECONDS(1) { Serial.println(val); }
 }
 
 
-// void sinelon();
+// void strategyPhaseWithRGBSquare();
 void loop() {
-  // sinelon();
+  // strategyPhaseWithRGBSquare();
 
   // Call the current pattern function once, updating the 'leds' array
   patterns[g_patternIndex]();
@@ -252,13 +249,24 @@ void resetPatternGlobals() {
   g_everyNMillis = random16(100,1000);  
   g_everyNSecs = random8(3,15);
   g_colorStrategy = random8(0,4);
-  g_pixelIndexStrategy = random8(0,4);
+  g_phaseStrategy = random8(0,5);
   g_waveStrategy1 = random8(0,4);
   g_waveStrategy2 = random8(0,4);
   g_waveStrategy3 = random8(0,4);
   setupRandomPalette1();
 }
 
+void disallowColorStrategyPositionForHueSwap() {
+  //some patterns/waveforms don't work well when swapping position for hue, so call 
+  //this in the global setup to disallow.
+  switch(g_colorStrategy) { 
+    case 2:
+      g_colorStrategy = 0;
+      break;
+    case 3:
+      g_colorStrategy = 1;
+  }
+}
 
 
 CRGB executeColorStrategy(uint8_t hue, uint8_t positionalValue) {
@@ -283,7 +291,7 @@ CRGB executeColorStrategy(uint8_t hue, uint8_t positionalValue) {
 
 uint8_t executePixelPhaseStrategy(uint16_t pixelIndex, float scale, bool reversePattern) {
   uint8_t phase = 0;
-  switch(g_pixelIndexStrategy) {
+  switch(g_phaseStrategy) {
     case PHASE_STRATEGY_ROWS:
       phase = phaseFromRowIndex(pixelIndex, PIXELS_PER_ROW, NUM_ROWS, scale, reversePattern);
       break;
@@ -295,6 +303,9 @@ uint8_t executePixelPhaseStrategy(uint16_t pixelIndex, float scale, bool reverse
       break;
     case PHASE_STRATEGY_STRIP_INDEX:
       phase = phaseFromPixelIndex(pixelIndex, NUM_LEDS, scale, reversePattern);
+      break;
+    case PHASE_STRATEGY_SOLID:
+      phase = 0;
       break;
   }
   return phase;
@@ -323,53 +334,6 @@ uint8_t executeWaveStrategy(uint8_t waveStrategy, uint8_t bpm, unsigned long sta
 
 
 
-//transitions
-void RGBWipe(byte r, byte g, byte b, uint8_t wait, bool reverse) {
-  for(uint16_t i=0; i<NUM_LEDS; i++) {
-    leds[reverse ? NUM_LEDS - i : i] = CRGB(r, g, b);
-    FastLED.show();
-    delay(wait);
-  }
-}
-
-void randomRGBTimeWipe(byte r, byte g, byte b) {  
-  uint8_t d = random8(25, 100);
-  bool reverse = pctToBool(50);
-  // Serial.print("reverse: ");
-  // Serial.println(reverse);
-  RGBWipe(r, g, b, d, reverse);
-}
-
-void wipeToBlack() {
-  Serial.println("wipeToBlack");
-  randomRGBTimeWipe(0,0,0);
-}
-
-void wipeToRandom() {
-  Serial.println("wipeToRandom");
-  uint8_t r = random8();
-  uint8_t g = random8();
-  uint8_t b = random8();
-  randomRGBTimeWipe(r, g, b);
-}
-
-
-void fadeOut() {
-  Serial.println("fadeOut");
-  for (uint8_t i=BRIGHTNESS; i > 0; i--) {
-    FastLED.setBrightness(i);
-    FastLED.show();
-    delay(20);
-  }
-  fill_solid(0,0,0);
-  FastLED.setBrightness(BRIGHTNESS);
-  FastLED.show();
-}
-
-
-
-
-
 
 
 
@@ -381,36 +345,6 @@ void fadeOut() {
 
 
 //sequences
-void strategySolidPaletteWave(){
-  if (g_patternsReset) {
-    Serial.println("strategySolidPaletteWave");
-    g_bpm1 = random8(5,15);
-    g_patternsReset = false;
-  }
-
-  uint8_t paletteSin = executeWaveStrategy(g_waveStrategy1, g_bpm1, g_startTime, 0);
-  fill_solid(leds, NUM_LEDS, ColorFromPalette(g_palette1, paletteSin, 255, g_paletteBlending1));
-
-  if (g_addGlitter) {    
-    addGlitter(g_glitterChance);
-  }
-}
-
-void strategySolidRGBWave(){
-  if (g_patternsReset) {
-    Serial.println("strategySolidRGBWave");
-    g_patternsReset = false;
-  }
-  
-  uint8_t redSin = executeWaveStrategy(g_waveStrategy1, g_bpm1, g_startTime, g_phase1);
-  uint8_t greenSin = executeWaveStrategy(g_waveStrategy2, g_bpm2, g_startTime, g_phase2);
-  uint8_t blueSin = executeWaveStrategy(g_waveStrategy3, g_bpm3, g_startTime, g_phase3);  
-  fill_solid(leds, NUM_LEDS, CRGB(redSin, greenSin, blueSin));
-  
-  if (g_addGlitter) {    
-    addGlitter(g_glitterChance);
-  }
-}
 
 void strategyColorAndPositionWave() {
   if (g_patternsReset) {
@@ -444,13 +378,7 @@ void strategyHueWaveWithSquare(){
     Serial.println("strategyHueWaveWithSquare");
     g_bpm2 = random8(2,40); //hue sin
     g_scale1 = getRandomFloat(0.1f, 4.0f);
-    switch(g_colorStrategy) { // strats 2 and 3 don't work with this pattern
-      case 2:
-        g_colorStrategy = 0;
-        break;
-      case 3:
-        g_colorStrategy = 1;
-    }
+    disallowColorStrategyPositionForHueSwap();
     g_patternsReset = false;
   }
   
@@ -511,16 +439,16 @@ void strategyPhaseWithRGBSquare(){
   }
 
   
-  uint8_t redSin, greenSin, blueSin, redPhase, greenPhase, bluePhase;
+  uint8_t redSquare, greenSquare, blueSquare, redPhase, greenPhase, bluePhase;
 
   for(uint16_t i=0; i<NUM_LEDS; i++) {
     redPhase = executePixelPhaseStrategy(i, g_scale1, g_reverse1);
     greenPhase = executePixelPhaseStrategy(i, g_scale2, g_reverse2);
     bluePhase = executePixelPhaseStrategy(i, g_scale3, g_reverse3);
-    redSin = beatsquare8(g_bpm1, 0, 255, g_startTime, redPhase, g_pulseWidth1);
-    greenSin = beatsquare8(g_bpm2, 0, 255, g_startTime, greenPhase, g_pulseWidth2);
-    blueSin = beatsquare8(g_bpm3, 0, 255, g_startTime, bluePhase, g_pulseWidth3);
-    leds[i] = CRGB(redSin, greenSin, blueSin);
+    redSquare = beatsquare8(g_bpm1, 0, 255, g_startTime, redPhase, g_pulseWidth1);
+    greenSquare = beatsquare8(g_bpm2, 0, 255, g_startTime, greenPhase, g_pulseWidth2);
+    blueSquare = beatsquare8(g_bpm3, 0, 255, g_startTime, bluePhase, g_pulseWidth3);
+    leds[i] = CRGB(redSquare, greenSquare, blueSquare);
   }
   
   if (g_addGlitter) {    
@@ -600,10 +528,10 @@ void bpm()
     g_hueSteps1 = random8(1,16);
     g_patternsReset = false;
   }
-  CRGBPalette16 palette = PartyColors_p;
+  // CRGBPalette16 palette = PartyColors_p;
   uint8_t beat = beatsin8( g_bpm1, 64, 255);
   for( uint8_t i = 0; i < NUM_LEDS; i++) { //9948
-    leds[i] = ColorFromPalette(palette, g_hue1+(i*2), beat-g_hue1+(i*10));
+    leds[i] = ColorFromPalette(g_palette1, g_hue1+(i*2), beat-g_hue1+(i*10));
   }
   
   EVERY_N_MILLISECONDS( g_everyNMillis ) { g_hue1+=g_hueSteps1; }
@@ -651,17 +579,15 @@ void juggle() {
 
 //setup
 void setupPatterns() {
-  patterns[0] = strategySolidRGBWave;
+  patterns[0] = strategyPhaseWithRGBSquare;
   patterns[1] = strategyRGBWaveAndPhase;
   patterns[2] = confetti;
   patterns[3] = strategyColorAndPositionWave;
   patterns[4] = strategyHueWaveWithSquare;
   patterns[5] = bpm;
   patterns[6] = juggle;
-  patterns[7] = strategySolidPaletteWave;
+  patterns[7] = rainbow;
   patterns[8] = sinelon;
-  patterns[9] = strategyPhaseWithRGBSquare;
-  patterns[10] = rainbow;
 }
 
 // void setupTransitions() {
