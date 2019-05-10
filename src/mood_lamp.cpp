@@ -61,7 +61,7 @@ uint8_t g_sat1;
 uint8_t g_glitterChance, g_glitterPercent;
 bool g_addGlitter;
 uint8_t g_everyNSecs;
-uint16_t g_everyNMillis;
+uint16_t g_everyNMillis1, g_everyNMillis2;
 CRGBPalette16 g_palette1;
 TBlendType g_paletteBlending1;
 static uint8_t g_colorIndex;
@@ -196,8 +196,8 @@ void addGlitter( fract8 chanceOfGlitter)
 //   Serial.println(g_hue2);
 //   Serial.print("g_hueSteps1: ");
 //   Serial.println(g_hueSteps1);  
-//   Serial.print("g_everyNMillis: ");
-//   Serial.println(g_everyNMillis);
+//   Serial.print("g_everyNMillis1: ");
+//   Serial.println(g_everyNMillis1);
 //   Serial.print("g_everyNSecs: ");
 //   Serial.println(g_everyNSecs);
 // }
@@ -246,7 +246,8 @@ void resetPatternGlobals() {
 
   g_hueSteps1 = random8(1,48);
   
-  g_everyNMillis = random16(100,1000);  
+  g_everyNMillis1 = random16(100,1000);  
+  g_everyNMillis2 = random(10,250);
   g_everyNSecs = random8(3,15);
   g_colorStrategy = random8(0,4);
   g_phaseStrategy = random8(0,5);
@@ -473,7 +474,7 @@ void offsetFill()
 {
   if (g_patternsReset) {
     Serial.println("offsetFill");
-    g_hue2 = random8(1,150); //delta hue
+    g_hue2 = random8(1,100); //delta hue
     g_patternsReset = false;
   }
 
@@ -482,7 +483,7 @@ void offsetFill()
   } else {
     fill_palette(leds, NUM_LEDS, g_hue1, g_hue2, g_palette1, 255, g_paletteBlending1);
   }
-  EVERY_N_MILLISECONDS( g_everyNMillis ) { g_hue1+= g_hueSteps1; }
+  EVERY_N_MILLISECONDS( g_everyNMillis2 ) { g_hue1+= g_hueSteps1; }
 
   if (g_addGlitter) {    
     addGlitter(g_glitterChance);
@@ -499,7 +500,7 @@ void confetti()
   fadeToBlackBy( leds, NUM_LEDS, 10);
   uint8_t pos = random16(NUM_LEDS);
   leds[pos] += executeColorStrategy(g_hue1 + random8(64), 255);
-  EVERY_N_MILLISECONDS( g_everyNMillis ) { g_hue1+=g_hueSteps1; }
+  EVERY_N_MILLISECONDS( g_everyNMillis1 ) { g_hue1+=g_hueSteps1; }
 
   if (g_addGlitter) {    
     addGlitter(g_glitterChance);
@@ -517,7 +518,7 @@ void sinelon()
   fadeToBlackBy( leds, NUM_LEDS, 20);
   uint8_t pos = beatsin16( g_bpm1, 0, NUM_LEDS-1 );
   leds[pos] += executeColorStrategy(g_hue1, 255);
-  EVERY_N_MILLISECONDS( g_everyNMillis ) { g_hue1+=g_hueSteps1; }
+  EVERY_N_MILLISECONDS( g_everyNMillis1 ) { g_hue1+=g_hueSteps1; }
   
   if (g_addGlitter) {    
     addGlitter(g_glitterChance);
@@ -538,7 +539,7 @@ void bpm()
     leds[i] = executeColorStrategy(g_hue1+(i*2), beat-g_hue1+(i*10));
   }
   
-  EVERY_N_MILLISECONDS( g_everyNMillis ) { g_hue1+=g_hueSteps1; }
+  EVERY_N_MILLISECONDS( g_everyNMillis1 ) { g_hue1+=g_hueSteps1; }
 
   if (g_addGlitter) {    
     addGlitter(g_glitterChance);
@@ -548,7 +549,7 @@ void bpm()
 void juggle() {
   if (g_patternsReset) {
     Serial.println("juggle");
-    g_everyNMillis = random(500,1000);
+    g_everyNMillis1 = random(500,1000);
     g_hueSteps1 = random8(1,12);
     g_patternsReset = false;
   }
@@ -560,7 +561,7 @@ void juggle() {
     dothue += 32;
   }
   
-  EVERY_N_MILLISECONDS( g_everyNMillis ) { g_hue1+=g_hueSteps1; }
+  EVERY_N_MILLISECONDS( g_everyNMillis1 ) { g_hue1+=g_hueSteps1; }
 
   if (g_addGlitter) {    
     addGlitter(g_glitterChance);
