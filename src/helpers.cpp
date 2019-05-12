@@ -25,6 +25,57 @@ float phaseFromPixelIndex(uint16_t pixelIndex, uint16_t numPixels, float scale, 
   return phase;
 }
 
+uint16_t calculatePixelRow(uint16_t pixelIndex, uint16_t pixelsPerRow) {
+  return pixelIndex / pixelsPerRow;
+}
+
+int phaseFromPixelIndexWithRowOffset(uint16_t pixelIndex, uint16_t numPixels, uint16_t pixelsPerRow, fract8 rowOffsetPercent, float scale, bool reversePattern) {
+  uint16_t fromMin = 0;
+  uint16_t pixelsAtScale = numPixels * scale;
+  uint16_t fromMax = pixelsAtScale;
+  uint16_t rowIndex = calculatePixelRow(pixelIndex, pixelsPerRow);
+  rowOffsetPercent = 255 / pixelsPerRow;
+  int singleOffsetAmount = (255 * rowOffsetPercent) / 100;
+  int offset =  singleOffsetAmount * (rowIndex + 1);
+  if (reversePattern) {
+	  fromMin = pixelsAtScale;
+	  fromMax = 0;
+    offset = offset * -1;
+  }
+  int phase = interpolate(pixelIndex + offset, fromMin + offset, fromMax+ offset, 0, 255);
+  // phase += offset;
+  
+  EVERY_N_MILLIS(500) { 
+    // Serial.print("pixelIndex: ");
+    // Serial.println(pixelIndex); 
+    
+    // Serial.print("pixelsAtScale: ");
+    // Serial.println(pixelsAtScale); 
+
+    // Serial.print("fromMin: ");
+    // Serial.println(fromMin);
+
+    // Serial.print("fromMax: ");
+    // Serial.println(fromMax);
+
+    // Serial.print("rowIndex: ");
+    // Serial.println(rowIndex);
+
+    Serial.print("singleOffsetAmount: ");
+    Serial.println(singleOffsetAmount);
+
+    Serial.print("rowOffsetPercent: ");
+    Serial.println(rowOffsetPercent);
+
+    Serial.print("offset: ");
+    Serial.println(offset);
+    
+    Serial.print("phase: ");
+    Serial.println(phase);
+  }
+  return phase;
+}
+
 int phaseFromOddEvenIndex(uint16_t pixelIndex) {
   if (pixelIndex % 2 == 0) {
     return 0;
@@ -37,7 +88,7 @@ float phaseFromRowIndex(uint16_t pixelIndex, uint16_t pixelsPerRow, uint16_t num
   if (pixelIndex  == 0) {
     return 0;
   }
-  uint16_t rowIndex = pixelIndex / pixelsPerRow;
+  uint16_t rowIndex = calculatePixelRow(pixelIndex, pixelsPerRow);
   uint16_t fromMin = 0;
   uint16_t fromMax = (numRows - 1) * scale;
   if (reversePattern) {

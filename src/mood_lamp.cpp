@@ -44,7 +44,6 @@ const uint8_t WAVE_STRATEGY_CUBIC = 3; // basic cubic (spends more time at limit
 
 
 void (*patterns[NUM_PATTERNS])();
-// void (*transitions[NUM_TRANSITIONS])();
 
 
 // Shared Global Variables
@@ -70,6 +69,7 @@ const uint8_t NUM_COLOR_STRATEGIES = 4;
 uint8_t g_colorStrategy;
 uint8_t g_phaseStrategy;
 uint8_t g_waveStrategy1, g_waveStrategy2, g_waveStrategy3;
+uint8_t g_rowOffsetPercent;
 
 
 
@@ -92,12 +92,12 @@ void setBrightnessFromKnob() {
 }
 
 
-void offsetFill();
+// void strategyColorAndPositionWave();
 void loop() {
-  offsetFill();
+  // strategyColorAndPositionWave();
 
   // Call the current pattern function once, updating the 'leds' array
-  // patterns[g_patternIndex]();
+  patterns[g_patternIndex]();
 
   // send the 'leds' array out to the actual LED strip
   FastLED.show(); 
@@ -247,13 +247,15 @@ void resetPatternGlobals() {
   g_hueSteps1 = random8(1,48);
   
   g_everyNMillis1 = random16(100,1000);  
-  g_everyNMillis2 = random(10,250);
+  g_everyNMillis2 = random(50,250);
   g_everyNSecs = random8(3,15);
   g_colorStrategy = random8(0,4);
   g_phaseStrategy = random8(0,5);
   g_waveStrategy1 = random8(0,4);
   g_waveStrategy2 = random8(0,4);
   g_waveStrategy3 = random8(0,4);
+
+  g_rowOffsetPercent = random8(5,75);
   setupRandomPalette1();
 }
 
@@ -353,6 +355,9 @@ void strategyColorAndPositionWave() {
     g_bpm1 = random8(2,20);
     g_bpm2 = random(2,20); //hue sin
     g_patternsReset = false;
+    // g_phaseStrategy = PHASE_STRATEGY_ROW_OFFSET;
+    // g_colorStrategy = COLOR_STRATEGY_HSV_HUE_AND_POSITION;
+    // g_addGlitter = false;
   }
 
   EVERY_N_SECONDS(g_everyNSecs) { g_reverse1 = !g_reverse1; }
@@ -494,6 +499,7 @@ void confetti()
 {
   if (g_patternsReset) {
     Serial.println("confetti");
+    disallowColorStrategyPositionForHueSwap();
     g_patternsReset = false;
   }
   // random colored speckles that blink in and fade smoothly
@@ -511,6 +517,7 @@ void sinelon()
 {
   if (g_patternsReset) {
     Serial.println("sinelon");
+    disallowColorStrategyPositionForHueSwap();
     g_bpm1 = random8(5, 80);
     g_patternsReset = false;
   }
@@ -531,6 +538,7 @@ void bpm()
     Serial.println("bpm");
     g_bpm1 = random8(10, 120);
     g_hueSteps1 = random8(1,16);
+    disallowColorStrategyPositionForHueSwap();
     g_patternsReset = false;
   }
   // CRGBPalette16 palette = PartyColors_p;
@@ -551,6 +559,7 @@ void juggle() {
     Serial.println("juggle");
     g_everyNMillis1 = random(500,1000);
     g_hueSteps1 = random8(1,12);
+    disallowColorStrategyPositionForHueSwap();
     g_patternsReset = false;
   }
   // eight colored dots, weaving in and out of sync with each other
@@ -595,14 +604,8 @@ void setupPatterns() {
   patterns[8] = sinelon;
 }
 
-// void setupTransitions() {
-//   transitions[0] = wipeToBlack;
-//   transitions[1] = wipeToRandom;
-//   transitions[2] = fadeOut;
-// }
-
 void setup() {  
-  delay(2000);
+  // delay(2000);
   // tell FastLED about the LED strip configuration
   FastLED.addLeds<LED_TYPE,DATA_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
   //FastLED.addLeds<LED_TYPE,DATA_PIN,CLK_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
