@@ -97,12 +97,12 @@ void setBrightnessFromKnob() {
 }
 
 
-void strategyPhaseWithRGBSquare();
+// void strategyPhaseWithRGBSquare();
 void loop() {
-  strategyPhaseWithRGBSquare();
+  // strategyRGBWaveAndPhase();
 
   // Call the current pattern function once, updating the 'leds' array
-  // patterns[g_patternIndex]();
+  patterns[g_patternIndex]();
 
   // send the 'leds' array out to the actual LED strip
   FastLED.show(); 
