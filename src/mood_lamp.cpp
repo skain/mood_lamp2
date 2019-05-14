@@ -6,7 +6,7 @@
 #define DATA_PIN 2
 #define LED_TYPE WS2811
 #define COLOR_ORDER RGB
-#define NUM_LEDS 50
+#define NUM_LEDS 49
 #define BRIGHTNESS 255
 
 // IMPORTANT: To reduce NeoPixel burnout risk, add 1000 uF capacitor across
@@ -19,8 +19,10 @@ CRGB leds[NUM_LEDS];
 
 // consts
 const uint8_t NUM_PATTERNS = 9;
-const uint8_t NUM_ROWS = 7;
-const uint8_t NUM_COLUMNS = 7;
+const uint8_t NUM_ROWS = 5;
+const uint8_t NUM_COLUMNS = 5;
+// const uint8_t NUM_ROWS = 7;
+// const uint8_t NUM_COLUMNS = 7;
 const uint8_t PIXELS_PER_ROW = NUM_LEDS / NUM_COLUMNS;
 
 // the strategy consts are just here to try and make the code more legible
@@ -39,6 +41,9 @@ const uint8_t WAVE_STRATEGY_SIN = 0; // basic sin
 const uint8_t WAVE_STRATEGY_SAW = 1; // basic sawtooth
 const uint8_t WAVE_STRATEGY_TRIANGLE = 2; // basic triangle (linear slopes)
 const uint8_t WAVE_STRATEGY_CUBIC = 3; // basic cubic (spends more time at limits than sine)
+
+const uint8_t OFFSET_FILL_STRATEGY_RAINBOW = 0; //use fill_rainbow
+const uint8_t OFFSET_FILL_STRATEGY_PALETTE = 1; //use current random palette
 
 
 
@@ -67,9 +72,9 @@ static uint8_t g_colorIndex;
 bool g_reverse1, g_reverse2, g_reverse3;
 const uint8_t NUM_COLOR_STRATEGIES = 4;
 uint8_t g_colorStrategy;
-uint8_t g_phaseStrategy;
+uint8_t g_phaseStrategy1, g_phaseStrategy2, g_phaseStrategy3;
 uint8_t g_waveStrategy1, g_waveStrategy2, g_waveStrategy3;
-uint8_t g_rowOffsetPercent;
+uint8_t g_offsetFillStrategy;
 
 
 
@@ -92,12 +97,12 @@ void setBrightnessFromKnob() {
 }
 
 
-// void strategyColorAndPositionWave();
+void strategyPhaseWithRGBSquare();
 void loop() {
-  // strategyColorAndPositionWave();
+  strategyPhaseWithRGBSquare();
 
   // Call the current pattern function once, updating the 'leds' array
-  patterns[g_patternIndex]();
+  // patterns[g_patternIndex]();
 
   // send the 'leds' array out to the actual LED strip
   FastLED.show(); 
@@ -249,13 +254,18 @@ void resetPatternGlobals() {
   g_everyNMillis1 = random16(100,1000);  
   g_everyNMillis2 = random(50,250);
   g_everyNSecs = random8(3,15);
+
   g_colorStrategy = random8(0,4);
-  g_phaseStrategy = random8(0,5);
+  
+  g_phaseStrategy1 = random8(0,5);
+  g_phaseStrategy2 = random8(0,5);
+  g_phaseStrategy3 = random8(0,5);
+  
   g_waveStrategy1 = random8(0,4);
   g_waveStrategy2 = random8(0,4);
   g_waveStrategy3 = random8(0,4);
 
-  g_rowOffsetPercent = random8(5,75);
+  g_offsetFillStrategy = random(0,2);
   setupRandomPalette1();
 }
 
@@ -292,9 +302,9 @@ CRGB executeColorStrategy(uint8_t hue, uint8_t positionalValue) {
   return color;
 }
 
-uint8_t executePixelPhaseStrategy(uint16_t pixelIndex, float scale, bool reversePattern) {
+uint8_t executePixelPhaseStrategy(uint16_t pixelIndex, uint8_t phaseStrategy, float scale, bool reversePattern) {
   uint8_t phase = 0;
-  switch(g_phaseStrategy) {
+  switch(phaseStrategy) {
     case PHASE_STRATEGY_ROWS:
       phase = phaseFromRowIndex(pixelIndex, PIXELS_PER_ROW, NUM_ROWS, scale, reversePattern);
       break;
@@ -368,7 +378,7 @@ void strategyColorAndPositionWave() {
   hue = executeWaveStrategy(g_waveStrategy1, g_bpm2, g_startTime, 0);
   
   for(uint16_t i=0; i<NUM_LEDS; i++) {
-    phase = executePixelPhaseStrategy(i, g_scale1, g_reverse1);
+    phase = executePixelPhaseStrategy(i, g_phaseStrategy1, g_scale1, g_reverse1);
     waveVal = executeWaveStrategy(g_waveStrategy2, g_bpm1, g_startTime, phase);
     color = executeColorStrategy(hue, waveVal);
     leds[i] = color;
@@ -393,7 +403,7 @@ void strategyHueWaveWithSquare(){
   hue = executeWaveStrategy(g_waveStrategy2, g_bpm2, g_startTime, 0);
   
   for(uint16_t i=0; i<NUM_LEDS; i++) {
-    phase = executePixelPhaseStrategy(i, g_scale1, g_reverse1);
+    phase = executePixelPhaseStrategy(i, g_phaseStrategy1, g_scale1, g_reverse1);
     curSquare = beatsquare8(g_bpm1, 0, 255, g_startTime, phase, g_pulseWidth1);
     color = executeColorStrategy(hue, curSquare);
     leds[i] = color;
@@ -419,9 +429,9 @@ void strategyRGBWaveAndPhase(){
   uint8_t redVal, greenVal, blueVal;
   
   for(uint16_t i=0; i<NUM_LEDS; i++) {
-    redPhase = executePixelPhaseStrategy(i, g_scale1, g_reverse1);
-    greenPhase = executePixelPhaseStrategy(i, g_scale2, g_reverse1);
-    bluePhase = executePixelPhaseStrategy(i, g_scale3, g_reverse1);
+    redPhase = executePixelPhaseStrategy(i, g_phaseStrategy1, g_scale1, g_reverse1);
+    greenPhase = executePixelPhaseStrategy(i, g_phaseStrategy2, g_scale2, g_reverse1);
+    bluePhase = executePixelPhaseStrategy(i, g_phaseStrategy3, g_scale3, g_reverse1);
     redVal = executeWaveStrategy(g_waveStrategy1, g_bpm1, g_startTime, redPhase);
     greenVal = executeWaveStrategy(g_waveStrategy2, g_bpm2, g_startTime, greenPhase);
     blueVal = executeWaveStrategy(g_waveStrategy3, g_bpm3, g_startTime, bluePhase);
@@ -448,9 +458,9 @@ void strategyPhaseWithRGBSquare(){
   uint8_t redSquare, greenSquare, blueSquare, redPhase, greenPhase, bluePhase;
 
   for(uint16_t i=0; i<NUM_LEDS; i++) {
-    redPhase = executePixelPhaseStrategy(i, g_scale1, g_reverse1);
-    greenPhase = executePixelPhaseStrategy(i, g_scale2, g_reverse2);
-    bluePhase = executePixelPhaseStrategy(i, g_scale3, g_reverse3);
+    redPhase = executePixelPhaseStrategy(i, g_phaseStrategy1, g_scale1, g_reverse1);
+    greenPhase = executePixelPhaseStrategy(i, g_phaseStrategy2, g_scale2, g_reverse2);
+    bluePhase = executePixelPhaseStrategy(i, g_phaseStrategy3, g_scale3, g_reverse3);
     redSquare = beatsquare8(g_bpm1, 0, 255, g_startTime, redPhase, g_pulseWidth1);
     greenSquare = beatsquare8(g_bpm2, 0, 255, g_startTime, greenPhase, g_pulseWidth2);
     blueSquare = beatsquare8(g_bpm3, 0, 255, g_startTime, bluePhase, g_pulseWidth3);
@@ -483,10 +493,13 @@ void offsetFill()
     g_patternsReset = false;
   }
 
-  if (g_reverse1) {
-    fill_rainbow( leds, NUM_LEDS, g_hue1, g_hue2);
-  } else {
-    fill_palette(leds, NUM_LEDS, g_hue1, g_hue2, g_palette1, 255, g_paletteBlending1);
+  switch(g_offsetFillStrategy) {
+    case OFFSET_FILL_STRATEGY_RAINBOW:
+      fill_rainbow( leds, NUM_LEDS, g_hue1, g_hue2);
+      break;
+    case OFFSET_FILL_STRATEGY_PALETTE:
+      fill_palette(leds, NUM_LEDS, g_hue1, g_hue2, g_palette1, 255, g_paletteBlending1);
+      break;
   }
   EVERY_N_MILLISECONDS( g_everyNMillis2 ) { g_hue1+= g_hueSteps1; }
 
