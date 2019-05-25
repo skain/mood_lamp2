@@ -6,8 +6,9 @@
 #define DATA_PIN 2
 #define LED_TYPE WS2811
 #define COLOR_ORDER RGB
-#define NUM_LEDS 49
-#define BRIGHTNESS 255
+// #define NUM_LEDS 49
+#define NUM_LEDS 25
+#define BRIGHTNESS 150
 
 // IMPORTANT: To reduce NeoPixel burnout risk, add 1000 uF capacitor across
 // pixel power leads, add 300 - 500 Ohm resistor on first pixel's data input
@@ -18,32 +19,32 @@
 CRGB leds[NUM_LEDS];
 
 // consts
-const uint8_t NUM_PATTERNS = 9;
-const uint8_t NUM_ROWS = 5;
-const uint8_t NUM_COLUMNS = 5;
-// const uint8_t NUM_ROWS = 7;
-// const uint8_t NUM_COLUMNS = 7;
-const uint8_t PIXELS_PER_ROW = NUM_LEDS / NUM_COLUMNS;
+#define NUM_PATTERNS 8
+#define NUM_ROWS 5
+#define NUM_COLUMNS 5
+// #define NUM_ROWS 7
+// #define NUM_COLUMNS 7
+#define PIXELS_PER_ROW NUM_LEDS / NUM_COLUMNS
 
 // the strategy consts are just here to try and make the code more legible
-const uint8_t COLOR_STRATEGY_HSV_HUE_AND_POSITION = 0; // HSV with hue for hue and postion for value
-const uint8_t COLOR_STRATEGY_PALETTE_HUE_AND_POSITION = 1; // Random palette with hue for wheel position and position for brightness
-const uint8_t COLOR_STRATEGY_HSV_POSITION_FOR_HUE = 2; // HSV with position for hue, 255 for value (hue is ignored)
-const uint8_t COLOR_STRATEGY_PALETTE_POSITION_FOR_HUE = 3; // Palette with position for wheel position, 255 for brightness (hue is ignored)
+#define COLOR_STRATEGY_HSV_HUE_AND_BRIGHTNESS 0 // HSV with hue for hue and postion for value
+#define COLOR_STRATEGY_PALETTE_HUE_AND_BRIGHTNESS 1 // Random palette with hue for wheel BRIGHTNESS and BRIGHTNESS for brightness
+#define COLOR_STRATEGY_HSV_BRIGHTNESS_FOR_HUE 2 // HSV with BRIGHTNESS for hue, 255 for value (hue is ignored)
+#define COLOR_STRATEGY_PALETTE_BRIGHTNESS_FOR_HUE 3 // Palette with BRIGHTNESS for wheel BRIGHTNESS, 255 for brightness (hue is ignored)
 
-const uint8_t PHASE_STRATEGY_ROWS = 0; // Phase calculated by row
-const uint8_t PHASE_STRATEGY_COLUMNS = 1; // Phase calculated by column
-const uint8_t PHASE_STRATEGY_ODD_EVEN = 2; // Phase calculated by pixelIndex % 2
-const uint8_t PHASE_STRATEGY_STRIP_INDEX = 3; // Phase calculated directly by pixel location on strip
-const uint8_t PHASE_STRATEGY_SOLID = 4; // All pixels assigned a phase of 0
+#define PHASE_STRATEGY_ROWS 0 // Phase calculated by row
+#define PHASE_STRATEGY_COLUMNS 1 // Phase calculated by column
+#define PHASE_STRATEGY_ODD_EVEN 2 // Phase calculated by pixelIndex % 2
+#define PHASE_STRATEGY_STRIP_INDEX 3 // Phase calculated directly by pixel location on strip
+#define PHASE_STRATEGY_SOLID 4 // All pixels assigned a phase of 0
 
-const uint8_t WAVE_STRATEGY_SIN = 0; // basic sin
-const uint8_t WAVE_STRATEGY_SAW = 1; // basic sawtooth
-const uint8_t WAVE_STRATEGY_TRIANGLE = 2; // basic triangle (linear slopes)
-const uint8_t WAVE_STRATEGY_CUBIC = 3; // basic cubic (spends more time at limits than sine)
+#define WAVE_STRATEGY_SIN 0 // basic sin
+#define WAVE_STRATEGY_SAW 1 // basic sawtooth
+#define WAVE_STRATEGY_TRIANGLE 2 // basic triangle (linear slopes)
+#define WAVE_STRATEGY_CUBIC 3 // basic cubic (spends more time at limits than sine)
 
-const uint8_t OFFSET_FILL_STRATEGY_RAINBOW = 0; //use fill_rainbow
-const uint8_t OFFSET_FILL_STRATEGY_PALETTE = 1; //use current random palette
+#define OFFSET_FILL_STRATEGY_RAINBOW 0 //use fill_rainbow
+#define OFFSET_FILL_STRATEGY_PALETTE 1 //use current random palette
 
 
 
@@ -70,7 +71,6 @@ CRGBPalette16 g_palette1;
 TBlendType g_paletteBlending1;
 static uint8_t g_colorIndex;
 bool g_reverse1, g_reverse2, g_reverse3;
-const uint8_t NUM_COLOR_STRATEGIES = 4;
 uint8_t g_colorStrategy;
 uint8_t g_phaseStrategy1, g_phaseStrategy2, g_phaseStrategy3;
 uint8_t g_waveStrategy1, g_waveStrategy2, g_waveStrategy3;
@@ -130,24 +130,23 @@ void loop() {
 // This function fills the palette with totally random colors.
 void setupRandomPalette1()
 {
-//    for( uint8_t i = 0; i < 16; i++) {
-//      if (i == 0 || pctToBool(25)) {
-//        g_palette1[i] = CHSV( random8(), 255, random8(10,255));
-//      } else {
-//        g_palette1[i] = g_palette1[i-1];
-//      }
-//    }
-  CRGB c1, c2, c3, c4;
-  c1 = getRandomColor();
-  c2 = getRandomColor();
-  c3 = getRandomColor();
-  c4 = getRandomColor();
-  g_palette1 = CRGBPalette16(c1, c2, c3, c4);
+  if (random8() > 128) {
+    for (uint8_t i = 0; i < 16; i++) {
+        g_palette1[i] = CHSV(random8(), 255, random8(10, 255));
+    }
+  } else {
+    CRGB c1, c2, c3, c4;
+    c1 = getRandomColor();
+    c2 = getRandomColor();
+    c3 = getRandomColor();
+    c4 = getRandomColor();
+    g_palette1 = CRGBPalette16(c1, c2, c3, c4);
+  }
 }
 
-void addGlitter( fract8 chanceOfGlitter) 
+void addGlitter(uint8_t chanceOfGlitter) 
 {
-  if( random8() < chanceOfGlitter) {
+  if (pctToBool(chanceOfGlitter)) {
     leds[ random16(NUM_LEDS) ] += CRGB::White;
   }
 }
@@ -217,9 +216,9 @@ void resetPatternGlobals() {
   // set up our global variables with sane values. These values may be overridden by pattern functions as needed.
 	g_patternsReset = true;
 
-  g_bpm1 = random8(2,80);
-  g_bpm2 = random8(2,80);
-  g_bpm3 = random8(2,80);
+  g_bpm1 = random8(1,80);
+  g_bpm2 = random8(1,80);
+  g_bpm3 = random8(1,80);
 
   g_paletteBlending1 = LINEARBLEND;
   g_colorIndex = 0;
@@ -269,8 +268,8 @@ void resetPatternGlobals() {
   setupRandomPalette1();
 }
 
-void disallowColorStrategyPositionForHueSwap() {
-  //some patterns/waveforms don't work well when swapping position for hue, so call 
+void disallowColorStrategyBrightnessForHueSwap() {
+  //some patterns/waveforms don't work well when swapping BRIGHTNESS for hue, so call 
   //this in the global setup to disallow.
   switch(g_colorStrategy) { 
     case 2:
@@ -282,20 +281,20 @@ void disallowColorStrategyPositionForHueSwap() {
 }
 
 
-CRGB executeColorStrategy(uint8_t hue, uint8_t positionalValue) {
+CRGB executeColorStrategy(uint8_t hue, uint8_t brightness) {
   CRGB color;
   switch(g_colorStrategy) {
-      case COLOR_STRATEGY_HSV_HUE_AND_POSITION:      
-        color = CHSV(hue, g_sat1, positionalValue);
+      case COLOR_STRATEGY_HSV_HUE_AND_BRIGHTNESS:      
+        color = CHSV(hue, g_sat1, brightness);
         break;
-      case COLOR_STRATEGY_PALETTE_HUE_AND_POSITION:
-        color = ColorFromPalette(g_palette1, hue, positionalValue, g_paletteBlending1);
+      case COLOR_STRATEGY_PALETTE_HUE_AND_BRIGHTNESS:
+        color = ColorFromPalette(g_palette1, hue, brightness, g_paletteBlending1);
         break;
-      case COLOR_STRATEGY_HSV_POSITION_FOR_HUE:      
-        color = CHSV(positionalValue, g_sat1, 255);
+      case COLOR_STRATEGY_HSV_BRIGHTNESS_FOR_HUE:      
+        color = CHSV(brightness, g_sat1, 255);
         break;
-      case COLOR_STRATEGY_PALETTE_POSITION_FOR_HUE:      
-        color = ColorFromPalette(g_palette1, positionalValue, 255, g_paletteBlending1);
+      case COLOR_STRATEGY_PALETTE_BRIGHTNESS_FOR_HUE:      
+        color = ColorFromPalette(g_palette1, brightness, 255, g_paletteBlending1);
         break;
   }
 
@@ -359,14 +358,14 @@ uint8_t executeWaveStrategy(uint8_t waveStrategy, uint8_t bpm, unsigned long sta
 
 //sequences
 
-void strategyColorAndPositionWave() {
+void strategyColorAndBrightnessWave() {
   if (g_patternsReset) {
-    Serial.println("strategyColorAndPositionWave");
+    Serial.println("strategyColorAndBrightnessWave");
     g_bpm1 = random8(2,20);
     g_bpm2 = random(2,20); //hue sin
     g_patternsReset = false;
     // g_phaseStrategy = PHASE_STRATEGY_ROW_OFFSET;
-    // g_colorStrategy = COLOR_STRATEGY_HSV_HUE_AND_POSITION;
+    // g_colorStrategy = COLOR_STRATEGY_HSV_HUE_AND_BRIGHTNESS;
     // g_addGlitter = false;
   }
 
@@ -394,7 +393,7 @@ void strategyHueWaveWithSquare(){
     Serial.println("strategyHueWaveWithSquare");
     g_bpm2 = random8(2,40); //hue sin
     g_scale1 = getRandomFloat(0.1f, 4.0f);
-    disallowColorStrategyPositionForHueSwap();
+    disallowColorStrategyBrightnessForHueSwap();
     g_patternsReset = false;
   }
   
@@ -512,7 +511,7 @@ void confetti()
 {
   if (g_patternsReset) {
     Serial.println("confetti");
-    disallowColorStrategyPositionForHueSwap();
+    disallowColorStrategyBrightnessForHueSwap();
     g_patternsReset = false;
   }
   // random colored speckles that blink in and fade smoothly
@@ -530,7 +529,7 @@ void sinelon()
 {
   if (g_patternsReset) {
     Serial.println("sinelon");
-    disallowColorStrategyPositionForHueSwap();
+    disallowColorStrategyBrightnessForHueSwap();
     g_bpm1 = random8(5, 80);
     g_patternsReset = false;
   }
@@ -551,7 +550,7 @@ void bpm()
     Serial.println("bpm");
     g_bpm1 = random8(10, 120);
     g_hueSteps1 = random8(1,16);
-    disallowColorStrategyPositionForHueSwap();
+    disallowColorStrategyBrightnessForHueSwap();
     g_patternsReset = false;
   }
   // CRGBPalette16 palette = PartyColors_p;
@@ -572,7 +571,7 @@ void juggle() {
     Serial.println("juggle");
     g_everyNMillis1 = random(500,1000);
     g_hueSteps1 = random8(1,12);
-    disallowColorStrategyPositionForHueSwap();
+    disallowColorStrategyBrightnessForHueSwap();
     g_patternsReset = false;
   }
   // eight colored dots, weaving in and out of sync with each other
@@ -609,12 +608,12 @@ void setupPatterns() {
   patterns[0] = strategyPhaseWithRGBSquare;
   patterns[1] = strategyRGBWaveAndPhase;
   patterns[2] = confetti;
-  patterns[3] = strategyColorAndPositionWave;
+  patterns[3] = strategyColorAndBrightnessWave;
   patterns[4] = strategyHueWaveWithSquare;
   patterns[5] = bpm;
-  patterns[6] = juggle;
+  patterns[6] = sinelon;
+  // patterns[6] = juggle;
   patterns[7] = offsetFill;
-  patterns[8] = sinelon;
 }
 
 void setup() {  
@@ -626,7 +625,7 @@ void setup() {
   // set master brightness control
   FastLED.setBrightness(BRIGHTNESS);
   Serial.begin(9600);
-  randomSeed(analogRead(0));
+  randomSeed(analogRead(3));
   random16_set_seed(8934);
   random16_add_entropy(analogRead(3));
   
