@@ -19,7 +19,7 @@
 CRGB leds[NUM_LEDS];
 
 // consts
-#define NUM_PATTERNS 8
+#define NUM_PATTERNS 6
 #define NUM_ROWS 5
 #define NUM_COLUMNS 5
 // #define NUM_ROWS 7
@@ -75,6 +75,7 @@ uint8_t g_colorStrategy;
 uint8_t g_phaseStrategy1, g_phaseStrategy2, g_phaseStrategy3;
 uint8_t g_waveStrategy1, g_waveStrategy2, g_waveStrategy3;
 uint8_t g_offsetFillStrategy;
+uint8_t g_demoReelPatternIndex;
 
 
 
@@ -248,7 +249,7 @@ void resetPatternGlobals() {
   g_hue1 = random8();
   g_hue2 = random8();
 
-  g_hueSteps1 = random8(1,48);
+  g_hueSteps1 = random8(1,32);
   
   g_everyNMillis1 = random16(100,1000);  
   g_everyNMillis2 = random(50,250);
@@ -473,17 +474,6 @@ void strategyPhaseWithRGBSquare(){
   EVERY_N_SECONDS(g_everyNSecs) { randomizeReverses(); }
 }
 
-
-
-
-
-
-
-
-
-
-
-//from demo reel example
 void offsetFill() 
 {
   if (g_patternsReset) {
@@ -507,6 +497,17 @@ void offsetFill()
   }
 }
 
+
+
+
+
+
+
+
+
+
+
+//from demo reel example
 void confetti() 
 {
   if (g_patternsReset) {
@@ -535,7 +536,7 @@ void sinelon()
   }
   // a colored dot sweeping back and forth, with fading trails
   fadeToBlackBy( leds, NUM_LEDS, 20);
-  uint8_t pos = beatsin16( g_bpm1, 0, NUM_LEDS-1 );
+  uint8_t pos = beatsin16(g_bpm1, 0, NUM_LEDS-1);
   leds[pos] += executeColorStrategy(g_hue1, 255);
   EVERY_N_MILLISECONDS( g_everyNMillis1 ) { g_hue1+=g_hueSteps1; }
   
@@ -590,6 +591,27 @@ void juggle() {
 }
 
 
+void executeDemoReelPattern()
+{
+  if (g_patternsReset) {
+    g_demoReelPatternIndex = random8(3);
+  }
+
+  switch(g_demoReelPatternIndex)
+  {
+    case 0:
+      confetti();
+      break;
+    case 1:
+      sinelon();
+      break;
+    case 2:
+      bpm();
+      break;
+  }
+}
+
+
 
 
 
@@ -607,13 +629,14 @@ void juggle() {
 void setupPatterns() {
   patterns[0] = strategyPhaseWithRGBSquare;
   patterns[1] = strategyRGBWaveAndPhase;
-  patterns[2] = confetti;
+  patterns[2] = executeDemoReelPattern;
   patterns[3] = strategyColorAndBrightnessWave;
   patterns[4] = strategyHueWaveWithSquare;
-  patterns[5] = bpm;
-  patterns[6] = sinelon;
+  patterns[5] = offsetFill;
+  // patterns[5] = bpm;
+  // patterns[6] = sinelon;
   // patterns[6] = juggle;
-  patterns[7] = offsetFill;
+  // patterns[2] = confetti;
 }
 
 void setup() {  
