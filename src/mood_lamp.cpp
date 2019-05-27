@@ -429,9 +429,9 @@ void strategyHueWaveWithSquare(){
     g_scale1 = getRandomFloat(0.1f, 4.0f);
     disallowColorStrategyBrightnessForHueSwap();
     g_waveStrategy2 = COLOR_STRATEGY_HSV_HUE_AND_BRIGHTNESS;
-    g_scale1 = 0;
-    g_columnGlitchFactor = 2;
-    g_rowGlitchFactor = 2;
+    // g_scale1 = 0;
+    // g_columnGlitchFactor = 2;
+    // g_rowGlitchFactor = 2;
     g_phaseStrategy1 = PHASE_STRATEGY_ROWS;
     g_patternsReset = false;
   }
