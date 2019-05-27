@@ -7,7 +7,6 @@
 #define LED_TYPE WS2811
 #define COLOR_ORDER RGB
 // #define NUM_LEDS 49
-#define NUM_LEDS 25
 #define BRIGHTNESS 150
 
 // IMPORTANT: To reduce NeoPixel burnout risk, add 1000 uF capacitor across
@@ -16,7 +15,6 @@
 // on a live circuit...if you must, connect GND first.
 
 
-CRGB leds[NUM_LEDS];
 
 // consts
 #define NUM_PATTERNS 6
@@ -24,7 +22,7 @@ CRGB leds[NUM_LEDS];
 #define NUM_COLUMNS 5
 // #define NUM_ROWS 7
 // #define NUM_COLUMNS 7
-#define PIXELS_PER_ROW NUM_LEDS / NUM_COLUMNS
+#define NUM_LEDS NUM_ROWS * NUM_COLUMNS
 
 // the strategy consts are just here to try and make the code more legible
 #define COLOR_STRATEGY_HSV_HUE_AND_BRIGHTNESS 0 // HSV with hue for hue and postion for value
@@ -49,6 +47,7 @@ CRGB leds[NUM_LEDS];
 
 
 
+CRGB leds[NUM_LEDS];
 void (*patterns[NUM_PATTERNS])();
 
 
@@ -306,7 +305,7 @@ uint8_t executePixelPhaseStrategy(uint16_t pixelIndex, uint8_t phaseStrategy, fl
   uint8_t phase = 0;
   switch(phaseStrategy) {
     case PHASE_STRATEGY_ROWS:
-      phase = phaseFromRowIndex(pixelIndex, PIXELS_PER_ROW, NUM_ROWS, scale, reversePattern);
+      phase = phaseFromRowIndex(pixelIndex, NUM_COLUMNS, NUM_ROWS, scale, reversePattern);
       break;
     case PHASE_STRATEGY_COLUMNS:
       phase = phaseFromColumnIndex(pixelIndex, NUM_COLUMNS, scale, reversePattern);
