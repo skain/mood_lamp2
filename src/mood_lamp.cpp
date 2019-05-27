@@ -98,12 +98,12 @@ void setBrightnessFromKnob() {
 }
 
 
-void strategyHueWaveWithSquare();
+// void strategyHueWaveWithSquare();
 void loop() {
-  strategyHueWaveWithSquare();
+  // strategyHueWaveWithSquare();
 
   // Call the current pattern function once, updating the 'leds' array
-  // patterns[g_patternIndex]();
+  patterns[g_patternIndex]();
 
   // send the 'leds' array out to the actual LED strip
   FastLED.show(); 
@@ -267,6 +267,16 @@ void resetPatternGlobals() {
 
   g_offsetFillStrategy = random(0,2);
   setupRandomPalette1();
+
+  g_rowGlitchFactor = g_columnGlitchFactor = 0;
+
+  if (pctToBool(20)) {
+    g_rowGlitchFactor = random8(2, NUM_LEDS);
+  }
+
+  if (pctToBool(20)) {
+    g_columnGlitchFactor = random8(2, NUM_LEDS);
+  }
 }
 
 void disallowColorStrategyBrightnessForHueSwap() {
@@ -306,8 +316,8 @@ uint8_t executePixelPhaseStrategy(uint16_t pixelIndex, uint8_t phaseStrategy, fl
   uint8_t phase = 0;
   switch(phaseStrategy) {
     case PHASE_STRATEGY_ROWS:
-      phase = phaseFromRowIndex(pixelIndex, NUM_COLUMNS, NUM_ROWS, scale, reversePattern);
-      // phase = phaseFromRowIndex(pixelIndex, NUM_COLUMNS - g_columnGlitchFactor, NUM_ROWS - g_rowGlitchFactor, scale, reversePattern);
+      // phase = phaseFromRowIndex(pixelIndex, NUM_COLUMNS, NUM_ROWS, scale, reversePattern);
+      phase = phaseFromRowIndex(pixelIndex, NUM_COLUMNS - g_columnGlitchFactor, NUM_ROWS - g_rowGlitchFactor, scale, reversePattern);
       break;
     case PHASE_STRATEGY_COLUMNS:
       // phase = phaseFromColumnIndex(pixelIndex, NUM_COLUMNS, scale, reversePattern);
@@ -428,11 +438,6 @@ void strategyHueWaveWithSquare(){
     g_bpm2 = random8(2,40); //hue sin
     g_scale1 = getRandomFloat(0.1f, 4.0f);
     disallowColorStrategyBrightnessForHueSwap();
-    g_waveStrategy2 = COLOR_STRATEGY_HSV_HUE_AND_BRIGHTNESS;
-    // g_scale1 = 0;
-    // g_columnGlitchFactor = 2;
-    // g_rowGlitchFactor = 2;
-    g_phaseStrategy1 = PHASE_STRATEGY_ROWS;
     g_patternsReset = false;
   }
   
@@ -442,7 +447,6 @@ void strategyHueWaveWithSquare(){
   
   for(uint16_t i=0; i<NUM_LEDS; i++) {
     phase = executePixelPhaseStrategy(i, g_phaseStrategy1, g_scale1, g_reverse1);
-    EVERY_N_MILLIS(250) { Serial.println(phase); }
     curSquare = beatsquare8(g_bpm1, 0, 255, g_startTime, phase, g_pulseWidth1);
     color = executeColorStrategy(hue, curSquare);
     leds[i] = color;
