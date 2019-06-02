@@ -6,7 +6,6 @@
 #define DATA_PIN 2
 #define LED_TYPE WS2811
 #define COLOR_ORDER RGB
-// #define NUM_LEDS 49
 #define BRIGHTNESS 150
 
 // IMPORTANT: To reduce NeoPixel burnout risk, add 1000 uF capacitor across
@@ -32,9 +31,9 @@
 
 #define PHASE_STRATEGY_ROWS 0 // Phase calculated by row
 #define PHASE_STRATEGY_COLUMNS 1 // Phase calculated by column
-#define PHASE_STRATEGY_ODD_EVEN 2 // Phase calculated by pixelIndex % 2
-#define PHASE_STRATEGY_STRIP_INDEX 3 // Phase calculated directly by pixel location on strip
-#define PHASE_STRATEGY_SOLID 4 // All pixels assigned a phase of 0
+#define PHASE_STRATEGY_STRIP_INDEX 2 // Phase calculated directly by pixel location on strip
+// #define PHASE_STRATEGY_SOLID 3 // All pixels assigned a phase of 0
+// #define PHASE_STRATEGY_ODD_EVEN 4 // Phase calculated by pixelIndex % 2
 
 #define WAVE_STRATEGY_SIN 0 // basic sin
 #define WAVE_STRATEGY_SAW 1 // basic sawtooth
@@ -75,7 +74,7 @@ uint8_t g_phaseStrategy1, g_phaseStrategy2, g_phaseStrategy3;
 uint8_t g_waveStrategy1, g_waveStrategy2, g_waveStrategy3;
 uint8_t g_offsetFillStrategy;
 uint8_t g_demoReelPatternIndex;
-unsigned int g_rowGlitchFactor, g_columnGlitchFactor;
+unsigned int g_rowGlitchFactor, g_columnGlitchFactor, g_pixelGlitchFactor;
 
 
 
@@ -98,9 +97,9 @@ void setBrightnessFromKnob() {
 }
 
 
-// void strategyHueWaveWithSquare();
+// void strategyColorAndBrightnessWave();
 void loop() {
-  // strategyHueWaveWithSquare();
+  // strategyColorAndBrightnessWave();
 
   // Call the current pattern function once, updating the 'leds' array
   patterns[g_patternIndex]();
@@ -112,7 +111,7 @@ void loop() {
 
   // do some periodic updates
   EVERY_N_SECONDS(20) { doPeriodicUpdates(); } // change patterns periodically
-  EVERY_N_MILLIS(125) { setBrightnessFromKnob(); }
+  EVERY_N_MILLIS(25) { setBrightnessFromKnob(); }
 }
 
 
@@ -257,9 +256,9 @@ void resetPatternGlobals() {
 
   g_colorStrategy = random8(0,4);
   
-  g_phaseStrategy1 = random8(0,5);
-  g_phaseStrategy2 = random8(0,5);
-  g_phaseStrategy3 = random8(0,5);
+  g_phaseStrategy1 = random8(0,3);
+  g_phaseStrategy2 = random8(0,3);
+  g_phaseStrategy3 = random8(0,3);
   
   g_waveStrategy1 = random8(0,4);
   g_waveStrategy2 = random8(0,4);
@@ -270,12 +269,16 @@ void resetPatternGlobals() {
 
   g_rowGlitchFactor = g_columnGlitchFactor = 0;
 
-  if (pctToBool(20)) {
-    g_rowGlitchFactor = random8(2, NUM_LEDS);
+  if (pctToBool(30)) {
+    g_rowGlitchFactor = random8(1, NUM_COLUMNS);
   }
 
-  if (pctToBool(20)) {
-    g_columnGlitchFactor = random8(2, NUM_LEDS);
+  if (pctToBool(30)) {
+    g_columnGlitchFactor = random8(1, NUM_ROWS);
+  }
+
+  if (pctToBool(30)) {
+    g_pixelGlitchFactor = random8(1, NUM_LEDS);
   }
 }
 
@@ -321,15 +324,15 @@ uint8_t executePixelPhaseStrategy(uint16_t pixelIndex, uint8_t phaseStrategy, fl
     case PHASE_STRATEGY_COLUMNS:
       phase = phaseFromColumnIndex(pixelIndex, NUM_COLUMNS - g_columnGlitchFactor, scale, reversePattern);
       break;
-    case PHASE_STRATEGY_ODD_EVEN:
-      phase = phaseFromOddEvenIndex(pixelIndex);
-      break;
+    // case PHASE_STRATEGY_ODD_EVEN:
+    //   phase = phaseFromOddEvenIndex(pixelIndex);
+    //   break;
     case PHASE_STRATEGY_STRIP_INDEX:
-      phase = phaseFromPixelIndex(pixelIndex, NUM_LEDS, scale, reversePattern);
+      phase = phaseFromPixelIndex(pixelIndex, NUM_LEDS - g_pixelGlitchFactor, scale, reversePattern);
       break;
-    case PHASE_STRATEGY_SOLID:
-      phase = 0;
-      break;
+    // case PHASE_STRATEGY_SOLID:
+    //   phase = 0;
+    //   break;
   }
   return phase;
 }
@@ -406,8 +409,9 @@ void strategyColorAndBrightnessWave() {
     g_bpm1 = random8(2,20);
     g_bpm2 = random(2,20); //hue sin
     g_patternsReset = false;
-    // g_phaseStrategy = PHASE_STRATEGY_ROW_OFFSET;
+    // g_phaseStrategy1 = PHASE_STRATEGY_COLUMNS;
     // g_colorStrategy = COLOR_STRATEGY_HSV_HUE_AND_BRIGHTNESS;
+    // g_rowGlitchFactor = 1;
     // g_addGlitter = false;
   }
 
