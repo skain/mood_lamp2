@@ -267,7 +267,7 @@ void resetPatternGlobals() {
   g_offsetFillStrategy = random(0,2);
   setupRandomPalette1();
 
-  g_rowGlitchFactor = g_columnGlitchFactor = 0;
+  g_rowGlitchFactor = g_columnGlitchFactor = g_pixelGlitchFactor = 0;
 
   if (pctToBool(30)) {
     g_rowGlitchFactor = random8(1, NUM_COLUMNS);
