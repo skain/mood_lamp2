@@ -16,11 +16,11 @@
 
 
 // consts
-#define NUM_PATTERNS 5
-#define NUM_ROWS 5
-#define NUM_COLUMNS 5
-// #define NUM_ROWS 7
-// #define NUM_COLUMNS 7
+#define NUM_PATTERNS 4
+// #define NUM_ROWS 5
+// #define NUM_COLUMNS 5
+#define NUM_ROWS 7
+#define NUM_COLUMNS 7
 #define NUM_LEDS NUM_ROWS * NUM_COLUMNS
 
 // the strategy consts are just here to try and make the code more legible
@@ -261,9 +261,9 @@ void resetPatternGlobals() {
   g_phaseStrategy2 = random8(0,3);
   g_phaseStrategy3 = random8(0,3);
   
-  g_waveStrategy1 = random8(0,4);
-  g_waveStrategy2 = random8(0,4);
-  g_waveStrategy3 = random8(0,4);
+  g_waveStrategy1 = random8(0,5);
+  g_waveStrategy2 = random8(0,5);
+  g_waveStrategy3 = random8(0,5);
 
   g_offsetFillStrategy = random(0,2);
   setupRandomPalette1();
@@ -416,7 +416,7 @@ void fullHueStrategy() {
 
 void fullRGBStrategy(){
   if (g_patternsReset) {
-    Serial.println("strategyRGBWaveAndPhase");
+    Serial.println("fullRGBStrategy");
     // g_scale1 = getRandomFloat(0.2f, 2.0f);
     // g_scale2 = getRandomFloat(0.2f, 2.0f);
     // g_scale3 = getRandomFloat(0.2f, 2.0f);
@@ -601,6 +601,7 @@ void setupPatterns() {
   patterns[0] = executeDemoReelPattern;
   patterns[1] = fullHueStrategy;
   patterns[2] = offsetFill;
+  patterns[3] = fullRGBStrategy;
   // patterns[4] = strategyHueWaveWithSquare;
   // patterns[5] = bpm;
   // patterns[6] = sinelon;
