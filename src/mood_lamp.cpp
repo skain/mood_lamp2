@@ -24,10 +24,10 @@
 #define NUM_LEDS NUM_ROWS * NUM_COLUMNS
 
 // the strategy consts are just here to try and make the code more legible
-#define COLOR_STRATEGY_HSV_HUE_AND_BRIGHTNESS 0 // HSV with hue for hue and postion for value
-#define COLOR_STRATEGY_PALETTE_HUE_AND_BRIGHTNESS 1 // Random palette with hue for wheel BRIGHTNESS and BRIGHTNESS for brightness
-#define COLOR_STRATEGY_HSV_BRIGHTNESS_FOR_HUE 2 // HSV with BRIGHTNESS for hue, 255 for value (hue is ignored)
-#define COLOR_STRATEGY_PALETTE_BRIGHTNESS_FOR_HUE 3 // Palette with BRIGHTNESS for wheel BRIGHTNESS, 255 for brightness (hue is ignored)
+// #define COLOR_STRATEGY_HSV_HUE_AND_BRIGHTNESS 0 // HSV with hue for hue and postion for value
+#define COLOR_STRATEGY_PALETTE_HUE_AND_BRIGHTNESS 0 // Random palette with hue for wheel BRIGHTNESS and BRIGHTNESS for brightness
+// #define COLOR_STRATEGY_HSV_BRIGHTNESS_FOR_HUE 2 // HSV with BRIGHTNESS for hue, 255 for value (hue is ignored)
+#define COLOR_STRATEGY_PALETTE_BRIGHTNESS_FOR_HUE 1 // Palette with BRIGHTNESS for wheel BRIGHTNESS, 255 for brightness (hue is ignored)
 
 #define PHASE_STRATEGY_ROWS 0 // Phase calculated by row
 #define PHASE_STRATEGY_COLUMNS 1 // Phase calculated by column
@@ -40,9 +40,6 @@
 #define WAVE_STRATEGY_TRIANGLE 2 // basic triangle (linear slopes)
 #define WAVE_STRATEGY_CUBIC 3 // basic cubic (spends more time at limits than sine)
 #define WAVE_STRATEGY_SQUARE 4 // basic square (on or off)
-
-#define OFFSET_FILL_STRATEGY_RAINBOW 0 //use fill_rainbow
-#define OFFSET_FILL_STRATEGY_PALETTE 1 //use current random palette
 
 
 
@@ -73,7 +70,6 @@ bool g_reverse1, g_reverse2, g_reverse3;
 uint8_t g_colorStrategy;
 uint8_t g_phaseStrategy1, g_phaseStrategy2, g_phaseStrategy3;
 uint8_t g_waveStrategy1, g_waveStrategy2, g_waveStrategy3;
-uint8_t g_offsetFillStrategy;
 uint8_t g_demoReelPatternIndex;
 unsigned int g_rowGlitchFactor, g_columnGlitchFactor, g_pixelGlitchFactor;
 
@@ -98,9 +94,9 @@ void setBrightnessFromKnob() {
 }
 
 
-// void fullRGBStrategy();
+// void fullHueStrategy();
 void loop() {
-  // fullRGBStrategy();
+  // fullHueStrategy();
 
   // Call the current pattern function once, updating the 'leds' array
   patterns[g_patternIndex]();
@@ -131,11 +127,48 @@ void loop() {
 // This function fills the palette with totally random colors.
 void setupRandomPalette1()
 {
-  if (random8() > 128) {
+  uint8_t chance = random8(100);
+  Serial.print("Chance: ");
+  Serial.println(chance);
+  if (chance > 90) {
+    Serial.println("set palette");
+    switch(random8(8)) {
+      case 0:
+        g_palette1 = RainbowColors_p;
+        break;
+      case 1:
+        g_palette1 = CloudColors_p;
+        break;
+      case 2:
+        g_palette1 = LavaColors_p;
+        break;
+      case 3:
+        g_palette1 = OceanColors_p;
+        break;
+      case 4:
+        g_palette1 = ForestColors_p;
+        break;
+      case 5:
+        g_palette1 = RainbowStripeColors_p;
+        break;
+      case 6:
+        g_palette1 = PartyColors_p;
+        break;
+      case 7:
+        g_palette1 = HeatColors_p;
+        break;
+    }      
+  }
+  else if (chance > 60) {
+    Serial.println("16 palette");
     for (uint8_t i = 0; i < 16; i++) {
         g_palette1[i] = CHSV(random8(), 255, random8(10, 255));
     }
+  } else if (chance > 30){
+    Serial.println("2 palette");
+    g_palette1 = CRGBPalette16(getRandomColor(), getRandomColor());
   } else {
+    Serial.println("4 palette");
     CRGB c1, c2, c3, c4;
     c1 = getRandomColor();
     c2 = getRandomColor();
@@ -255,7 +288,7 @@ void resetPatternGlobals() {
   g_everyNMillis2 = random(50,250);
   g_everyNSecs = random8(3,15);
 
-  g_colorStrategy = random8(0,4);
+  g_colorStrategy = random8(0,2);
   
   g_phaseStrategy1 = random8(0,3);
   g_phaseStrategy2 = random8(0,3);
@@ -265,7 +298,6 @@ void resetPatternGlobals() {
   g_waveStrategy2 = random8(0,5);
   g_waveStrategy3 = random8(0,5);
 
-  g_offsetFillStrategy = random(0,2);
   setupRandomPalette1();
 
   g_rowGlitchFactor = g_columnGlitchFactor = g_pixelGlitchFactor = 0;
@@ -287,11 +319,9 @@ void disallowColorStrategyBrightnessForHueSwap() {
   //some patterns/waveforms don't work well when swapping BRIGHTNESS for hue, so call 
   //this in the global setup to disallow.
   switch(g_colorStrategy) { 
-    case 2:
-      g_colorStrategy = 0;
+    case COLOR_STRATEGY_PALETTE_BRIGHTNESS_FOR_HUE:
+      g_colorStrategy = COLOR_STRATEGY_PALETTE_HUE_AND_BRIGHTNESS;
       break;
-    case 3:
-      g_colorStrategy = 1;
   }
 }
 
@@ -299,15 +329,15 @@ void disallowColorStrategyBrightnessForHueSwap() {
 CRGB executeColorStrategy(uint8_t hue, uint8_t brightness) {
   CRGB color;
   switch(g_colorStrategy) {
-      case COLOR_STRATEGY_HSV_HUE_AND_BRIGHTNESS:      
-        color = CHSV(hue, g_sat1, brightness);
-        break;
+      // case COLOR_STRATEGY_HSV_HUE_AND_BRIGHTNESS:      
+      //   color = CHSV(hue, g_sat1, brightness);
+      //   break;
       case COLOR_STRATEGY_PALETTE_HUE_AND_BRIGHTNESS:
         color = ColorFromPalette(g_palette1, hue, brightness, g_paletteBlending1);
         break;
-      case COLOR_STRATEGY_HSV_BRIGHTNESS_FOR_HUE:      
-        color = CHSV(brightness, g_sat1, 255);
-        break;
+      // case COLOR_STRATEGY_HSV_BRIGHTNESS_FOR_HUE:      
+      //   color = CHSV(brightness, g_sat1, 255);
+      //   break;
       case COLOR_STRATEGY_PALETTE_BRIGHTNESS_FOR_HUE:      
         color = ColorFromPalette(g_palette1, brightness, 255, g_paletteBlending1);
         break;
@@ -385,7 +415,7 @@ void fullHueStrategy() {
       disallowColorStrategyBrightnessForHueSwap();
     }
     g_patternsReset = false;
-    // g_colorStrategy = COLOR_STRATEGY_HSV_HUE_AND_BRIGHTNESS;
+    // g_colorStrategy = COLOR_STRATEGY_PALETTE_HUE_AND_BRIGHTNESS;
     // g_phaseStrategy1 = PHASE_STRATEGY_ROWS;
     // g_waveStrategy1 = 0;
     // g_waveStrategy2 = 4;
@@ -451,14 +481,8 @@ void offsetFill()
     g_patternsReset = false;
   }
 
-  switch(g_offsetFillStrategy) {
-    case OFFSET_FILL_STRATEGY_RAINBOW:
-      fill_rainbow( leds, NUM_LEDS, g_hue1, g_hue2);
-      break;
-    case OFFSET_FILL_STRATEGY_PALETTE:
-      fill_palette(leds, NUM_LEDS, g_hue1, g_hue2, g_palette1, 255, g_paletteBlending1);
-      break;
-  }
+  fill_palette(leds, NUM_LEDS, g_hue1, g_hue2, g_palette1, 255, g_paletteBlending1);
+
   EVERY_N_MILLISECONDS( g_everyNMillis2 ) { g_hue1+= g_hueSteps1; }
 
   if (g_addGlitter) {    
