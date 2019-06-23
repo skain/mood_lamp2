@@ -17,10 +17,10 @@
 
 // consts
 #define NUM_PATTERNS 4
-// #define NUM_ROWS 5
-// #define NUM_COLUMNS 5
-#define NUM_ROWS 7
-#define NUM_COLUMNS 7
+#define NUM_ROWS 5
+#define NUM_COLUMNS 5
+// #define NUM_ROWS 7
+// #define NUM_COLUMNS 7
 #define NUM_LEDS NUM_ROWS * NUM_COLUMNS
 
 // the strategy consts are just here to try and make the code more legible
@@ -41,8 +41,8 @@
 #define WAVE_STRATEGY_CUBIC 3 // basic cubic (spends more time at limits than sine)
 #define WAVE_STRATEGY_SQUARE 4 // basic square (on or off)
 
-#define THREE_WAVE_STRATEGY_RGB 0
-#define THREE_WAVE_STRATEGY_HSV 1
+#define THREE_WAVE_STRATEGY_RGB 0 // apply 3 different waves to R, G and B
+#define THREE_WAVE_STRATEGY_HSV 1 // apply 3 different waves to H, S and V
 
 
 
