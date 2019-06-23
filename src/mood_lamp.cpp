@@ -450,7 +450,6 @@ void fullThreeWaveStrategy(){
   if (g_patternsReset) {
     Serial.println("fullThreeWaveStrategy");
     g_patternsReset = false;
-    g_three_wave_strategy = THREE_WAVE_STRATEGY_HSV;
   }
   
   float phase1, phase2, phase3;
