@@ -41,6 +41,8 @@
 #define WAVE_STRATEGY_CUBIC 3 // basic cubic (spends more time at limits than sine)
 #define WAVE_STRATEGY_SQUARE 4 // basic square (on or off)
 
+#define THREE_WAVE_STRATEGY_RGB 0
+#define THREE_WAVE_STRATEGY_HSV 1
 
 
 
@@ -72,6 +74,7 @@ uint8_t g_phaseStrategy1, g_phaseStrategy2, g_phaseStrategy3;
 uint8_t g_waveStrategy1, g_waveStrategy2, g_waveStrategy3;
 uint8_t g_demoReelPatternIndex;
 unsigned int g_rowGlitchFactor, g_columnGlitchFactor, g_pixelGlitchFactor;
+uint8_t g_three_wave_strategy;
 
 
 
@@ -94,9 +97,9 @@ void setBrightnessFromKnob() {
 }
 
 
-// void fullHueStrategy();
+// void fullThreeWaveStrategy();
 void loop() {
-  // fullHueStrategy();
+  // fullThreeWaveStrategy();
 
   // Call the current pattern function once, updating the 'leds' array
   patterns[g_patternIndex]();
@@ -128,10 +131,7 @@ void loop() {
 void setupRandomPalette1()
 {
   uint8_t chance = random8(100);
-  Serial.print("Chance: ");
-  Serial.println(chance);
   if (chance > 90) {
-    Serial.println("set palette");
     switch(random8(8)) {
       case 0:
         g_palette1 = RainbowColors_p;
@@ -313,6 +313,8 @@ void resetPatternGlobals() {
   if (pctToBool(30)) {
     g_pixelGlitchFactor = random8(1, NUM_LEDS);
   }
+
+  g_three_wave_strategy = random8(0,2);
 }
 
 void disallowColorStrategyBrightnessForHueSwap() {
@@ -444,26 +446,31 @@ void fullHueStrategy() {
 
 
 
-void fullRGBStrategy(){
+void fullThreeWaveStrategy(){
   if (g_patternsReset) {
-    Serial.println("fullRGBStrategy");
-    // g_scale1 = getRandomFloat(0.2f, 2.0f);
-    // g_scale2 = getRandomFloat(0.2f, 2.0f);
-    // g_scale3 = getRandomFloat(0.2f, 2.0f);
+    Serial.println("fullThreeWaveStrategy");
     g_patternsReset = false;
+    g_three_wave_strategy = THREE_WAVE_STRATEGY_HSV;
   }
   
-  float redPhase, greenPhase, bluePhase;
-  uint8_t redVal, greenVal, blueVal;
+  float phase1, phase2, phase3;
+  uint8_t val1, val2, val3;
   
   for(uint16_t i=0; i<NUM_LEDS; i++) {
-    redPhase = executePixelPhaseStrategy(i, g_phaseStrategy1, g_scale1, g_reverse1);
-    greenPhase = executePixelPhaseStrategy(i, g_phaseStrategy2, g_scale2, g_reverse1);
-    bluePhase = executePixelPhaseStrategy(i, g_phaseStrategy3, g_scale3, g_reverse1);
-    redVal = executeWaveStrategy(g_waveStrategy1, g_bpm1, g_startTime, redPhase, g_pulseWidth1);
-    greenVal = executeWaveStrategy(g_waveStrategy2, g_bpm2, g_startTime, greenPhase, g_pulseWidth2);
-    blueVal = executeWaveStrategy(g_waveStrategy3, g_bpm3, g_startTime, bluePhase, g_pulseWidth3);
-    leds[i] = CRGB(redVal, greenVal, blueVal);
+    phase1 = executePixelPhaseStrategy(i, g_phaseStrategy1, g_scale1, g_reverse1);
+    phase2 = executePixelPhaseStrategy(i, g_phaseStrategy2, g_scale2, g_reverse1);
+    phase3 = executePixelPhaseStrategy(i, g_phaseStrategy3, g_scale3, g_reverse1);
+    val1 = executeWaveStrategy(g_waveStrategy1, g_bpm1, g_startTime, phase1, g_pulseWidth1);
+    val2 = executeWaveStrategy(g_waveStrategy2, g_bpm2, g_startTime, phase2, g_pulseWidth2);
+    val3 = executeWaveStrategy(g_waveStrategy3, g_bpm3, g_startTime, phase3, g_pulseWidth3);
+    switch(g_three_wave_strategy) {
+      case THREE_WAVE_STRATEGY_RGB:
+        leds[i] = CRGB(val1, val2, val3);
+        break;
+      case THREE_WAVE_STRATEGY_HSV:
+        leds[i] = CHSV(val1, val2, val3);
+        break;
+    }
   }
 
   if (g_addGlitter) {    
@@ -625,7 +632,7 @@ void setupPatterns() {
   patterns[0] = executeDemoReelPattern;
   patterns[1] = fullHueStrategy;
   patterns[2] = offsetFill;
-  patterns[3] = fullRGBStrategy;
+  patterns[3] = fullThreeWaveStrategy;
   // patterns[4] = strategyHueWaveWithSquare;
   // patterns[5] = bpm;
   // patterns[6] = sinelon;
