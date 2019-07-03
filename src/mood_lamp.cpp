@@ -309,12 +309,12 @@ void resetPatternGlobals() {
     g_pixelGlitchFactor = random8(1, NUM_LEDS);
   }
 
-  g_minAmplitude1 = random8();
-  g_maxAmplitude1 = random8();
-  g_minAmplitude2 = random8();
-  g_maxAmplitude2 = random8();
-  g_minAmplitude3 = random8();
-  g_maxAmplitude3 = random8();
+  g_minAmplitude1 = random8(253);
+  g_maxAmplitude1 = random8(g_minAmplitude1 + 1, 255);
+  g_minAmplitude2 = random8(253);
+  g_maxAmplitude2 = random8(g_minAmplitude2 + 1, 255);
+  g_minAmplitude3 = random8(253);
+  g_maxAmplitude3 = random8(g_minAmplitude3 + 1, 255);
 }
 
 void disallowColorStrategyBrightnessForHueSwap() {
