@@ -72,6 +72,7 @@ uint8_t g_phaseStrategy1, g_phaseStrategy2, g_phaseStrategy3;
 uint8_t g_waveStrategy1, g_waveStrategy2, g_waveStrategy3;
 uint8_t g_demoReelPatternIndex;
 unsigned int g_rowGlitchFactor, g_columnGlitchFactor, g_pixelGlitchFactor;
+uint8_t g_minAmplitude1, g_maxAmplitude1, g_minAmplitude2, g_maxAmplitude2, g_minAmplitude3, g_maxAmplitude3;
 
 
 
@@ -94,9 +95,9 @@ void setBrightnessFromKnob() {
 }
 
 
-// void fullHueStrategy();
+// void fullPaletteStrategy();
 void loop() {
-  // fullHueStrategy();
+  // fullPaletteStrategy();
 
   // Call the current pattern function once, updating the 'leds' array
   patterns[g_patternIndex]();
@@ -128,10 +129,7 @@ void loop() {
 void setupRandomPalette1()
 {
   uint8_t chance = random8(100);
-  Serial.print("Chance: ");
-  Serial.println(chance);
   if (chance > 90) {
-    Serial.println("set palette");
     switch(random8(8)) {
       case 0:
         g_palette1 = RainbowColors_p;
@@ -160,15 +158,12 @@ void setupRandomPalette1()
     }      
   }
   else if (chance > 60) {
-    Serial.println("16 palette");
     for (uint8_t i = 0; i < 16; i++) {
         g_palette1[i] = CHSV(random8(), 255, random8(10, 255));
     }
   } else if (chance > 30){
-    Serial.println("2 palette");
     g_palette1 = CRGBPalette16(getRandomColor(), getRandomColor());
   } else {
-    Serial.println("4 palette");
     CRGB c1, c2, c3, c4;
     c1 = getRandomColor();
     c2 = getRandomColor();
@@ -222,12 +217,12 @@ void addGlitter(uint8_t chanceOfGlitter)
 //   Serial.println(g_scale3);
 //   Serial.print("g_sat1: ");
 //   Serial.println(g_sat1);    
-//   Serial.print("g_pulseWidth1: ");
-//   Serial.println(g_pulseWidth1);
-//   Serial.print("g_pulseWidth2: ");
-//   Serial.println(g_pulseWidth2);
-//   Serial.print("g_pulseWidth3: ");
-//   Serial.println(g_pulseWidth3);  
+//   Serial.print("g_minAmplitude1, g_maxAmplitude1, g_pulseWidth1: ");
+//   Serial.println(g_minAmplitude1, g_maxAmplitude1, g_pulseWidth1);
+//   Serial.print("g_minAmplitude2, g_maxAmplitude2, g_pulseWidth2: ");
+//   Serial.println(g_minAmplitude2, g_maxAmplitude2, g_pulseWidth2);
+//   Serial.print("g_minAmplitude3, g_maxAmplitude3, g_pulseWidth3: ");
+//   Serial.println(g_minAmplitude3, g_maxAmplitude3, g_pulseWidth3);  
 //   Serial.print("g_hue1: ");
 //   Serial.println(g_hue1);
 //   Serial.print("g_hue2: ");
@@ -313,6 +308,13 @@ void resetPatternGlobals() {
   if (pctToBool(30)) {
     g_pixelGlitchFactor = random8(1, NUM_LEDS);
   }
+
+  g_minAmplitude1 = random8();
+  g_maxAmplitude1 = random8();
+  g_minAmplitude2 = random8();
+  g_maxAmplitude2 = random8();
+  g_minAmplitude3 = random8();
+  g_maxAmplitude3 = random8();
 }
 
 void disallowColorStrategyBrightnessForHueSwap() {
@@ -368,23 +370,24 @@ uint8_t executePixelPhaseStrategy(uint16_t pixelIndex, uint8_t phaseStrategy, fl
   return phase;
 }
 
-uint8_t executeWaveStrategy(uint8_t waveStrategy, uint8_t bpm, unsigned long startTime, uint8_t phase, uint8_t pulseWidth) {
+uint8_t executeWaveStrategy(uint8_t waveStrategy, uint8_t bpm, unsigned long startTime, uint8_t phase, 
+  uint8_t minAmplitude, uint8_t maxAmplitude, uint8_t pulseWidth) {
   uint8_t waveValue = 0;
   switch(waveStrategy) {
     case WAVE_STRATEGY_SIN:
-      waveValue = beatsin8(bpm, 0, 255, startTime, phase);
+      waveValue = beatsin8(bpm, minAmplitude, maxAmplitude, startTime, phase);
       break;
     case WAVE_STRATEGY_SAW:
-      waveValue = beatsaw8(bpm, 0, 255, startTime, phase);
+      waveValue = beatsaw8(bpm, minAmplitude, maxAmplitude, startTime, phase);
       break;
     case WAVE_STRATEGY_TRIANGLE:
-      waveValue = beattriwave8(bpm, 0, 255, startTime, phase);
+      waveValue = beattriwave8(bpm, minAmplitude, maxAmplitude, startTime, phase);
       break;
     case WAVE_STRATEGY_CUBIC:
-      waveValue = beatcubicwave8(bpm, 9, 255, startTime, phase);
+      waveValue = beatcubicwave8(bpm, minAmplitude, maxAmplitude, startTime, phase);
       break;
     case WAVE_STRATEGY_SQUARE:
-      waveValue = beatsquare8(bpm, 0, 255, startTime, phase, pulseWidth);
+      waveValue = beatsquare8(bpm, minAmplitude, maxAmplitude, startTime, phase, pulseWidth);
       break;
   }
 
@@ -406,21 +409,15 @@ uint8_t executeWaveStrategy(uint8_t waveStrategy, uint8_t bpm, unsigned long sta
 
 
 //sequences
-void fullHueStrategy() {
+void fullPaletteStrategy() {
   if (g_patternsReset) {
-    Serial.println("fullHueStrategy");
-    g_bpm1 = random8(2,20);
-    g_bpm2 = random(2,20); //hue sin
+    Serial.println("fullPaletteStrategy");
+    // g_bpm1 = random8(2,20);
+    // g_bpm2 = random(2,20); //hue sin
     if (g_waveStrategy2 == WAVE_STRATEGY_SQUARE) {
       disallowColorStrategyBrightnessForHueSwap();
     }
     g_patternsReset = false;
-    // g_colorStrategy = COLOR_STRATEGY_PALETTE_HUE_AND_BRIGHTNESS;
-    // g_phaseStrategy1 = PHASE_STRATEGY_ROWS;
-    // g_waveStrategy1 = 0;
-    // g_waveStrategy2 = 4;
-    // g_addGlitter = false;
-    // disallowColorStrategyBrightnessForHueSwap();
   }
 
   EVERY_N_SECONDS(g_everyNSecs) { g_reverse1 = !g_reverse1; }
@@ -428,11 +425,11 @@ void fullHueStrategy() {
   uint8_t phase, waveVal, hue;
   CRGB color;
 
-  hue = executeWaveStrategy(g_waveStrategy1, g_bpm2, g_startTime, 0, g_pulseWidth1);
+  hue = executeWaveStrategy(g_waveStrategy1, g_bpm1, g_startTime, 0, g_minAmplitude1, g_maxAmplitude1, g_pulseWidth1);
   
   for(uint16_t i=0; i<NUM_LEDS; i++) {
     phase = executePixelPhaseStrategy(i, g_phaseStrategy1, g_scale1, g_reverse1);
-    waveVal = executeWaveStrategy(g_waveStrategy2, g_bpm1, g_startTime, phase, g_pulseWidth1);
+    waveVal = executeWaveStrategy(g_waveStrategy2, g_bpm2, g_startTime, phase, g_minAmplitude2, g_maxAmplitude2, g_pulseWidth2);
     color = executeColorStrategy(hue, waveVal);
     leds[i] = color;
   }
@@ -447,9 +444,6 @@ void fullHueStrategy() {
 void fullRGBStrategy(){
   if (g_patternsReset) {
     Serial.println("fullRGBStrategy");
-    // g_scale1 = getRandomFloat(0.2f, 2.0f);
-    // g_scale2 = getRandomFloat(0.2f, 2.0f);
-    // g_scale3 = getRandomFloat(0.2f, 2.0f);
     g_patternsReset = false;
   }
   
@@ -460,9 +454,9 @@ void fullRGBStrategy(){
     redPhase = executePixelPhaseStrategy(i, g_phaseStrategy1, g_scale1, g_reverse1);
     greenPhase = executePixelPhaseStrategy(i, g_phaseStrategy2, g_scale2, g_reverse1);
     bluePhase = executePixelPhaseStrategy(i, g_phaseStrategy3, g_scale3, g_reverse1);
-    redVal = executeWaveStrategy(g_waveStrategy1, g_bpm1, g_startTime, redPhase, g_pulseWidth1);
-    greenVal = executeWaveStrategy(g_waveStrategy2, g_bpm2, g_startTime, greenPhase, g_pulseWidth2);
-    blueVal = executeWaveStrategy(g_waveStrategy3, g_bpm3, g_startTime, bluePhase, g_pulseWidth3);
+    redVal = executeWaveStrategy(g_waveStrategy1, g_bpm1, g_startTime, redPhase, g_minAmplitude1, g_maxAmplitude1, g_pulseWidth1);
+    greenVal = executeWaveStrategy(g_waveStrategy2, g_bpm2, g_startTime, greenPhase, g_minAmplitude2, g_maxAmplitude2, g_pulseWidth2);
+    blueVal = executeWaveStrategy(g_waveStrategy3, g_bpm3, g_startTime, bluePhase, g_minAmplitude3, g_maxAmplitude3, g_pulseWidth3);
     leds[i] = CRGB(redVal, greenVal, blueVal);
   }
 
@@ -483,7 +477,7 @@ void offsetFill()
 
   fill_palette(leds, NUM_LEDS, g_hue1, g_hue2, g_palette1, 255, g_paletteBlending1);
 
-  EVERY_N_MILLISECONDS( g_everyNMillis2 ) { g_hue1+= g_hueSteps1; }
+  EVERY_N_MILLISECONDS( g_everyNMillis2 ) { g_hue1 += g_hueSteps1; }
 
   if (g_addGlitter) {    
     addGlitter(g_glitterChance);
@@ -509,7 +503,7 @@ void confetti()
     g_patternsReset = false;
   }
   // random colored speckles that blink in and fade smoothly
-  fadeToBlackBy( leds, NUM_LEDS, 10);
+  fadeToBlackBy(leds, NUM_LEDS, 10);
   uint8_t pos = random16(NUM_LEDS);
   leds[pos] += executeColorStrategy(g_hue1 + random8(64), 255);
   EVERY_N_MILLISECONDS( g_everyNMillis1 ) { g_hue1+=g_hueSteps1; }
@@ -528,7 +522,7 @@ void sinelon()
     g_patternsReset = false;
   }
   // a colored dot sweeping back and forth, with fading trails
-  fadeToBlackBy( leds, NUM_LEDS, 20);
+  fadeToBlackBy(leds, NUM_LEDS, 20);
   uint8_t pos = beatsin16(g_bpm1, 0, NUM_LEDS-1);
   leds[pos] += executeColorStrategy(g_hue1, 255);
   EVERY_N_MILLISECONDS( g_everyNMillis1 ) { g_hue1+=g_hueSteps1; }
@@ -547,9 +541,9 @@ void bpm()
     disallowColorStrategyBrightnessForHueSwap();
     g_patternsReset = false;
   }
-  // CRGBPalette16 palette = PartyColors_p;
+  
   uint8_t beat = beatsin8( g_bpm1, 64, 255);
-  for( uint8_t i = 0; i < NUM_LEDS; i++) { //9948
+  for( uint8_t i = 0; i < NUM_LEDS; i++) { 
     leds[i] = executeColorStrategy(g_hue1+(i*2), beat-g_hue1+(i*10));
   }
   
@@ -623,7 +617,7 @@ void setupPatterns() {
   // patterns[0] = strategyPhaseWithRGBSquare;
   // patterns[1] = strategyRGBWaveAndPhase;
   patterns[0] = executeDemoReelPattern;
-  patterns[1] = fullHueStrategy;
+  patterns[1] = fullPaletteStrategy;
   patterns[2] = offsetFill;
   patterns[3] = fullRGBStrategy;
   // patterns[4] = strategyHueWaveWithSquare;
