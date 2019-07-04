@@ -17,10 +17,12 @@
 
 // consts
 #define NUM_PATTERNS 4
-#define NUM_ROWS 5
-#define NUM_COLUMNS 5
-// #define NUM_ROWS 7
-// #define NUM_COLUMNS 7
+// #define NUM_ROWS 5
+// #define NUM_COLUMNS 5
+// #define NUM_ROWS 8
+// #define NUM_COLUMNS 6
+#define NUM_ROWS 7
+#define NUM_COLUMNS 7
 #define NUM_LEDS NUM_ROWS * NUM_COLUMNS
 
 // the strategy consts are just here to try and make the code more legible
@@ -313,12 +315,15 @@ void resetPatternGlobals() {
   }
 
   g_three_wave_strategy = random8(0,2);
-  g_minAmplitude1 = random8(253);
-  g_maxAmplitude1 = random8(g_minAmplitude1 + 1, 255);
-  g_minAmplitude2 = random8(253);
-  g_maxAmplitude2 = random8(g_minAmplitude2 + 1, 255);
-  g_minAmplitude3 = random8(253);
-  g_maxAmplitude3 = random8(g_minAmplitude3 + 1, 255);
+
+  uint8_t minAmpMax = 128;
+  uint8_t minAmpSpread = 64;
+  g_minAmplitude1 = random8(minAmpMax);
+  g_maxAmplitude1 = random8(g_minAmplitude1 + minAmpSpread, 255);
+  g_minAmplitude2 = random8(minAmpMax);
+  g_maxAmplitude2 = random8(g_minAmplitude2 + minAmpSpread, 255);
+  g_minAmplitude3 = random8(minAmpMax);
+  g_maxAmplitude3 = random8(g_minAmplitude3 + minAmpSpread, 255);
 }
 
 void disallowColorStrategyBrightnessForHueSwap() {
