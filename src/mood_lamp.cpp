@@ -17,12 +17,12 @@
 
 // consts
 #define NUM_PATTERNS 4
-// #define NUM_ROWS 5
-// #define NUM_COLUMNS 5
+#define NUM_ROWS 5
+#define NUM_COLUMNS 5
 // #define NUM_ROWS 8
 // #define NUM_COLUMNS 6
-#define NUM_ROWS 7
-#define NUM_COLUMNS 7
+// #define NUM_ROWS 7
+// #define NUM_COLUMNS 7
 #define NUM_LEDS NUM_ROWS * NUM_COLUMNS
 
 // the strategy consts are just here to try and make the code more legible
@@ -452,7 +452,15 @@ void fullPaletteStrategy() {
 
 void fullThreeWaveStrategy(){
   if (g_patternsReset) {
-    Serial.println("fullRGBStrategy");
+    Serial.println("fullThreeWaveStrategy");
+    if (g_three_wave_strategy == THREE_WAVE_STRATEGY_HSV) {
+      if (g_minAmplitude2 < 192) {
+        g_minAmplitude2 = 192; // low values for saturation are kind of boring...
+        if (g_maxAmplitude2 < g_minAmplitude2) {
+          g_maxAmplitude2 = 255;
+        }
+      }
+    }
     g_patternsReset = false;
   }
   
