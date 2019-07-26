@@ -1,5 +1,4 @@
 # mood_lamp2
-This is a test.
 Finally getting around to a new iteration of my mood lamp project, this time in (not in) CircuitPython!
 
 So, CircuitPython didn't work out. I suppose it's possible I was doing something wrong, but for me at least it was such a dog performance-wise I couldn't get anywhere near a decent framerate out of these neopixels. I upgraded to faster boards a couple times (with the last being an M4) and it really just sucked. Even after I followed the optimization advice I found and basically de-Python-fied my code so completely it almost just looked like C.
