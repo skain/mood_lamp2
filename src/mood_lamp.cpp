@@ -100,9 +100,9 @@ void setBrightnessFromKnob() {
 }
 
 
-// void fullPaletteStrategy();
+// void fullThreeWaveStrategy();
 void loop() {
-  // fullPaletteStrategy();
+  // fullThreeWaveStrategy();
 
   // Call the current pattern function once, updating the 'leds' array
   patterns[g_patternIndex]();
@@ -134,7 +134,7 @@ void loop() {
 void setupRandomPalette1()
 {
   uint8_t chance = random8(100);
-  if (chance > 90) {
+  if (chance > 97) {
     switch(random8(8)) {
       case 0:
         g_palette1 = RainbowColors_p;
@@ -162,11 +162,11 @@ void setupRandomPalette1()
         break;
     }      
   }
-  else if (chance > 60) {
+  else if (chance > 67) {
     for (uint8_t i = 0; i < 16; i++) {
         g_palette1[i] = CHSV(random8(), 255, random8(10, 255));
     }
-  } else if (chance > 30){
+  } else if (chance > 37){
     g_palette1 = CRGBPalette16(getRandomColor(), getRandomColor());
   } else {
     CRGB c1, c2, c3, c4;
@@ -459,6 +459,21 @@ void fullThreeWaveStrategy(){
         if (g_maxAmplitude2 < g_minAmplitude2) {
           g_maxAmplitude2 = 255;
         }
+      }
+    }
+
+    if (g_three_wave_strategy == THREE_WAVE_STRATEGY_RGB) {
+      // similarly, high RGB mins equal low saturation
+      if (g_minAmplitude1 > 45) {
+        g_minAmplitude1 = 45; 
+      }
+
+      if (g_minAmplitude2 > 45) {
+        g_minAmplitude2 = 45; 
+      }
+
+      if (g_minAmplitude3 > 45) {
+        g_minAmplitude3 = 45; 
       }
     }
     g_patternsReset = false;
