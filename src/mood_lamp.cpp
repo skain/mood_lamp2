@@ -479,7 +479,7 @@ void fullThreeWaveStrategy(){
     g_patternsReset = false;
   }
   
-  float phase1, phase2, phase3;
+  uint8_t phase1, phase2, phase3;
   uint8_t val1, val2, val3;
   
   for(uint16_t i=0; i<NUM_LEDS; i++) {
