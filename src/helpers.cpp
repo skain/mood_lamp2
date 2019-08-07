@@ -173,3 +173,25 @@ bool pctToBool(fract8 chance) {
 CHSV getRandomColor() {
   return CHSV(random8(), random8(240, 255), random8());
 }
+
+uint8_t calculateWeightedRandom(uint8_t weights[], uint8_t numWeights) {
+  // pass in a list of probabilities (1-99%) and this function 
+  // generates a random number and returns the index of the weight 
+  // passed in that's hit
+
+  uint8_t sumOfWeights = 0;
+  for (uint8_t i = 0; i < numWeights; i++) {
+    sumOfWeights += weights[i];
+  }
+
+  uint8_t roll = random8(sumOfWeights);
+
+  for (uint8_t i = 0; i < numWeights; i++) {
+    if (roll < weights[i]) {
+      return i;
+    }
+
+    roll -= weights[i];
+  }
+  return numWeights + 1;
+}

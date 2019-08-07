@@ -30,3 +30,5 @@ uint16_t beatsquare8(accum88 beatsPerMinute, uint8_t lowest = 0, uint8_t highest
 bool pctToBool(fract8 chance);
 
 CHSV getRandomColor();
+
+uint8_t calculateWeightedRandom(uint8_t weights[], uint8_t numWeights);
