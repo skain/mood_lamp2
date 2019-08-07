@@ -16,7 +16,7 @@
 
 
 // consts
-#define NUM_PATTERNS 4
+#define NUM_PATTERNS 3
 #define NUM_ROWS 5
 #define NUM_COLUMNS 5
 // #define NUM_ROWS 8
@@ -45,6 +45,7 @@
 
 #define THREE_WAVE_STRATEGY_RGB 0 // apply 3 different waves to R, G and B
 #define THREE_WAVE_STRATEGY_HSV 1 // apply 3 different waves to H, S and V
+#define THREE_WAVE_STRATEGY_PALETTE 2 // apply 2 of the three waves to palette H and V (no S with palettes...)
 
 
 
@@ -326,36 +327,36 @@ void resetPatternGlobals() {
   g_maxAmplitude3 = random8(g_minAmplitude3 + minAmpSpread, 255);
 }
 
-void disallowColorStrategyBrightnessForHueSwap() {
-  //some patterns/waveforms don't work well when swapping BRIGHTNESS for hue, so call 
-  //this in the global setup to disallow.
-  switch(g_colorStrategy) { 
-    case COLOR_STRATEGY_PALETTE_BRIGHTNESS_FOR_HUE:
-      g_colorStrategy = COLOR_STRATEGY_PALETTE_HUE_AND_BRIGHTNESS;
-      break;
-  }
-}
+// void disallowColorStrategyBrightnessForHueSwap() {
+//   //some patterns/waveforms don't work well when swapping BRIGHTNESS for hue, so call 
+//   //this in the global setup to disallow.
+//   switch(g_colorStrategy) { 
+//     case COLOR_STRATEGY_PALETTE_BRIGHTNESS_FOR_HUE:
+//       g_colorStrategy = COLOR_STRATEGY_PALETTE_HUE_AND_BRIGHTNESS;
+//       break;
+//   }
+// }
 
 
-CRGB executeColorStrategy(uint8_t hue, uint8_t brightness) {
-  CRGB color;
-  switch(g_colorStrategy) {
-      // case COLOR_STRATEGY_HSV_HUE_AND_BRIGHTNESS:      
-      //   color = CHSV(hue, g_sat1, brightness);
-      //   break;
-      case COLOR_STRATEGY_PALETTE_HUE_AND_BRIGHTNESS:
-        color = ColorFromPalette(g_palette1, hue, brightness, g_paletteBlending1);
-        break;
-      // case COLOR_STRATEGY_HSV_BRIGHTNESS_FOR_HUE:      
-      //   color = CHSV(brightness, g_sat1, 255);
-      //   break;
-      case COLOR_STRATEGY_PALETTE_BRIGHTNESS_FOR_HUE:      
-        color = ColorFromPalette(g_palette1, brightness, 255, g_paletteBlending1);
-        break;
-  }
+// CRGB executeColorStrategy(uint8_t hue, uint8_t brightness) {
+//   CRGB color;
+//   switch(g_colorStrategy) {
+//       // case COLOR_STRATEGY_HSV_HUE_AND_BRIGHTNESS:      
+//       //   color = CHSV(hue, g_sat1, brightness);
+//       //   break;
+//       case COLOR_STRATEGY_PALETTE_HUE_AND_BRIGHTNESS:
+//         color = ColorFromPalette(g_palette1, hue, brightness, g_paletteBlending1);
+//         break;
+//       // case COLOR_STRATEGY_HSV_BRIGHTNESS_FOR_HUE:      
+//       //   color = CHSV(brightness, g_sat1, 255);
+//       //   break;
+//       case COLOR_STRATEGY_PALETTE_BRIGHTNESS_FOR_HUE:      
+//         color = ColorFromPalette(g_palette1, brightness, 255, g_paletteBlending1);
+//         break;
+//   }
 
-  return color;
-}
+//   return color;
+// }
 
 uint8_t executePixelPhaseStrategy(uint16_t pixelIndex, uint8_t phaseStrategy, float scale, bool reversePattern) {
   uint8_t phase = 0;
@@ -418,35 +419,35 @@ uint8_t executeWaveStrategy(uint8_t waveStrategy, uint8_t bpm, unsigned long sta
 
 
 //sequences
-void fullPaletteStrategy() {
-  if (g_patternsReset) {
-    Serial.println("fullPaletteStrategy");
-    // g_bpm1 = random8(2,20);
-    // g_bpm2 = random(2,20); //hue sin
-    if (g_waveStrategy2 == WAVE_STRATEGY_SQUARE) {
-      disallowColorStrategyBrightnessForHueSwap();
-    }
-    g_patternsReset = false;
-  }
+// void fullPaletteStrategy() {
+//   if (g_patternsReset) {
+//     Serial.println("fullPaletteStrategy");
+//     // g_bpm1 = random8(2,20);
+//     // g_bpm2 = random(2,20); //hue sin
+//     if (g_waveStrategy2 == WAVE_STRATEGY_SQUARE) {
+//       disallowColorStrategyBrightnessForHueSwap();
+//     }
+//     g_patternsReset = false;
+//   }
 
-  EVERY_N_SECONDS(g_everyNSecs) { g_reverse1 = !g_reverse1; }
+//   EVERY_N_SECONDS(g_everyNSecs) { g_reverse1 = !g_reverse1; }
   
-  uint8_t phase, waveVal, hue;
-  CRGB color;
+//   uint8_t phase, waveVal, hue;
+//   CRGB color;
 
-  hue = executeWaveStrategy(g_waveStrategy1, g_bpm1, g_startTime, 0, g_minAmplitude1, g_maxAmplitude1, g_pulseWidth1);
+//   hue = executeWaveStrategy(g_waveStrategy1, g_bpm1, g_startTime, 0, g_minAmplitude1, g_maxAmplitude1, g_pulseWidth1);
   
-  for(uint16_t i=0; i<NUM_LEDS; i++) {
-    phase = executePixelPhaseStrategy(i, g_phaseStrategy1, g_scale1, g_reverse1);
-    waveVal = executeWaveStrategy(g_waveStrategy2, g_bpm2, g_startTime, phase, g_minAmplitude2, g_maxAmplitude2, g_pulseWidth2);
-    color = executeColorStrategy(hue, waveVal);
-    leds[i] = color;
-  }
+//   for(uint16_t i=0; i<NUM_LEDS; i++) {
+//     phase = executePixelPhaseStrategy(i, g_phaseStrategy1, g_scale1, g_reverse1);
+//     waveVal = executeWaveStrategy(g_waveStrategy2, g_bpm2, g_startTime, phase, g_minAmplitude2, g_maxAmplitude2, g_pulseWidth2);
+//     color = executeColorStrategy(hue, waveVal);
+//     leds[i] = color;
+//   }
   
-  if (g_addGlitter) {    
-    addGlitter(g_glitterChance);
-  }
-}
+//   if (g_addGlitter) {    
+//     addGlitter(g_glitterChance);
+//   }
+// }
 
 
 
@@ -496,6 +497,9 @@ void fullThreeWaveStrategy(){
       case THREE_WAVE_STRATEGY_HSV:
         leds[i] = CHSV(val1, val2, val3);
         break;
+      case THREE_WAVE_STRATEGY_PALETTE:
+        // leds[i] = executeColorStrategy(val1, val2);
+        leds[i] = ColorFromPalette(g_palette1, val1, val2, g_paletteBlending1);
     }
   }
 
@@ -538,13 +542,15 @@ void confetti()
 {
   if (g_patternsReset) {
     Serial.println("confetti");
-    disallowColorStrategyBrightnessForHueSwap();
+    // disallowColorStrategyBrightnessForHueSwap();
     g_patternsReset = false;
   }
   // random colored speckles that blink in and fade smoothly
   fadeToBlackBy(leds, NUM_LEDS, 10);
   uint8_t pos = random16(NUM_LEDS);
-  leds[pos] += executeColorStrategy(g_hue1 + random8(64), 255);
+  // leds[pos] += executeColorStrategy(g_hue1 + random8(64), 255);
+  leds[pos] += ColorFromPalette(g_palette1, g_hue1 + random8(64), 255, g_paletteBlending1);
+  
   EVERY_N_MILLISECONDS( g_everyNMillis1 ) { g_hue1+=g_hueSteps1; }
 
   if (g_addGlitter) {    
@@ -556,14 +562,15 @@ void sinelon()
 {
   if (g_patternsReset) {
     Serial.println("sinelon");
-    disallowColorStrategyBrightnessForHueSwap();
+    // disallowColorStrategyBrightnessForHueSwap();
     g_bpm1 = random8(5, 80);
     g_patternsReset = false;
   }
   // a colored dot sweeping back and forth, with fading trails
   fadeToBlackBy(leds, NUM_LEDS, 20);
   uint8_t pos = beatsin16(g_bpm1, 0, NUM_LEDS-1);
-  leds[pos] += executeColorStrategy(g_hue1, 255);
+  // leds[pos] += executeColorStrategy(g_hue1, 255);
+  leds[pos] += ColorFromPalette(g_palette1, g_hue1, 255, g_paletteBlending1);
   EVERY_N_MILLISECONDS( g_everyNMillis1 ) { g_hue1+=g_hueSteps1; }
   
   if (g_addGlitter) {    
@@ -577,13 +584,14 @@ void bpm()
     Serial.println("bpm");
     g_bpm1 = random8(10, 120);
     g_hueSteps1 = random8(1,16);
-    disallowColorStrategyBrightnessForHueSwap();
+    // disallowColorStrategyBrightnessForHueSwap();
     g_patternsReset = false;
   }
   
   uint8_t beat = beatsin8( g_bpm1, 64, 255);
   for( uint8_t i = 0; i < NUM_LEDS; i++) { 
-    leds[i] = executeColorStrategy(g_hue1+(i*2), beat-g_hue1+(i*10));
+    // leds[i] = executeColorStrategy(g_hue1+(i*2), beat-g_hue1+(i*10));
+    leds[i] = ColorFromPalette(g_palette1, g_hue1 + (i * 2), beat - g_hue1 + (i * 10), g_paletteBlending1);
   }
   
   EVERY_N_MILLISECONDS( g_everyNMillis1 ) { g_hue1+=g_hueSteps1; }
@@ -656,9 +664,9 @@ void setupPatterns() {
   // patterns[0] = strategyPhaseWithRGBSquare;
   // patterns[1] = strategyRGBWaveAndPhase;
   patterns[0] = executeDemoReelPattern;
-  patterns[1] = fullPaletteStrategy;
-  patterns[2] = offsetFill;
-  patterns[3] = fullThreeWaveStrategy;
+  patterns[1] = offsetFill;
+  patterns[2] = fullThreeWaveStrategy;
+  // patterns[1] = fullPaletteStrategy;
   // patterns[4] = strategyHueWaveWithSquare;
   // patterns[5] = bpm;
   // patterns[6] = sinelon;
