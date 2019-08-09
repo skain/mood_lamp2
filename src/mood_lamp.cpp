@@ -341,24 +341,19 @@ void resetPatternGlobals() {
   g_maxAmplitude3 = random8(g_minAmplitude3 + minAmpSpread, 255);
 }
 
-uint8_t executePixelPhaseStrategy(uint16_t pixelIndex, uint8_t phaseStrategy, float scale, bool reversePattern) {
+uint8_t executePixelPhaseStrategy(uint16_t pixelIndex, uint8_t phaseStrategy, float scale, bool reversePattern,
+  uint8_t columnGlitchFactor, uint8_t rowGlitchFactor, uint8_t pixelGlitchFactor) {
   uint8_t phase = 0;
   switch(phaseStrategy) {
     case PHASE_STRATEGY_ROWS:
-      phase = phaseFromRowIndex(pixelIndex, NUM_COLUMNS - g_columnGlitchFactor, NUM_ROWS - g_rowGlitchFactor, scale, reversePattern);
+      phase = phaseFromRowIndex(pixelIndex, NUM_COLUMNS - columnGlitchFactor, NUM_ROWS - rowGlitchFactor, scale, reversePattern);
       break;
     case PHASE_STRATEGY_COLUMNS:
-      phase = phaseFromColumnIndex(pixelIndex, NUM_COLUMNS - g_columnGlitchFactor, scale, reversePattern);
+      phase = phaseFromColumnIndex(pixelIndex, NUM_COLUMNS - columnGlitchFactor, scale, reversePattern);
       break;
-    // case PHASE_STRATEGY_ODD_EVEN:
-    //   phase = phaseFromOddEvenIndex(pixelIndex);
-    //   break;
     case PHASE_STRATEGY_STRIP_INDEX:
-      phase = phaseFromPixelIndex(pixelIndex, NUM_LEDS - g_pixelGlitchFactor, scale, reversePattern);
+      phase = phaseFromPixelIndex(pixelIndex, NUM_LEDS - pixelGlitchFactor, scale, reversePattern);
       break;
-    // case PHASE_STRATEGY_SOLID:
-    //   phase = 0;
-    //   break;
   }
   return phase;
 }
@@ -435,9 +430,9 @@ void fullThreeWaveStrategy(){
   uint8_t val1, val2, val3;
   
   for(uint16_t i=0; i<NUM_LEDS; i++) {
-    phase1 = executePixelPhaseStrategy(i, g_phaseStrategy1, g_scale1, g_reverse1);
-    phase2 = executePixelPhaseStrategy(i, g_phaseStrategy2, g_scale2, g_reverse1);
-    phase3 = executePixelPhaseStrategy(i, g_phaseStrategy3, g_scale3, g_reverse1);
+    phase1 = executePixelPhaseStrategy(i, g_phaseStrategy1, g_scale1, g_reverse1, g_columnGlitchFactor, g_rowGlitchFactor, g_pixelGlitchFactor);
+    phase2 = executePixelPhaseStrategy(i, g_phaseStrategy2, g_scale2, g_reverse1, g_columnGlitchFactor, g_rowGlitchFactor, g_pixelGlitchFactor);
+    phase3 = executePixelPhaseStrategy(i, g_phaseStrategy3, g_scale3, g_reverse1, g_columnGlitchFactor, g_rowGlitchFactor, g_pixelGlitchFactor);
     val1 = executeWaveStrategy(g_waveStrategy1, g_bpm1, g_startTime, phase1, g_minAmplitude1, g_maxAmplitude1, g_pulseWidth1);
     val2 = executeWaveStrategy(g_waveStrategy2, g_bpm2, g_startTime, phase2, g_minAmplitude2, g_maxAmplitude2, g_pulseWidth2);
     val3 = executeWaveStrategy(g_waveStrategy3, g_bpm3, g_startTime, phase3, g_minAmplitude3, g_maxAmplitude3, g_pulseWidth3);
