@@ -148,49 +148,100 @@ void loop() {
 // This function fills the palette with totally random colors.
 void setupRandomPalette1()
 {
-  uint8_t chance = random8(100);
-  if (chance > 97) {
-    switch(random8(8)) {
-      case 0:
-        g_palette1 = RainbowColors_p;
-        break;
-      case 1:
-        g_palette1 = CloudColors_p;
-        break;
-      case 2:
-        g_palette1 = LavaColors_p;
-        break;
-      case 3:
-        g_palette1 = OceanColors_p;
-        break;
-      case 4:
-        g_palette1 = ForestColors_p;
-        break;
-      case 5:
-        g_palette1 = RainbowStripeColors_p;
-        break;
-      case 6:
-        g_palette1 = PartyColors_p;
-        break;
-      case 7:
-        g_palette1 = HeatColors_p;
-        break;
-    }      
+  uint8_t weights[] = {5, 25, 35, 35};
+  switch(calculateWeightedRandom(weights, 4)) {
+    case 0:
+      Serial.println("Preset Palette");
+      switch(random8(8)) {
+        case 0:
+          g_palette1 = RainbowColors_p;
+          break;
+        case 1:
+          g_palette1 = CloudColors_p;
+          break;
+        case 2:
+          g_palette1 = LavaColors_p;
+          break;
+        case 3:
+          g_palette1 = OceanColors_p;
+          break;
+        case 4:
+          g_palette1 = ForestColors_p;
+          break;
+        case 5:
+          g_palette1 = RainbowStripeColors_p;
+          break;
+        case 6:
+          g_palette1 = PartyColors_p;
+          break;
+        case 7:
+          g_palette1 = HeatColors_p;
+          break;
+      }  
+      break;
+    case 1:
+      Serial.println("16 random palette");
+        for (uint8_t i = 0; i < 16; i++) {
+          g_palette1[i] = CHSV(random8(), 255, random8(10, 255));
+        }
+      break;
+    case 2:
+      Serial.println("2 random palette");
+      g_palette1 = CRGBPalette16(getRandomColor(), getRandomColor());
+      break;
+    case 3:
+      Serial.println("4 random palette");
+      CRGB c1, c2, c3, c4;
+      c1 = getRandomColor();
+      c2 = getRandomColor();
+      c3 = getRandomColor();
+      c4 = getRandomColor();
+      g_palette1 = CRGBPalette16(c1, c2, c3, c4);
+      break;
   }
-  else if (chance > 67) {
-    for (uint8_t i = 0; i < 16; i++) {
-        g_palette1[i] = CHSV(random8(), 255, random8(10, 255));
-    }
-  } else if (chance > 37){
-    g_palette1 = CRGBPalette16(getRandomColor(), getRandomColor());
-  } else {
-    CRGB c1, c2, c3, c4;
-    c1 = getRandomColor();
-    c2 = getRandomColor();
-    c3 = getRandomColor();
-    c4 = getRandomColor();
-    g_palette1 = CRGBPalette16(c1, c2, c3, c4);
-  }
+  // uint8_t chance = random8(100);
+  // if (chance > 97) {
+  //   switch(random8(8)) {
+  //     case 0:
+  //       g_palette1 = RainbowColors_p;
+  //       break;
+  //     case 1:
+  //       g_palette1 = CloudColors_p;
+  //       break;
+  //     case 2:
+  //       g_palette1 = LavaColors_p;
+  //       break;
+  //     case 3:
+  //       g_palette1 = OceanColors_p;
+  //       break;
+  //     case 4:
+  //       g_palette1 = ForestColors_p;
+  //       break;
+  //     case 5:
+  //       g_palette1 = RainbowStripeColors_p;
+  //       break;
+  //     case 6:
+  //       g_palette1 = PartyColors_p;
+  //       break;
+  //     case 7:
+  //       g_palette1 = HeatColors_p;
+  //       break;
+  //   }      
+  // }
+  // else if (chance > 67) {
+  //   for (uint8_t i = 0; i < 16; i++) {
+  //       g_palette1[i] = CHSV(random8(), 255, random8(10, 255));
+  //   }
+  // } else if (chance > 37){
+  //   g_palette1 = CRGBPalette16(getRandomColor(), getRandomColor());
+  // } else {
+  //   CRGB c1, c2, c3, c4;
+  //   c1 = getRandomColor();
+  //   c2 = getRandomColor();
+  //   c3 = getRandomColor();
+  //   c4 = getRandomColor();
+  //   g_palette1 = CRGBPalette16(c1, c2, c3, c4);
+  // }
 }
 
 void addGlitter(uint8_t chanceOfGlitter) 
@@ -405,28 +456,35 @@ uint8_t executeWaveStrategy(uint8_t waveStrategy, uint8_t bpm, unsigned long sta
 void fullThreeWaveStrategy(){
   if (g_patternsReset) {
     Serial.println("fullThreeWaveStrategy");
-    if (g_three_wave_strategy == THREE_WAVE_STRATEGY_HSV) {
-      if (g_minAmplitude2 < 192) {
-        g_minAmplitude2 = 192; // low values for saturation are kind of boring...
-        if (g_maxAmplitude2 < g_minAmplitude2) {
-          g_maxAmplitude2 = 255;
+    switch (g_three_wave_strategy)
+    {
+      case THREE_WAVE_STRATEGY_HSV:
+        Serial.println("  -THREE_WAVE_STRATEGY_HSV");
+        if (g_minAmplitude2 < 96) {
+          g_minAmplitude2 = 96; // low values for saturation are kind of boring...
+          if (g_maxAmplitude2 < g_minAmplitude2) {
+            g_maxAmplitude2 = 255;
+          }
         }
-      }
-    }
+        break;
+      case THREE_WAVE_STRATEGY_PALETTE:
+        Serial.println("  -THREE_WAVE_STRATEGY_PALETTE");
+        break;
+      case THREE_WAVE_STRATEGY_RGB:
+        Serial.println("  -THREE_WAVE_STRATEGY_RGB");
+        // similarly, high RGB mins equal low saturation
+        if (g_minAmplitude1 > 25) {
+          g_minAmplitude1 = 25; 
+        }
 
-    if (g_three_wave_strategy == THREE_WAVE_STRATEGY_RGB) {
-      // similarly, high RGB mins equal low saturation
-      if (g_minAmplitude1 > 45) {
-        g_minAmplitude1 = 45; 
-      }
+        if (g_minAmplitude2 > 25) {
+          g_minAmplitude2 = 25; 
+        }
 
-      if (g_minAmplitude2 > 45) {
-        g_minAmplitude2 = 45; 
-      }
-
-      if (g_minAmplitude3 > 45) {
-        g_minAmplitude3 = 45; 
-      }
+        if (g_minAmplitude3 > 25) {
+          g_minAmplitude3 = 25; 
+        }
+        break;
     }
     g_patternsReset = false;
   }
@@ -545,7 +603,6 @@ void executeDemoReelPattern()
 {
   if (g_patternsReset) {
     g_demoReelPatternIndex = random8(3);
-    g_patternsReset = false;
   }
 
   switch(g_demoReelPatternIndex)
