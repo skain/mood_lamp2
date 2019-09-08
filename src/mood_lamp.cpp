@@ -3,7 +3,7 @@
 #include <FastLED.h>
 #define FRAMES_PER_SECOND  120
 
-#define DATA_PIN 2
+
 #define LED_TYPE WS2811
 #define COLOR_ORDER RGB
 #define BRIGHTNESS 150
@@ -17,12 +17,20 @@
 
 // consts
 #define NUM_PATTERNS 3
+
+//choose the correct data pin for your layout
+#define DATA_PIN 2
+// #define DATA_PIN 4
+
+//choose the matrix layout
 #define NUM_ROWS 5
 #define NUM_COLUMNS 5
 // #define NUM_ROWS 8
 // #define NUM_COLUMNS 6
 // #define NUM_ROWS 7
 // #define NUM_COLUMNS 7
+// #define NUM_ROWS 10
+// #define NUM_COLUMNS 5
 #define NUM_LEDS NUM_ROWS * NUM_COLUMNS
 
 // the strategy consts are just here to try and make the code more legible
@@ -627,7 +635,7 @@ void setupPatterns() {
 }
 
 void setup() {  
-  // delay(2000);
+  delay(1000);
   // tell FastLED about the LED strip configuration
   FastLED.addLeds<LED_TYPE,DATA_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
   //FastLED.addLeds<LED_TYPE,DATA_PIN,CLK_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
