@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"name": "PixelTest",
+			"path": "C:\\Users\\skain\\PixelTest\\PixelTest"
+		}
+	],
+	"settings": {
+		"terminal.integrated.env.windows": {
+			"PATH": "C:\\Users\\skain\\.platformio\\penv\\Scripts;C:\\Users\\skain\\.platformio\\penv;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\Program Files\\Microsoft\\Web Platform Installer\\;C:\\Program Files\\Calibre2\\;C:\\Program Files (x86)\\GtkSharp\\2.12\\bin;C:\\Program Files\\nodejs\\;C:\\WINDOWS\\System32\\OpenSSH\\;C:\\Program Files\\PuTTY\\;C:\\Program Files\\MongoDB\\Server\\4.0\\bin;C:\\Program Files\\Git\\cmd;C:\\Users\\skain\\AppData\\Local\\Programs\\Python\\Python37-32\\Scripts\\;C:\\Users\\skain\\AppData\\Local\\Programs\\Python\\Python37-32\\;C:\\Users\\skain\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\skain\\AppData\\Roaming\\npm;C:\\Users\\skain\\AppData\\Local\\Programs\\Microsoft VS Code\\bin;C:\\Program Files\\youtube-dl;C:\\Python27;C:\\Python27\\Scripts;C:\\Users\\skain\\AppData\\Roaming\\Python\\Scripts;C:\\Users\\skain\\AppData\\Roaming\\Python\\Python37\\Scripts;C:\\Program Files\\heroku\\bin;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\Program Files\\Microsoft\\Web Platform Installer\\;C:\\Program Files\\Calibre2\\;C:\\Program Files (x86)\\GtkSharp\\2.12\\bin;C:\\Program Files\\nodejs\\;C:\\WINDOWS\\System32\\OpenSSH\\;C:\\Program Files\\PuTTY\\;C:\\Program Files\\MongoDB\\Server\\4.0\\bin;C:\\Program Files\\Git\\cmd;C:\\Users\\skain\\AppData\\Local\\Programs\\Python\\Python37-32\\Scripts\\;C:\\Users\\skain\\AppData\\Local\\Programs\\Python\\Python37-32\\;C:\\Users\\skain\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\skain\\AppData\\Roaming\\npm;C:\\Users\\skain\\AppData\\Local\\Programs\\Microsoft VS Code\\bin;C:\\Program Files\\youtube-dl;C:\\Python27;C:\\Python27\\Scripts;C:\\Users\\skain\\AppData\\Roaming\\Python\\Scripts;C:\\Users\\skain\\AppData\\Roaming\\Python\\Python37\\Scripts;C:\\Program Files\\heroku\\bin",
+			"PLATFORMIO_CALLER": "vscode"
+		}
+	}
+}
