@@ -16,18 +16,18 @@
 #define NUM_PATTERNS 3
 
 //choose the correct data pin for your layout
-#define DATA_PIN 2
-// #define DATA_PIN 4
+// #define DATA_PIN 2
+#define DATA_PIN 4
 
-#define POWER_SWITCH_ENABLED 0
-// #define POWER_SWITCH_ENABLED 1
+// #define POWER_SWITCH_ENABLED 0
+#define POWER_SWITCH_ENABLED 1
 #define POWER_SWITCH_PIN 8
 
 //choose the matrix layout
-#define NUM_ROWS 5
-#define NUM_COLUMNS 5
-// #define NUM_ROWS 8
-// #define NUM_COLUMNS 6
+// #define NUM_ROWS 5
+// #define NUM_COLUMNS 5
+#define NUM_ROWS 8
+#define NUM_COLUMNS 6
 // #define NUM_ROWS 7
 // #define NUM_COLUMNS 7
 // #define NUM_ROWS 10
@@ -110,6 +110,9 @@ bool checkPowerSwitch()
 	{
 		fill_solid(leds, NUM_LEDS, CRGB(0, 0, 0));
 		FastLED.show();
+		if (!g_patternsReset) {
+			resetPatternGlobals();
+		}
 		delay(250);
 		return false;
 	}
