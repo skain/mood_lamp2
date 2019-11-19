@@ -16,18 +16,18 @@
 #define NUM_PATTERNS 3
 
 //choose the correct data pin for your layout
-// #define DATA_PIN 2
-#define DATA_PIN 4
+#define DATA_PIN 2
+// #define DATA_PIN 4
 
-// #define POWER_SWITCH_ENABLED 0
-#define POWER_SWITCH_ENABLED 1
+#define POWER_SWITCH_ENABLED 0
+// #define POWER_SWITCH_ENABLED 1
 #define POWER_SWITCH_PIN 8
 
 //choose the matrix layout
-// #define NUM_ROWS 5
-// #define NUM_COLUMNS 5
-#define NUM_ROWS 8
-#define NUM_COLUMNS 6
+#define NUM_ROWS 5
+#define NUM_COLUMNS 5
+// #define NUM_ROWS 8
+// #define NUM_COLUMNS 6
 // #define NUM_ROWS 7
 // #define NUM_COLUMNS 7
 // #define NUM_ROWS 10
@@ -85,7 +85,7 @@ uint8_t g_demoReelPatternIndex;
 unsigned int g_rowGlitchFactor, g_columnGlitchFactor, g_pixelGlitchFactor;
 uint8_t g_three_wave_strategy;
 uint8_t g_minAmplitude1, g_maxAmplitude1, g_minAmplitude2, g_maxAmplitude2, g_minAmplitude3, g_maxAmplitude3;
-bool g_bifurcatePatterns;
+bool g_bifurcatePatterns, g_bifurcateOscillation;
 uint8_t g_bifurcatePatternsBy;
 
 void resetPatternGlobals();
@@ -93,8 +93,6 @@ void resetPatternGlobals();
 void doPeriodicUpdates()
 {
 	resetPatternGlobals();
-	uint8_t patternWeights[] = {15, 20, 65};
-	g_patternIndex = calculateWeightedRandom(patternWeights, NUM_PATTERNS);
 }
 
 void setBrightnessFromKnob()
@@ -120,7 +118,7 @@ bool checkPowerSwitch()
 	return true;
 }
 
-// void fullThreeWaveStrategy();
+void fullThreeWaveStrategy();
 void loop()
 {
 	// fullThreeWaveStrategy();
@@ -139,8 +137,6 @@ void loop()
 	// do some periodic updates
 	EVERY_N_SECONDS(20) { doPeriodicUpdates(); } // change patterns periodically
 	EVERY_N_MILLIS(25) { setBrightnessFromKnob(); }
-	// EVERY_N_SECONDS(2) { testRandom(); }
-	// EVERY_N_SECONDS(1) { digitalRead(POWER_SWITCH_PIN) ? Serial.println("Off") : Serial.println("On"); }
 }
 
 // helpers that require access to globals TODO: fix this
@@ -322,6 +318,9 @@ void resetPatternGlobals()
 	// set up our global variables with sane values. These values may be overridden by pattern functions as needed.
 	g_patternsReset = true;
 
+	uint8_t patternWeights[] = {15, 20, 65};
+	g_patternIndex = calculateWeightedRandom(patternWeights, NUM_PATTERNS);
+
 	g_bpm1 = random8(1, 80);
 	g_bpm2 = random8(1, 80);
 	g_bpm3 = random8(1, 80);
@@ -389,7 +388,7 @@ void resetPatternGlobals()
 		g_pixelGlitchFactor = random8(1, NUM_LEDS);
 	}
 
-	g_three_wave_strategy = random8(0, 2);
+	g_three_wave_strategy = random8(0, 3);
 
 	uint8_t minAmpMax = 128;
 	uint8_t minAmpSpread = 64;
@@ -399,8 +398,11 @@ void resetPatternGlobals()
 	g_maxAmplitude2 = random8(g_minAmplitude2 + minAmpSpread, 255);
 	g_minAmplitude3 = random8(minAmpMax);
 	g_maxAmplitude3 = random8(g_minAmplitude3 + minAmpSpread, 255);
-	g_bifurcatePatterns = pctToBool(20);
-	g_bifurcatePatternsBy = random8(1, NUM_COLUMNS);
+	// g_bifurcatePatterns = true;
+	// g_bifurcateOscillation = true;
+	g_bifurcatePatterns = pctToBool(85);
+	g_bifurcateOscillation = pctToBool(75);
+	g_bifurcatePatternsBy = random8(1, NUM_LEDS / 2);
 }
 
 uint8_t executePixelPhaseStrategy(uint16_t pixelIndex, uint8_t phaseStrategy, float scale, bool reversePattern,
@@ -458,9 +460,9 @@ void fullThreeWaveStrategy()
 		{
 		case THREE_WAVE_STRATEGY_HSV:
 			Serial.println("  -THREE_WAVE_STRATEGY_HSV");
-			if (g_minAmplitude2 < 96)
+			if (g_minAmplitude2 < 110)
 			{
-				g_minAmplitude2 = 96; // low values for saturation are kind of boring...
+				g_minAmplitude2 = 110; // low values for saturation are kind of boring...
 				if (g_maxAmplitude2 < g_minAmplitude2)
 				{
 					g_maxAmplitude2 = 255;
@@ -493,6 +495,13 @@ void fullThreeWaveStrategy()
 		if (g_bifurcatePatterns) {
 			Serial.print("  -Bifurcating by: ");
 			Serial.println(g_bifurcatePatternsBy);
+			Serial.print("    -New Patterns: ");
+			Serial.print(g_three_wave_strategy);
+			Serial.print(", ");
+			Serial.println((g_three_wave_strategy + 1) % 2);
+			if (g_bifurcateOscillation) {
+				Serial.println("     -Oscillating");
+			}
 		}
 		g_patternsReset = false;
 	}
@@ -500,6 +509,8 @@ void fullThreeWaveStrategy()
 	uint8_t phase1, phase2, phase3;
 	uint8_t val1, val2, val3;
 	uint8_t curWaveStrategy;
+	uint8_t b_pixels = 0;
+	uint8_t bifurcate_val;
 
 	for (uint16_t i = 0; i < NUM_LEDS; i++)
 	{
@@ -513,9 +524,15 @@ void fullThreeWaveStrategy()
 		curWaveStrategy = g_three_wave_strategy;
 		if (g_bifurcatePatterns)
 		{
-			if (i % 2 == 0)
+			if (i % bifurcate_val == 0)
 			{
+				bifurcate_val = g_bifurcatePatternsBy;
+				if (g_bifurcateOscillation)
+				{
+					bifurcate_val = executeWaveStrategy(g_waveStrategy1, g_bpm1 / 6, g_startTime, 0, 2, g_bifurcatePatternsBy, g_pulseWidth1);
+				}
 				curWaveStrategy = (curWaveStrategy + 1) % 2;
+				b_pixels++;
 			}
 		}
 
@@ -532,6 +549,8 @@ void fullThreeWaveStrategy()
 				break;
 		}
 	}
+
+	// EVERY_N_SECONDS(10) { Serial.print("Bifurcated pixels: "); Serial.println(b_pixels); }
 
 	if (g_addGlitter)
 	{

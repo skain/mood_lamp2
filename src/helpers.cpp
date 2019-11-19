@@ -167,7 +167,7 @@ uint16_t beatcubicwave8(accum88 beatsPerMinute, uint8_t lowest = 0, uint8_t high
 
 bool pctToBool(fract8 chance) {
   //rolls a yes/no dice with the specified integer percent of being yes
-  return random8() < chance;
+  return random8(1, 101) < chance;
 }
 
 CHSV getRandomColor() {
