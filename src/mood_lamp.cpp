@@ -16,23 +16,23 @@
 #define NUM_PATTERNS 3
 
 //choose the correct data pin for your layout
-#define DATA_PIN 2
-// #define DATA_PIN 4
+// #define DATA_PIN 2
+#define DATA_PIN 4
 
-#define POWER_SWITCH_ENABLED 0
-// #define POWER_SWITCH_ENABLED 1
+// #define POWER_SWITCH_ENABLED 0
+#define POWER_SWITCH_ENABLED 1
 #define POWER_SWITCH_PIN 8
 
 //choose the matrix layout
-#define NUM_ROWS 5
-#define NUM_COLUMNS 5
+// #define NUM_ROWS 5
+// #define NUM_COLUMNS 5
 // #define NUM_ROWS 8
 // #define NUM_COLUMNS 6
-// #define NUM_ROWS 7
-// #define NUM_COLUMNS 7
+#define NUM_ROWS 7
+#define NUM_COLUMNS 7
 // #define NUM_ROWS 10
 // #define NUM_COLUMNS 5
-#define NUM_LEDS NUM_ROWS *NUM_COLUMNS
+#define NUM_LEDS NUM_ROWS * NUM_COLUMNS
 
 // the strategy consts are just here to try and make the code more legible
 // #define COLOR_STRATEGY_HSV_HUE_AND_BRIGHTNESS 0 // HSV with hue for hue and postion for value
@@ -55,6 +55,9 @@
 #define THREE_WAVE_STRATEGY_RGB 0	 // apply 3 different waves to R, G and B
 #define THREE_WAVE_STRATEGY_HSV 1	 // apply 3 different waves to H, S and V
 #define THREE_WAVE_STRATEGY_PALETTE 2 // apply 2 of the three waves to palette H and V (no S with palettes...)
+
+#define BIFURCATION_STRATEGY_MODULO 0 // apply a different pattern to pixels based on the modulo of the pixel index
+#define BIFURCATION_STRATEGY_SPLIT 1 // apply a different pattern to pixels with indexes below a value
 
 CRGB leds[NUM_LEDS];
 void (*patterns[NUM_PATTERNS])();
@@ -85,7 +88,7 @@ uint8_t g_demoReelPatternIndex;
 unsigned int g_rowGlitchFactor, g_columnGlitchFactor, g_pixelGlitchFactor;
 uint8_t g_minAmplitude1, g_maxAmplitude1, g_minAmplitude2, g_maxAmplitude2, g_minAmplitude3, g_maxAmplitude3;
 bool g_bifurcatePatterns, g_bifurcateOscillation;
-uint8_t g_bifurcatePatternsBy;
+uint8_t g_bifurcatePatternsBy, g_bifurcationStrategy;
 
 void resetPatternGlobals();
 
@@ -197,49 +200,6 @@ void setupRandomPalette1()
 		g_palette1 = CRGBPalette16(c1, c2, c3, c4);
 		break;
 	}
-	// uint8_t chance = random8(100);
-	// if (chance > 97) {
-	//   switch(random8(8)) {
-	//     case 0:
-	//       g_palette1 = RainbowColors_p;
-	//       break;
-	//     case 1:
-	//       g_palette1 = CloudColors_p;
-	//       break;
-	//     case 2:
-	//       g_palette1 = LavaColors_p;
-	//       break;
-	//     case 3:
-	//       g_palette1 = OceanColors_p;
-	//       break;
-	//     case 4:
-	//       g_palette1 = ForestColors_p;
-	//       break;
-	//     case 5:
-	//       g_palette1 = RainbowStripeColors_p;
-	//       break;
-	//     case 6:
-	//       g_palette1 = PartyColors_p;
-	//       break;
-	//     case 7:
-	//       g_palette1 = HeatColors_p;
-	//       break;
-	//   }
-	// }
-	// else if (chance > 67) {
-	//   for (uint8_t i = 0; i < 16; i++) {
-	//       g_palette1[i] = CHSV(random8(), 255, random8(10, 255));
-	//   }
-	// } else if (chance > 37){
-	//   g_palette1 = CRGBPalette16(getRandomColor(), getRandomColor());
-	// } else {
-	//   CRGB c1, c2, c3, c4;
-	//   c1 = getRandomColor();
-	//   c2 = getRandomColor();
-	//   c3 = getRandomColor();
-	//   c4 = getRandomColor();
-	//   g_palette1 = CRGBPalette16(c1, c2, c3, c4);
-	// }
 }
 
 void addGlitter(uint8_t chanceOfGlitter)
@@ -399,7 +359,9 @@ void resetPatternGlobals()
 	// g_bifurcateOscillation = true;
 	g_bifurcatePatterns = pctToBool(85);
 	g_bifurcateOscillation = pctToBool(75);
-	g_bifurcatePatternsBy = random8(1, NUM_LEDS / 2);
+	g_bifurcatePatternsBy = random8(2, NUM_LEDS / 2);
+	// g_bifurcationStrategy = 1;
+	g_bifurcationStrategy = random(0, 2);
 }
 
 uint8_t executePixelPhaseStrategy(uint16_t pixelIndex, uint8_t phaseStrategy, float scale, bool reversePattern,
@@ -449,24 +411,45 @@ uint8_t executeWaveStrategy(uint8_t waveStrategy, uint8_t bpm, unsigned long sta
 
 uint8_t executeBifurcationStrategy(uint8_t pixelIndex)
 {
-	uint8_t curWaveStrategy;
-	uint8_t bifurcate_val;
+	uint8_t curWaveStrategy, bifurcateVal;
+	bool isBifurcated = false;
 
 	curWaveStrategy = g_colorStrategy;
+	bifurcateVal = g_bifurcatePatternsBy;
 	if (g_bifurcatePatterns)
 	{
-
-		bifurcate_val = g_bifurcatePatternsBy;
-		if (g_bifurcateOscillation)
+		switch(g_bifurcationStrategy)
 		{
-			bifurcate_val = executeWaveStrategy(g_waveStrategy1, g_bpm1 / 6, g_startTime, 0, 2, g_bifurcatePatternsBy, g_pulseWidth1);
+			case BIFURCATION_STRATEGY_MODULO:
+				if (g_bifurcateOscillation)
+				{
+					bifurcateVal = executeWaveStrategy(g_waveStrategy1, g_bpm1 / 6, g_startTime, 0, 2, g_bifurcatePatternsBy, g_pulseWidth1);
+				}
+
+				if (pixelIndex % bifurcateVal == 0)
+				{
+					isBifurcated = true;
+				}
+				break;
+			case BIFURCATION_STRATEGY_SPLIT:
+				if (g_bifurcateOscillation)
+				{
+					bifurcateVal = executeWaveStrategy(g_waveStrategy1, g_bpm1 / 2, g_startTime, 0, 0, NUM_LEDS - (g_bifurcatePatternsBy / 3), g_pulseWidth1);
+				}
+
+				if (pixelIndex < bifurcateVal)
+				{
+					isBifurcated = true;
+				}
+				break;
 		}
 
-		if (pixelIndex % bifurcate_val == 0)
+		if (isBifurcated)
 		{
 			curWaveStrategy = (curWaveStrategy + 1) % 2;
 		}
 	}
+
 
 	return curWaveStrategy;
 }
@@ -533,6 +516,8 @@ void fullThreeWaveStrategy()
 		}
 
 		if (g_bifurcatePatterns) {
+			Serial.print("  -Bifurcation Strategy: ");
+			Serial.println(g_bifurcationStrategy);
 			Serial.print("  -Bifurcating by: ");
 			Serial.println(g_bifurcatePatternsBy);
 			Serial.print("    -New Patterns: ");
