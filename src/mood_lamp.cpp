@@ -320,9 +320,9 @@ void resetPatternGlobals()
 	uint8_t patternWeights[] = {15, 20, 65};
 	g_patternIndex = calculateWeightedRandom(patternWeights, NUM_PATTERNS);
 
-	g_bpm1 = random8(1, 80);
-	g_bpm2 = random8(1, 80);
-	g_bpm3 = random8(1, 80);
+	g_bpm1 = random8(1, 120);
+	g_bpm2 = random8(1, 120);
+	g_bpm3 = random8(1, 120);
 
 	g_paletteBlending1 = LINEARBLEND;
 	g_colorIndex = 0;
@@ -447,7 +447,7 @@ uint8_t executeWaveStrategy(uint8_t waveStrategy, uint8_t bpm, unsigned long sta
 	return waveValue;
 }
 
-void executeColorStrategy(uint8_t pixelIndex, uint8_t val1, uint8_t val2, uint8_t val3)
+uint8_t executeBifurcationStrategy(uint8_t pixelIndex)
 {
 	uint8_t curWaveStrategy;
 	uint8_t bifurcate_val;
@@ -467,6 +467,13 @@ void executeColorStrategy(uint8_t pixelIndex, uint8_t val1, uint8_t val2, uint8_
 			curWaveStrategy = (curWaveStrategy + 1) % 2;
 		}
 	}
+
+	return curWaveStrategy;
+}
+
+void executeColorStrategy(uint8_t pixelIndex, uint8_t val1, uint8_t val2, uint8_t val3)
+{
+	uint8_t curWaveStrategy= executeBifurcationStrategy(pixelIndex);
 
 	switch (curWaveStrategy)
 	{
@@ -541,9 +548,6 @@ void fullThreeWaveStrategy()
 
 	uint8_t phase1, phase2, phase3;
 	uint8_t val1, val2, val3;
-	// uint8_t curWaveStrategy;
-	// uint8_t b_pixels = 0;
-	// uint8_t bifurcate_val;
 
 	for (uint16_t i = 0; i < NUM_LEDS; i++)
 	{
@@ -556,41 +560,6 @@ void fullThreeWaveStrategy()
 
 		executeColorStrategy(i, val1, val2, val3);
 	}
-//todo
-//replace/rename g_colorStrategy to g_colorStrategy
-//refactor everything below to executeColorStrategy method
-	// 	curWaveStrategy = g_colorStrategy;
-	// 	if (g_bifurcatePatterns)
-	// 	{
-			
-	// 		bifurcate_val = g_bifurcatePatternsBy;
-	// 		if (g_bifurcateOscillation)
-	// 		{
-	// 			bifurcate_val = executeWaveStrategy(g_waveStrategy1, g_bpm1 / 6, g_startTime, 0, 2, g_bifurcatePatternsBy, g_pulseWidth1);
-	// 		}
-
-	// 		if (i % bifurcate_val == 0)
-	// 		{
-	// 			curWaveStrategy = (curWaveStrategy + 1) % 2;
-	// 			b_pixels++;
-	// 		}
-	// 	}
-
-	// 	switch (curWaveStrategy)
-	// 	{
-	// 		case THREE_WAVE_STRATEGY_RGB:
-	// 			leds[i] = CRGB(val1, val2, val3);
-	// 			break;
-	// 		case THREE_WAVE_STRATEGY_HSV:
-	// 			leds[i] = CHSV(val1, val2, val3);
-	// 			break;
-	// 		case THREE_WAVE_STRATEGY_PALETTE:
-	// 			leds[i] = ColorFromPalette(g_palette1, val1, val2, g_paletteBlending1);
-	// 			break;
-	// 	}
-	// }
-
-	// // EVERY_N_SECONDS(10) { Serial.print("Bifurcated pixels: "); Serial.println(b_pixels); }
 
 	if (g_addGlitter)
 	{
