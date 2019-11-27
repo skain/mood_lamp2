@@ -32,3 +32,7 @@ bool pctToBool(fract8 chance);
 CHSV getRandomColor();
 
 uint8_t calculateWeightedRandom(uint8_t weights[], uint8_t numWeights);
+
+uint16_t calculatePixelRow(uint16_t pixelIndex, uint16_t pixelsPerRow);
+
+uint16_t calculatePixelColumn(uint16_t pixelIndex, uint16_t numColumns);

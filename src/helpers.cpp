@@ -29,6 +29,10 @@ uint16_t calculatePixelRow(uint16_t pixelIndex, uint16_t pixelsPerRow) {
   return pixelIndex / pixelsPerRow;
 }
 
+uint16_t calculatePixelColumn(uint16_t pixelIndex, uint16_t numColumns) {
+	return pixelIndex % numColumns;
+}
+
 int phaseFromPixelIndexWithRowOffset(uint16_t pixelIndex, uint16_t numPixels, uint16_t pixelsPerRow, fract8 rowOffsetPercent, float scale, bool reversePattern) {
   uint16_t fromMin = 0;
   uint16_t pixelsAtScale = numPixels * scale;
@@ -102,7 +106,8 @@ float phaseFromColumnIndex(uint16_t pixelIndex, uint16_t numCols, float scale, b
   if (pixelIndex  == 0) {
     return 0;
   }
-  uint16_t colIndex = pixelIndex % numCols;
+  uint16_t colIndex = calculatePixelColumn(pixelIndex, numCols);
+//   uint16_t colIndex = pixelIndex % numCols;
   uint16_t fromMin = 0;
   uint16_t fromMax = (numCols - 1) * scale;
   if (reversePattern) {
