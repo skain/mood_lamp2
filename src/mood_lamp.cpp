@@ -53,9 +53,9 @@
 #define WAVE_STRATEGY_CUBIC 3	 // basic cubic (spends more time at limits than sine)
 #define WAVE_STRATEGY_SQUARE 4   // basic square (on or off)
 
-#define THREE_WAVE_STRATEGY_RGB 0	   // apply 3 different waves to R, G and B
-#define THREE_WAVE_STRATEGY_HSV 1	   // apply 3 different waves to H, S and V
-#define THREE_WAVE_STRATEGY_PALETTE 2  // apply 2 of the three waves to palette H and V (no S with palettes...)
+#define COLOR_STRATEGY_RGB 0	   // apply 3 different waves to R, G and B
+#define COLOR_STRATEGY_HSV 1	   // apply 3 different waves to H, S and V
+#define COLOR_STRATEGY_PALETTE 2  // apply 2 of the three waves to palette H and V (no S with palettes...)
 
 #define NUM_BIFURCATION_STRATEGIES 3   // count of bifurcation strats
 #define BIFURCATION_STRATEGY_PIXELS 0  // apply a different pattern to pixels based on the modulo of the pixel index
@@ -482,16 +482,16 @@ void executeColorStrategy(uint8_t pixelIndex, uint8_t val1, uint8_t val2, uint8_
 
 	switch (curWaveStrategy)
 	{
-		case THREE_WAVE_STRATEGY_RGB:
+		case COLOR_STRATEGY_RGB:
 			leds[pixelIndex] = CRGB(val1, val2, val3);
 			break;
-		case THREE_WAVE_STRATEGY_HSV:
+		case COLOR_STRATEGY_HSV:
 			if (val2 < 170) {
 				val2 = 170; // prevent low saturation values
 			}
 			leds[pixelIndex] = CHSV(val1, val2, val3);
 			break;
-		case THREE_WAVE_STRATEGY_PALETTE:
+		case COLOR_STRATEGY_PALETTE:
 			leds[pixelIndex] = ColorFromPalette(g_palette1, val1, val2, g_paletteBlending1);
 			break;
 	}
@@ -506,8 +506,8 @@ void fullThreeWaveStrategy()
 		Serial.println("fullThreeWaveStrategy");
 		switch (g_colorStrategy)
 		{
-		case THREE_WAVE_STRATEGY_HSV:
-			Serial.println("  -THREE_WAVE_STRATEGY_HSV");
+		case COLOR_STRATEGY_HSV:
+			Serial.println("  -COLOR_STRATEGY_HSV");
 			if (g_minAmplitude2 < 170)
 			{
 				g_minAmplitude2 = 170; // low values for saturation are kind of boring...
@@ -517,11 +517,11 @@ void fullThreeWaveStrategy()
 				}
 			}
 			break;
-		case THREE_WAVE_STRATEGY_PALETTE:
-			Serial.println("  -THREE_WAVE_STRATEGY_PALETTE");
+		case COLOR_STRATEGY_PALETTE:
+			Serial.println("  -COLOR_STRATEGY_PALETTE");
 			break;
-		case THREE_WAVE_STRATEGY_RGB:
-			Serial.println("  -THREE_WAVE_STRATEGY_RGB");
+		case COLOR_STRATEGY_RGB:
+			Serial.println("  -COLOR_STRATEGY_RGB");
 			// similarly, high RGB mins equal low saturation
 			if (g_minAmplitude1 > 25)
 			{
