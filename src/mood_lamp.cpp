@@ -13,39 +13,32 @@
 // on a live circuit...if you must, connect GND first.
 
 // consts
-#define NUM_PATTERNS 3
+#define NUM_PATTERNS 2
 
 //choose the correct data pin for your layout
-// #define DATA_PIN 2
-#define DATA_PIN 4
+#define DATA_PIN 2
+// #define DATA_PIN 4
 
-// #define POWER_SWITCH_ENABLED 0
-#define POWER_SWITCH_ENABLED 1
+#define POWER_SWITCH_ENABLED 0
+// #define POWER_SWITCH_ENABLED 1
 #define POWER_SWITCH_PIN 8
 
 //choose the matrix layout
-// #define NUM_ROWS 5
-// #define NUM_COLUMNS 5
-#define NUM_ROWS 8
-#define NUM_COLUMNS 6
+#define NUM_ROWS 5
+#define NUM_COLUMNS 5
+// #define NUM_ROWS 8
+// #define NUM_COLUMNS 6
 // #define NUM_ROWS 7
 // #define NUM_COLUMNS 7
 // #define NUM_ROWS 10
 // #define NUM_COLUMNS 5
 #define NUM_LEDS NUM_ROWS * NUM_COLUMNS
 
-// the strategy consts are just here to try and make the code more legible
-// #define COLOR_STRATEGY_HSV_HUE_AND_BRIGHTNESS 0 // HSV with hue for hue and postion for value
-#define COLOR_STRATEGY_PALETTE_HUE_AND_BRIGHTNESS 0 // Random palette with hue for wheel BRIGHTNESS and BRIGHTNESS for brightness
-// #define COLOR_STRATEGY_HSV_BRIGHTNESS_FOR_HUE 2 // HSV with BRIGHTNESS for hue, 255 for value (hue is ignored)
-#define COLOR_STRATEGY_PALETTE_BRIGHTNESS_FOR_HUE 1 // Palette with BRIGHTNESS for wheel HUE, 255 for brightness (hue is ignored)
-
 #define PHASE_STRATEGY_ROWS 0		 // Phase calculated by row
 #define PHASE_STRATEGY_COLUMNS 1	 // Phase calculated by column
 #define PHASE_STRATEGY_STRIP_INDEX 2 // Phase calculated directly by pixel location on strip
 #define PHASE_STRATEGY_RANDOM 3      // Random phases calculated with predictable seed
 // #define PHASE_STRATEGY_SOLID 3 // All pixels assigned a phase of 0
-// #define PHASE_STRATEGY_ODD_EVEN 4 // Phase calculated by pixelIndex % 2
 
 #define WAVE_STRATEGY_SIN 0		 // basic sin
 #define WAVE_STRATEGY_SAW 1		 // basic sawtooth
@@ -56,14 +49,14 @@
 #define COLOR_STRATEGY_RGB 0	   // apply 3 different waves to R, G and B
 #define COLOR_STRATEGY_HSV 1	   // apply 3 different waves to H, S and V
 #define COLOR_STRATEGY_PALETTE 2  // apply 2 of the three waves to palette H and V (no S with palettes...)
+#define COLOR_STRATEGY_OFFSET_PALETTE 3 // use and offset to fill from palette and apply one wave to V (H is calculated directly off of pixel index + offset)
 
 #define NUM_BIFURCATION_STRATEGIES 3   // count of bifurcation strats
 #define BIFURCATION_STRATEGY_PIXELS 0  // apply a different pattern to pixels based on the modulo of the pixel index
 #define BIFURCATION_STRATEGY_ROWS 1   // apply a different pattern to pixels based on rows
 #define BIFURCATION_STRATEGY_COLS 2   // apply a different pattern to pixels base on columns
-// #define BIFURCATION_STRATEGY_CHECKERBOARD 3 // if num_cols is even and rowIndex is odd then colIndex + 1, else colIndex?
-#define BIFURCATION_MODE_MODULO 0
-#define BIFURCATION_MODE_BELOW 1
+#define BIFURCATION_MODE_MODULO 0 // apply a different pattern to pixels based on the modulo of the pixel index, row, or column
+#define BIFURCATION_MODE_BELOW 1 // apply a different pattern to pixels that have an index, row or column below a specific value
 #define BIFURCATION_MODE_ALTERNATE 2 //apply a different pattern to every other pixel (and handle even count rows correctly)
 
 CRGB leds[NUM_LEDS];
@@ -77,7 +70,7 @@ uint8_t g_bpm1, g_bpm2, g_bpm3;
 float g_scale1, g_scale2, g_scale3;
 uint8_t g_pulseWidth1, g_pulseWidth2, g_pulseWidth3;
 uint8_t g_patternIndex;
-uint8_t g_hue1, g_hue2;
+uint8_t g_hue1, g_paletteOffset;
 uint8_t g_hueSteps1;
 uint8_t g_sat1;
 uint8_t g_glitterChance, g_glitterPercent;
@@ -88,7 +81,7 @@ CRGBPalette16 g_palette1;
 TBlendType g_paletteBlending1;
 static uint8_t g_colorIndex;
 bool g_reverse1, g_reverse2, g_reverse3;
-uint8_t g_colorStrategy;
+uint8_t g_colorStrategy, g_bifurcateColorStrategy1;
 uint8_t g_phaseStrategy1, g_phaseStrategy2, g_phaseStrategy3;
 uint8_t g_waveStrategy1, g_waveStrategy2, g_waveStrategy3;
 uint8_t g_demoReelPatternIndex;
@@ -97,6 +90,7 @@ uint8_t g_minAmplitude1, g_maxAmplitude1, g_minAmplitude2, g_maxAmplitude2, g_mi
 bool g_bifurcatePatterns, g_bifurcateOscillation;
 uint8_t g_bifurcatePatternsBy, g_bifurcationStrategy, g_bifurcationMode;
 uint16_t g_predictableRandomSeed;
+
 
 void resetPatternGlobals();
 
@@ -128,16 +122,15 @@ bool checkPowerSwitch()
 	return true;
 }
 
-void fullThreeWaveStrategy();
 void loop()
 {
-	g_patternIndex = 1;
-	g_bifurcatePatterns = false;
+	// g_patternIndex = 1;
+	// g_bifurcatePatterns = true;
+	// g_colorStrategy = 3;
+
 	if (! checkPowerSwitch()) {
 		return;
 	}
-
-	// fullThreeWaveStrategy();
 
 	// Call the current pattern function once, updating the 'leds' array
 	patterns[g_patternIndex]();
@@ -158,8 +151,8 @@ void loop()
 void setupRandomPalette1()
 {
 	uint8_t weights[] = {25, 35, 35};
-	// switch (calculateWeightedRandom(weights, 3))
-	switch (2)
+	switch (calculateWeightedRandom(weights, 3))
+	// switch (2)
 	{
 	case 0:
 		Serial.println("16 random palette");
@@ -199,6 +192,16 @@ void randomizeReverses()
 	g_reverse3 = random8(2);
 }
 
+uint8_t calculateNextColorStrategy(uint8_t curColorStrategy)
+{
+	uint8_t nextColorStrategy = curColorStrategy;
+	while (nextColorStrategy == curColorStrategy)
+	{
+		nextColorStrategy = random8(4);
+	}
+	return nextColorStrategy;
+}
+
 void resetPatternGlobals()
 {
 	// set up our global variables with sane values. These values may be overridden by pattern functions as needed.
@@ -207,7 +210,7 @@ void resetPatternGlobals()
 
 	g_patternsReset = true;
 
-	uint8_t patternWeights[] = {15, 20, 65};
+	uint8_t patternWeights[] = {10, 90};
 	g_patternIndex = calculateWeightedRandom(patternWeights, NUM_PATTERNS);
 
 	g_bpm1 = random8();
@@ -240,7 +243,7 @@ void resetPatternGlobals()
 	g_pulseWidth3 = 255 / random8(2, NUM_LEDS);
 
 	g_hue1 = random8();
-	g_hue2 = random8();
+	g_paletteOffset = random8(1, 100);
 
 	g_hueSteps1 = random8(1, 32);
 
@@ -275,7 +278,7 @@ void resetPatternGlobals()
 		g_pixelGlitchFactor = random8(1, NUM_LEDS);
 	}
 
-	g_colorStrategy = random8(0, 3);
+	g_colorStrategy = random8(0, 4);
 
 	uint8_t minAmpMax = 96;
 	uint8_t minAmpSpread = 96;
@@ -291,6 +294,7 @@ void resetPatternGlobals()
 	g_bifurcatePatternsBy = random8(2, NUM_LEDS / 2);
 	g_bifurcationStrategy = random(0, NUM_BIFURCATION_STRATEGIES);
 	g_bifurcationMode = random(0, 3);
+	g_bifurcateColorStrategy1 = calculateNextColorStrategy(g_colorStrategy);
 }
 
 uint8_t executePixelPhaseStrategy(uint16_t pixelIndex, uint8_t phaseStrategy, float scale, bool reversePattern,
@@ -344,10 +348,10 @@ uint8_t executeWaveStrategy(uint8_t waveStrategy, uint8_t bpm, unsigned long sta
 
 uint8_t executeBifurcationStrategy(uint8_t pixelIndex)
 {
-	uint8_t curWaveStrategy, bifurcateVal, calculatedIndex, maxAmplitude;
+	uint8_t curColorStrategy, bifurcateVal, calculatedIndex, maxAmplitude;
 	bool isBifurcated = false;
 
-	curWaveStrategy = g_colorStrategy;
+	curColorStrategy = g_colorStrategy;
 	bifurcateVal = g_bifurcatePatternsBy;
 
 	if (g_bifurcatePatterns)
@@ -468,19 +472,19 @@ uint8_t executeBifurcationStrategy(uint8_t pixelIndex)
 
 		if (isBifurcated)
 		{
-			curWaveStrategy = (curWaveStrategy + 1) % 2;
+			curColorStrategy = g_bifurcateColorStrategy1;
 		}
 	}
 
 
-	return curWaveStrategy;
+	return curColorStrategy;
 }
 
 void executeColorStrategy(uint8_t pixelIndex, uint8_t val1, uint8_t val2, uint8_t val3)
 {
-	uint8_t curWaveStrategy = executeBifurcationStrategy(pixelIndex);
+	uint8_t curColorStrategy = executeBifurcationStrategy(pixelIndex);
 
-	switch (curWaveStrategy)
+	switch (curColorStrategy)
 	{
 		case COLOR_STRATEGY_RGB:
 			leds[pixelIndex] = CRGB(val1, val2, val3);
@@ -493,6 +497,11 @@ void executeColorStrategy(uint8_t pixelIndex, uint8_t val1, uint8_t val2, uint8_
 			break;
 		case COLOR_STRATEGY_PALETTE:
 			leds[pixelIndex] = ColorFromPalette(g_palette1, val1, val2, g_paletteBlending1);
+			break;
+		case COLOR_STRATEGY_OFFSET_PALETTE:
+			uint8_t colorIndex = g_hue1 + (g_paletteOffset * pixelIndex);
+			leds[pixelIndex] = ColorFromPalette(g_palette1, colorIndex, val1, g_paletteBlending1);
+			EVERY_N_MILLISECONDS(g_everyNMillis2) { g_hue1 += g_hueSteps1; }
 			break;
 	}
 
@@ -538,6 +547,9 @@ void fullThreeWaveStrategy()
 				g_minAmplitude3 = 25;
 			}
 			break;
+		case COLOR_STRATEGY_OFFSET_PALETTE:
+			Serial.println("  -COLOR_STRATEGY_OFFSET_PALETTE");
+			break;
 		}
 		// g_bifurcatePatterns = true;
 		// g_bifurcatePatternsBy = 2;
@@ -556,7 +568,7 @@ void fullThreeWaveStrategy()
 			Serial.print("    -New Patterns: ");
 			Serial.print(g_colorStrategy);
 			Serial.print(", ");
-			Serial.println((g_colorStrategy + 1) % 2);
+			Serial.println(g_bifurcateColorStrategy1);
 			if (g_bifurcateOscillation) {
 				Serial.println("     -Oscillating");
 			}
@@ -588,47 +600,6 @@ void fullThreeWaveStrategy()
 	}
 
 	EVERY_N_SECONDS(g_everyNSecs) { randomizeReverses(); }
-}
-
-void offsetFill()
-{
-	if (g_patternsReset)
-	{
-		Serial.println("offsetFill");
-		Serial.print("BPM: ");
-		Serial.println(g_bpm1);
-		Serial.print("Wave: ");
-		Serial.println(g_waveStrategy1);
-		Serial.print("Phase: ");
-		Serial.println(g_phaseStrategy1);
-		g_hue2 = random8(1, 100); //delta hue
-		g_patternsReset = false;
-	}
-
-	// fill_palette(leds, NUM_LEDS, g_hue1, g_hue2, g_palette1, 255, g_paletteBlending1);
-	uint8_t colorIndex;
-	// uint8_t colorIndex = g_hue1;
-	uint8_t phase1, val1;
-	random16_set_seed(g_predictableRandomSeed); // The randomizer needs to be re-set each time through the loop in order for the 'random' numbers to be the same each time through.
-
-	for (uint16_t i = 0; i < NUM_LEDS; i++)
-	{
-		colorIndex = g_hue1 + (g_hue2 * i);
-		phase1 = executePixelPhaseStrategy(i, g_phaseStrategy1, g_scale1, g_reverse1, g_columnGlitchFactor, g_rowGlitchFactor, g_pixelGlitchFactor);
-		val1 = executeWaveStrategy(g_waveStrategy1, g_bpm1, g_startTime, phase1, g_minAmplitude1, g_maxAmplitude1, g_pulseWidth1);
-
-		leds[i] = ColorFromPalette(g_palette1, colorIndex, val1, g_paletteBlending1);
-		// EVERY_N_SECONDS(2) { Serial.println(val1); }
-		// colorIndex += g_hue2;
-	}
-	random16_set_seed(millis()); // Re-randomizing the random number seed for other routines.
-
-	EVERY_N_MILLISECONDS(g_everyNMillis2) { g_hue1 += g_hueSteps1; }
-
-	if (g_addGlitter)
-	{
-		addGlitter(g_glitterChance);
-	}
 }
 
 //from demo reel example
@@ -721,8 +692,8 @@ void executeDemoReelPattern()
 void setupPatterns()
 {
 	patterns[0] = executeDemoReelPattern;
-	patterns[1] = offsetFill;
-	patterns[2] = fullThreeWaveStrategy;
+	patterns[1] = fullThreeWaveStrategy;
+	// patterns[2] = offsetFill;
 }
 
 void setup()
