@@ -16,18 +16,18 @@
 #define NUM_PATTERNS 3
 
 //choose the correct data pin for your layout
-#define DATA_PIN 2
-// #define DATA_PIN 4
+// #define DATA_PIN 2
+#define DATA_PIN 4
 
-#define POWER_SWITCH_ENABLED 0
-// #define POWER_SWITCH_ENABLED 1
+// #define POWER_SWITCH_ENABLED 0
+#define POWER_SWITCH_ENABLED 1
 #define POWER_SWITCH_PIN 8
 
 //choose the matrix layout
-#define NUM_ROWS 5
-#define NUM_COLUMNS 5
-// #define NUM_ROWS 8
-// #define NUM_COLUMNS 6
+// #define NUM_ROWS 5
+// #define NUM_COLUMNS 5
+#define NUM_ROWS 8
+#define NUM_COLUMNS 6
 // #define NUM_ROWS 7
 // #define NUM_COLUMNS 7
 // #define NUM_ROWS 10
@@ -131,6 +131,8 @@ bool checkPowerSwitch()
 void fullThreeWaveStrategy();
 void loop()
 {
+	g_patternIndex = 1;
+	g_bifurcatePatterns = false;
 	if (! checkPowerSwitch()) {
 		return;
 	}
@@ -155,51 +157,22 @@ void loop()
 // This function fills the palette with totally random colors.
 void setupRandomPalette1()
 {
-	uint8_t weights[] = {5, 25, 35, 35};
-	switch (calculateWeightedRandom(weights, 4))
+	uint8_t weights[] = {25, 35, 35};
+	// switch (calculateWeightedRandom(weights, 3))
+	switch (2)
 	{
 	case 0:
-		Serial.println("Preset Palette");
-		switch (random8(8))
-		{
-		case 0:
-			g_palette1 = RainbowColors_p;
-			break;
-		case 1:
-			g_palette1 = CloudColors_p;
-			break;
-		case 2:
-			g_palette1 = LavaColors_p;
-			break;
-		case 3:
-			g_palette1 = OceanColors_p;
-			break;
-		case 4:
-			g_palette1 = ForestColors_p;
-			break;
-		case 5:
-			g_palette1 = RainbowStripeColors_p;
-			break;
-		case 6:
-			g_palette1 = PartyColors_p;
-			break;
-		case 7:
-			g_palette1 = HeatColors_p;
-			break;
-		}
-		break;
-	case 1:
 		Serial.println("16 random palette");
 		for (uint8_t i = 0; i < 16; i++)
 		{
 			g_palette1[i] = CHSV(random8(), 255, random8(10, 255));
 		}
 		break;
-	case 2:
+	case 1:
 		Serial.println("2 random palette");
 		g_palette1 = CRGBPalette16(getRandomColor(), getRandomColor());
 		break;
-	case 3:
+	case 2:
 		Serial.println("4 random palette");
 		CRGB c1, c2, c3, c4;
 		c1 = getRandomColor();
@@ -304,8 +277,8 @@ void resetPatternGlobals()
 
 	g_colorStrategy = random8(0, 3);
 
-	uint8_t minAmpMax = 128;
-	uint8_t minAmpSpread = 64;
+	uint8_t minAmpMax = 96;
+	uint8_t minAmpSpread = 96;
 	g_minAmplitude1 = random8(minAmpMax);
 	g_maxAmplitude1 = random8(g_minAmplitude1 + minAmpSpread, 255);
 	g_minAmplitude2 = random8(minAmpMax);
@@ -376,6 +349,7 @@ uint8_t executeBifurcationStrategy(uint8_t pixelIndex)
 
 	curWaveStrategy = g_colorStrategy;
 	bifurcateVal = g_bifurcatePatternsBy;
+
 	if (g_bifurcatePatterns)
 	{
 		switch (g_bifurcationStrategy)
@@ -386,7 +360,7 @@ uint8_t executeBifurcationStrategy(uint8_t pixelIndex)
 					case BIFURCATION_MODE_MODULO:
 						if (g_bifurcateOscillation)
 						{
-							bifurcateVal = executeWaveStrategy(g_waveStrategy1, g_bpm1 / 6, g_startTime, 0, 2, g_bifurcatePatternsBy, g_pulseWidth1);
+							bifurcateVal = executeWaveStrategy(g_waveStrategy1, g_bpm1 / 6, g_startTime, 0, 0, g_bifurcatePatternsBy, g_pulseWidth1);
 						}
 
 						if (pixelIndex % bifurcateVal == 0)
@@ -448,7 +422,7 @@ uint8_t executeBifurcationStrategy(uint8_t pixelIndex)
 					case BIFURCATION_MODE_MODULO:
 						if (g_bifurcateOscillation)
 						{
-							bifurcateVal = executeWaveStrategy(g_waveStrategy1, g_bpm1 / 6, g_startTime, 0, 2, g_bifurcatePatternsBy, g_pulseWidth1);
+							bifurcateVal = executeWaveStrategy(g_waveStrategy1, g_bpm1 / 6, g_startTime, 0, 0, g_bifurcatePatternsBy, g_pulseWidth1);
 						}
 
 						if (calculatedIndex % bifurcateVal == 0)
@@ -512,6 +486,9 @@ void executeColorStrategy(uint8_t pixelIndex, uint8_t val1, uint8_t val2, uint8_
 			leds[pixelIndex] = CRGB(val1, val2, val3);
 			break;
 		case THREE_WAVE_STRATEGY_HSV:
+			if (val2 < 170) {
+				val2 = 170; // prevent low saturation values
+			}
 			leds[pixelIndex] = CHSV(val1, val2, val3);
 			break;
 		case THREE_WAVE_STRATEGY_PALETTE:
@@ -531,9 +508,9 @@ void fullThreeWaveStrategy()
 		{
 		case THREE_WAVE_STRATEGY_HSV:
 			Serial.println("  -THREE_WAVE_STRATEGY_HSV");
-			if (g_minAmplitude2 < 110)
+			if (g_minAmplitude2 < 170)
 			{
-				g_minAmplitude2 = 110; // low values for saturation are kind of boring...
+				g_minAmplitude2 = 170; // low values for saturation are kind of boring...
 				if (g_maxAmplitude2 < g_minAmplitude2)
 				{
 					g_maxAmplitude2 = 255;
@@ -618,11 +595,33 @@ void offsetFill()
 	if (g_patternsReset)
 	{
 		Serial.println("offsetFill");
+		Serial.print("BPM: ");
+		Serial.println(g_bpm1);
+		Serial.print("Wave: ");
+		Serial.println(g_waveStrategy1);
+		Serial.print("Phase: ");
+		Serial.println(g_phaseStrategy1);
 		g_hue2 = random8(1, 100); //delta hue
 		g_patternsReset = false;
 	}
 
-	fill_palette(leds, NUM_LEDS, g_hue1, g_hue2, g_palette1, 255, g_paletteBlending1);
+	// fill_palette(leds, NUM_LEDS, g_hue1, g_hue2, g_palette1, 255, g_paletteBlending1);
+	uint8_t colorIndex;
+	// uint8_t colorIndex = g_hue1;
+	uint8_t phase1, val1;
+	random16_set_seed(g_predictableRandomSeed); // The randomizer needs to be re-set each time through the loop in order for the 'random' numbers to be the same each time through.
+
+	for (uint16_t i = 0; i < NUM_LEDS; i++)
+	{
+		colorIndex = g_hue1 + (g_hue2 * i);
+		phase1 = executePixelPhaseStrategy(i, g_phaseStrategy1, g_scale1, g_reverse1, g_columnGlitchFactor, g_rowGlitchFactor, g_pixelGlitchFactor);
+		val1 = executeWaveStrategy(g_waveStrategy1, g_bpm1, g_startTime, phase1, g_minAmplitude1, g_maxAmplitude1, g_pulseWidth1);
+
+		leds[i] = ColorFromPalette(g_palette1, colorIndex, val1, g_paletteBlending1);
+		// EVERY_N_SECONDS(2) { Serial.println(val1); }
+		// colorIndex += g_hue2;
+	}
+	random16_set_seed(millis()); // Re-randomizing the random number seed for other routines.
 
 	EVERY_N_MILLISECONDS(g_everyNMillis2) { g_hue1 += g_hueSteps1; }
 
@@ -739,7 +738,7 @@ void setup()
 	FastLED.setBrightness(BRIGHTNESS);
 	Serial.begin(9600);
 	randomSeed(analogRead(3));
-	random16_set_seed(8934);
+	random16_set_seed(analogRead(3));
 	random16_add_entropy(analogRead(3));
 
 	setupPatterns();
