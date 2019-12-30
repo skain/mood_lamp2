@@ -148,7 +148,7 @@ void loop()
 // helpers that require access to globals TODO: fix this
 
 // This function fills the palette with totally random colors.
-void setupRandomPalettes()
+void setupRandomPalette()
 {
 	uint8_t weights[] = {25, 35, 35};
 	switch (calculateWeightedRandom(weights, 3))
@@ -260,7 +260,7 @@ void resetPatternGlobals()
 	g_waveStrategy2 = random8(0, 5);
 	g_waveStrategy3 = random8(0, 5);
 
-	setupRandomPalettes();
+	setupRandomPalette();
 
 	g_rowGlitchFactor = g_columnGlitchFactor = g_pixelGlitchFactor = 0;
 
