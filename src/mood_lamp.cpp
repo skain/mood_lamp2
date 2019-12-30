@@ -148,7 +148,7 @@ void loop()
 // helpers that require access to globals TODO: fix this
 
 // This function fills the palette with totally random colors.
-void setupRandomPalette1()
+void setupRandomPalettes()
 {
 	uint8_t weights[] = {25, 35, 35};
 	switch (calculateWeightedRandom(weights, 3))
@@ -204,8 +204,9 @@ uint8_t calculateNextColorStrategy(uint8_t curColorStrategy)
 
 void resetPatternGlobals()
 {
-	// set up our global variables with sane values. These values may be overridden by pattern functions as needed.
 	random16_set_seed(millis());
+	random16_add_entropy(random());
+
 	g_predictableRandomSeed = random16();
 
 	g_patternsReset = true;
@@ -259,7 +260,7 @@ void resetPatternGlobals()
 	g_waveStrategy2 = random8(0, 5);
 	g_waveStrategy3 = random8(0, 5);
 
-	setupRandomPalette1();
+	setupRandomPalettes();
 
 	g_rowGlitchFactor = g_columnGlitchFactor = g_pixelGlitchFactor = 0;
 
@@ -708,9 +709,8 @@ void setup()
 	// set master brightness control
 	FastLED.setBrightness(BRIGHTNESS);
 	Serial.begin(9600);
-	randomSeed(analogRead(3));
 	random16_set_seed(analogRead(3));
-	random16_add_entropy(analogRead(3));
+	random16_add_entropy(random());
 
 	setupPatterns();
 	doPeriodicUpdates();
