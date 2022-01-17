@@ -32,7 +32,7 @@
 // #define NUM_COLUMNS 7
 // #define NUM_ROWS 10
 // #define NUM_COLUMNS 5
-#define NUM_LEDS NUM_ROWS *NUM_COLUMNS
+#define NUM_LEDS NUM_ROWS * NUM_COLUMNS
 
 #define PHASE_STRATEGY_ROWS 0		 // Phase calculated by row
 #define PHASE_STRATEGY_COLUMNS 1	 // Phase calculated by column
@@ -139,6 +139,8 @@ String colorStrategyToString(uint8_t strategy)
 		return "OFFSET_PALETTE";
 		break;
 	}
+
+	return "UNAVAILABLE";
 }
 
 void loop()
@@ -161,7 +163,7 @@ void loop()
 	FastLED.delay(1000 / FRAMES_PER_SECOND);
 
 	// do some periodic updates
-	EVERY_N_SECONDS(5) { doPeriodicUpdates(); } // change patterns periodically
+	EVERY_N_SECONDS(20) { doPeriodicUpdates(); } // change patterns periodically
 	EVERY_N_MILLIS(25) { setBrightnessFromKnob(); }
 }
 
