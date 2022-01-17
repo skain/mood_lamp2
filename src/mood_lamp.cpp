@@ -15,17 +15,17 @@
 // consts
 #define NUM_PATTERNS 2
 
-//choose the correct data pin for your layout
-#define DATA_PIN 2
+// choose the correct data pin for your layout
+#define DATA_PIN 5
 // #define DATA_PIN 4
 
 #define POWER_SWITCH_ENABLED 0
 // #define POWER_SWITCH_ENABLED 1
 #define POWER_SWITCH_PIN 8
 
-//choose the matrix layout
-#define NUM_ROWS 5
-#define NUM_COLUMNS 5
+// choose the matrix layout
+#define NUM_ROWS 8
+#define NUM_COLUMNS 6
 // #define NUM_ROWS 8
 // #define NUM_COLUMNS 6
 // #define NUM_ROWS 7
@@ -37,27 +37,27 @@
 #define PHASE_STRATEGY_ROWS 0		 // Phase calculated by row
 #define PHASE_STRATEGY_COLUMNS 1	 // Phase calculated by column
 #define PHASE_STRATEGY_STRIP_INDEX 2 // Phase calculated directly by pixel location on strip
-#define PHASE_STRATEGY_RANDOM 3      // Random phases calculated with predictable seed
+#define PHASE_STRATEGY_RANDOM 3		 // Random phases calculated with predictable seed
 // #define PHASE_STRATEGY_SOLID 3 // All pixels assigned a phase of 0
 
 #define WAVE_STRATEGY_SIN 0		 // basic sin
 #define WAVE_STRATEGY_SAW 1		 // basic sawtooth
 #define WAVE_STRATEGY_TRIANGLE 2 // basic triangle (linear slopes)
 #define WAVE_STRATEGY_CUBIC 3	 // basic cubic (spends more time at limits than sine)
-#define WAVE_STRATEGY_SQUARE 4   // basic square (on or off)
+#define WAVE_STRATEGY_SQUARE 4	 // basic square (on or off)
 
-#define COLOR_STRATEGY_RGB 0	   // apply 3 different waves to R, G and B
-#define COLOR_STRATEGY_HSV 1	   // apply 3 different waves to H, S and V
-#define COLOR_STRATEGY_PALETTE 2  // apply 2 of the three waves to palette H and V (no S with palettes...)
-#define COLOR_STRATEGY_OFFSET_PALETTE 3 // use and offset to fill from palette and apply one wave to V (H is calculated directly off of pixel index + offset)
+#define COLOR_STRATEGY_RGB 0			// apply 3 different waves to R, G and B
+#define COLOR_STRATEGY_HSV 1			// apply 3 different waves to H, S and V
+#define COLOR_STRATEGY_PALETTE 2		// apply 2 of the three waves to palette H and V (no S with palettes...)
+#define COLOR_STRATEGY_OFFSET_PALETTE 3 // use an offset to fill from palette and apply one wave to V (H is calculated directly off of pixel index + offset)
 
-#define NUM_BIFURCATION_STRATEGIES 3   // count of bifurcation strats
-#define BIFURCATION_STRATEGY_PIXELS 0  // apply a different pattern to pixels based on the modulo of the pixel index
-#define BIFURCATION_STRATEGY_ROWS 1   // apply a different pattern to pixels based on rows
-#define BIFURCATION_STRATEGY_COLS 2   // apply a different pattern to pixels base on columns
-#define BIFURCATION_MODE_MODULO 0 // apply a different pattern to pixels based on the modulo of the pixel index, row, or column
-#define BIFURCATION_MODE_BELOW 1 // apply a different pattern to pixels that have an index, row or column below a specific value
-#define BIFURCATION_MODE_ALTERNATE 2 //apply a different pattern to every other pixel (and handle even count rows correctly)
+#define NUM_BIFURCATION_STRATEGIES 3  // count of bifurcation strats
+#define BIFURCATION_STRATEGY_PIXELS 0 // apply a different pattern to pixels based on the modulo of the pixel index
+#define BIFURCATION_STRATEGY_ROWS 1	  // apply a different pattern to pixels based on rows
+#define BIFURCATION_STRATEGY_COLS 2	  // apply a different pattern to pixels base on columns
+#define BIFURCATION_MODE_MODULO 0	  // apply a different pattern to pixels based on the modulo of the pixel index, row, or column
+#define BIFURCATION_MODE_BELOW 1	  // apply a different pattern to pixels that have an index, row or column below a specific value
+#define BIFURCATION_MODE_ALTERNATE 2  // apply a different pattern to every other pixel (and handle even count rows correctly)
 
 CRGB leds[NUM_LEDS];
 void (*patterns[NUM_PATTERNS])();
@@ -91,7 +91,6 @@ bool g_bifurcatePatterns, g_bifurcateOscillation;
 uint8_t g_bifurcatePatternsBy, g_bifurcationStrategy, g_bifurcationMode;
 uint16_t g_predictableRandomSeed;
 
-
 void resetPatternGlobals();
 
 void doPeriodicUpdates()
@@ -112,7 +111,8 @@ bool checkPowerSwitch()
 	{
 		fill_solid(leds, NUM_LEDS, CRGB(0, 0, 0));
 		FastLED.show();
-		if (!g_patternsReset) {
+		if (!g_patternsReset)
+		{
 			resetPatternGlobals();
 		}
 		delay(250);
@@ -122,13 +122,35 @@ bool checkPowerSwitch()
 	return true;
 }
 
+String colorStrategyToString(uint8_t strategy)
+{
+	switch (strategy)
+	{
+	case 0:
+		return "RGB";
+		break;
+	case 1:
+		return "HSV";
+		break;
+	case 2:
+		return "PALETTE";
+		break;
+	case 3:
+		return "OFFSET_PALETTE";
+		break;
+	}
+
+	return "UNAVAILABLE";
+}
+
 void loop()
 {
 	// g_patternIndex = 1;
 	// g_bifurcatePatterns = true;
 	// g_colorStrategy = 3;
 
-	if (! checkPowerSwitch()) {
+	if (!checkPowerSwitch())
+	{
 		return;
 	}
 
@@ -150,7 +172,8 @@ void loop()
 // This function fills the palette with totally random colors.
 void setupRandomPalette()
 {
-	uint8_t weights[] = {25, 35, 35};
+	Serial.println("====================");
+	uint8_t weights[] = {5, 90, 5};
 	switch (calculateWeightedRandom(weights, 3))
 	// switch (2)
 	{
@@ -158,7 +181,7 @@ void setupRandomPalette()
 		Serial.println("16 random palette");
 		for (uint8_t i = 0; i < 16; i++)
 		{
-			g_palette1[i] = CHSV(random8(), 255, random8(10, 255));
+			g_palette1[i] = getRandomColor();
 		}
 		break;
 	case 1:
@@ -197,7 +220,7 @@ uint8_t calculateNextColorStrategy(uint8_t curColorStrategy)
 	uint8_t nextColorStrategy = curColorStrategy;
 	while (nextColorStrategy == curColorStrategy)
 	{
-		nextColorStrategy = random8(4);
+		nextColorStrategy = random8(1, 4);
 	}
 	return nextColorStrategy;
 }
@@ -279,7 +302,7 @@ void resetPatternGlobals()
 		g_pixelGlitchFactor = random8(1, NUM_LEDS);
 	}
 
-	g_colorStrategy = random8(0, 4);
+	g_colorStrategy = random8(1, 4);
 
 	uint8_t minAmpMax = 96;
 	uint8_t minAmpSpread = 96;
@@ -289,7 +312,7 @@ void resetPatternGlobals()
 	g_maxAmplitude2 = random8(g_minAmplitude2 + minAmpSpread, 255);
 	g_minAmplitude3 = random8(minAmpMax);
 	g_maxAmplitude3 = random8(g_minAmplitude3 + minAmpSpread, 255);
-	
+
 	g_bifurcatePatterns = pctToBool(70);
 	g_bifurcateOscillation = pctToBool(60);
 	g_bifurcatePatternsBy = random8(2, NUM_LEDS / 2);
@@ -302,6 +325,8 @@ uint8_t executePixelPhaseStrategy(uint16_t pixelIndex, uint8_t phaseStrategy, fl
 								  uint8_t columnGlitchFactor, uint8_t rowGlitchFactor, uint8_t pixelGlitchFactor)
 {
 	uint8_t phase = 0;
+	scale = 1;
+	columnGlitchFactor = rowGlitchFactor = pixelGlitchFactor = 0;
 	switch (phaseStrategy)
 	{
 	case PHASE_STRATEGY_ROWS:
@@ -359,116 +384,121 @@ uint8_t executeBifurcationStrategy(uint8_t pixelIndex)
 	{
 		switch (g_bifurcationStrategy)
 		{
-			case BIFURCATION_STRATEGY_PIXELS:
-				switch (g_bifurcationMode)
+		case BIFURCATION_STRATEGY_PIXELS:
+			switch (g_bifurcationMode)
+			{
+			case BIFURCATION_MODE_MODULO:
+				if (g_bifurcateOscillation)
 				{
-					case BIFURCATION_MODE_MODULO:
-						if (g_bifurcateOscillation)
-						{
-							bifurcateVal = executeWaveStrategy(g_waveStrategy1, g_bpm1 / 6, g_startTime, 0, 0, g_bifurcatePatternsBy, g_pulseWidth1);
-						}
+					bifurcateVal = executeWaveStrategy(g_waveStrategy1, g_bpm1 / 6, g_startTime, 0, 0, g_bifurcatePatternsBy, g_pulseWidth1);
+				}
 
-						if (pixelIndex % bifurcateVal == 0)
-						{
-							isBifurcated = true;
-						}
-						break;
-					case BIFURCATION_MODE_BELOW:
-						if (g_bifurcateOscillation)
-						{
-							bifurcateVal = executeWaveStrategy(g_waveStrategy1, g_bpm1 / 2, g_startTime, 0, 0, NUM_LEDS, g_pulseWidth1);
-						}
-
-						if (pixelIndex < bifurcateVal)
-						{
-							isBifurcated = true;
-						}
-						break;
-					case BIFURCATION_MODE_ALTERNATE:
-						if (g_bifurcateOscillation)
-						{
-							bifurcateVal = beatsquare8(g_bpm1 / 6, 0, 1, g_startTime, 0);
-						}
-
-						calculatedIndex = pixelIndex;
-						if (NUM_COLUMNS % 2 == 0 && calculatePixelRow(pixelIndex, NUM_COLUMNS) % 2 != 0)
-						{
-							calculatedIndex += 1;
-						}
-
-						if (calculatedIndex % 2 == 0)
-						{
-							if (bifurcateVal > 0) {
-								isBifurcated = true;
-							}
-						} 
-						else 
-						{
-							if (bifurcateVal == 0)
-							{
-								isBifurcated = true;
-							}
-						}
-						break;
+				if (pixelIndex % bifurcateVal == 0)
+				{
+					isBifurcated = true;
 				}
 				break;
-			case BIFURCATION_STRATEGY_COLS:
-			case BIFURCATION_STRATEGY_ROWS:
-				if (g_bifurcationStrategy == BIFURCATION_STRATEGY_COLS)
+			case BIFURCATION_MODE_BELOW:
+				if (g_bifurcateOscillation)
 				{
-					calculatedIndex = calculatePixelColumn(pixelIndex, NUM_COLUMNS);
-					maxAmplitude = NUM_COLUMNS;
-				} else {
-					calculatedIndex = calculatePixelRow(pixelIndex, NUM_COLUMNS);
-					maxAmplitude = NUM_ROWS;
+					bifurcateVal = executeWaveStrategy(g_waveStrategy1, g_bpm1 / 2, g_startTime, 0, 0, NUM_LEDS, g_pulseWidth1);
 				}
-				switch(g_bifurcationMode)
+
+				if (pixelIndex < bifurcateVal)
 				{
-					case BIFURCATION_MODE_MODULO:
-						if (g_bifurcateOscillation)
-						{
-							bifurcateVal = executeWaveStrategy(g_waveStrategy1, g_bpm1 / 6, g_startTime, 0, 0, g_bifurcatePatternsBy, g_pulseWidth1);
-						}
-
-						if (calculatedIndex % bifurcateVal == 0)
-						{
-							isBifurcated = true;
-						}
-						break;
-					case BIFURCATION_MODE_BELOW:
-						if (g_bifurcateOscillation)
-						{
-							bifurcateVal = executeWaveStrategy(g_waveStrategy1, g_bpm1 / 3, g_startTime, 0, 0, maxAmplitude, g_pulseWidth1);
-						}
-
-						if (calculatedIndex < bifurcateVal)
-						{
-							isBifurcated = true;
-						}
-						break;
-					case BIFURCATION_MODE_ALTERNATE:
-						if (g_bifurcateOscillation)
-						{
-							bifurcateVal = beatsquare8(g_bpm1 / 6, 0, 1, g_startTime, 0);
-						}
-
-						if (calculatedIndex % 2 == 0)
-						{
-							if (bifurcateVal > 0)
-							{
-								isBifurcated = true;
-							}
-						}
-						else
-						{
-							if (bifurcateVal == 0)
-							{
-								isBifurcated = true;
-							}
-						}
-						break;
+					isBifurcated = true;
 				}
 				break;
+			case BIFURCATION_MODE_ALTERNATE:
+				if (g_bifurcateOscillation)
+				{
+					bifurcateVal = beatsquare8(g_bpm1 / 6, 0, 1, g_startTime, 0);
+				}
+
+				calculatedIndex = pixelIndex;
+				if (NUM_COLUMNS % 2 == 0 && calculatePixelRow(pixelIndex, NUM_COLUMNS) % 2 != 0)
+				{
+					calculatedIndex += 1;
+				}
+
+				if (calculatedIndex % 2 == 0)
+				{
+					if (bifurcateVal > 0)
+					{
+						isBifurcated = true;
+					}
+				}
+				else
+				{
+					if (bifurcateVal == 0)
+					{
+						isBifurcated = true;
+					}
+				}
+				break;
+			}
+			break;
+		case BIFURCATION_STRATEGY_COLS:
+		case BIFURCATION_STRATEGY_ROWS:
+			if (g_bifurcationStrategy == BIFURCATION_STRATEGY_COLS)
+			{
+				calculatedIndex = calculatePixelColumn(pixelIndex, NUM_COLUMNS);
+				maxAmplitude = NUM_COLUMNS;
+				bifurcateVal = bifurcateVal % NUM_COLUMNS;
+			}
+			else
+			{
+				calculatedIndex = calculatePixelRow(pixelIndex, NUM_COLUMNS);
+				maxAmplitude = NUM_ROWS;
+				bifurcateVal = bifurcateVal % NUM_ROWS;
+			}
+			switch (g_bifurcationMode)
+			{
+			case BIFURCATION_MODE_MODULO:
+				if (g_bifurcateOscillation)
+				{
+					bifurcateVal = executeWaveStrategy(g_waveStrategy1, g_bpm1 / 6, g_startTime, 0, 0, g_bifurcatePatternsBy, g_pulseWidth1);
+				}
+
+				if (calculatedIndex % bifurcateVal == 0)
+				{
+					isBifurcated = true;
+				}
+				break;
+			case BIFURCATION_MODE_BELOW:
+				if (g_bifurcateOscillation)
+				{
+					bifurcateVal = executeWaveStrategy(g_waveStrategy1, g_bpm1 / 3, g_startTime, 0, 0, maxAmplitude, g_pulseWidth1);
+				}
+
+				if (calculatedIndex < bifurcateVal)
+				{
+					isBifurcated = true;
+				}
+				break;
+			case BIFURCATION_MODE_ALTERNATE:
+				if (g_bifurcateOscillation)
+				{
+					bifurcateVal = beatsquare8(g_bpm1 / 6, 0, 1, g_startTime, 0);
+				}
+
+				if (calculatedIndex % 2 == 0)
+				{
+					if (bifurcateVal > 0)
+					{
+						isBifurcated = true;
+					}
+				}
+				else
+				{
+					if (bifurcateVal == 0)
+					{
+						isBifurcated = true;
+					}
+				}
+				break;
+			}
+			break;
 		}
 
 		if (isBifurcated)
@@ -476,7 +506,6 @@ uint8_t executeBifurcationStrategy(uint8_t pixelIndex)
 			curColorStrategy = g_bifurcateColorStrategy1;
 		}
 	}
-
 
 	return curColorStrategy;
 }
@@ -487,28 +516,28 @@ void executeColorStrategy(uint8_t pixelIndex, uint8_t val1, uint8_t val2, uint8_
 
 	switch (curColorStrategy)
 	{
-		case COLOR_STRATEGY_RGB:
-			leds[pixelIndex] = CRGB(val1, val2, val3);
-			break;
-		case COLOR_STRATEGY_HSV:
-			if (val2 < 170) {
-				val2 = 170; // prevent low saturation values
-			}
-			leds[pixelIndex] = CHSV(val1, val2, val3);
-			break;
-		case COLOR_STRATEGY_PALETTE:
-			leds[pixelIndex] = ColorFromPalette(g_palette1, val1, val2, g_paletteBlending1);
-			break;
-		case COLOR_STRATEGY_OFFSET_PALETTE:
-			uint8_t colorIndex = g_hue1 + (g_paletteOffset * pixelIndex);
-			leds[pixelIndex] = ColorFromPalette(g_palette1, colorIndex, val1, g_paletteBlending1);
-			EVERY_N_MILLISECONDS(g_everyNMillis2) { g_hue1 += g_hueSteps1; }
-			break;
+	case COLOR_STRATEGY_RGB:
+		leds[pixelIndex] = CRGB(val1, val2, val3);
+		break;
+	case COLOR_STRATEGY_HSV:
+		if (val2 < 170)
+		{
+			val2 = 170; // prevent low saturation values
+		}
+		leds[pixelIndex] = CHSV(val1, val2, val3);
+		break;
+	case COLOR_STRATEGY_PALETTE:
+		leds[pixelIndex] = ColorFromPalette(g_palette1, val1, val2, g_paletteBlending1);
+		break;
+	case COLOR_STRATEGY_OFFSET_PALETTE:
+		uint8_t colorIndex = g_hue1 + (g_paletteOffset * pixelIndex);
+		leds[pixelIndex] = ColorFromPalette(g_palette1, colorIndex, val1, g_paletteBlending1);
+		EVERY_N_MILLISECONDS(g_everyNMillis2) { g_hue1 += g_hueSteps1; }
+		break;
 	}
-
 }
 
-//sequences
+// sequences
 void fullThreeWaveStrategy()
 {
 	if (g_patternsReset)
@@ -559,18 +588,45 @@ void fullThreeWaveStrategy()
 		// g_bifurcateOscillation = false;
 		// g_addGlitter = false;
 
-		if (g_bifurcatePatterns) {
+		if (g_bifurcatePatterns)
+		{
 			Serial.print("  -Bifurcation Strategy: ");
-			Serial.println(g_bifurcationStrategy);
+			Serial.print(g_bifurcationStrategy);
+			Serial.print("-");
+			switch (g_bifurcationStrategy)
+			{
+			case 0:
+				Serial.println("PIXELS");
+				break;
+			case 1:
+				Serial.println("ROWS");
+				break;
+			case 2:
+				Serial.println("COLS");
+			}
 			Serial.print("  -Bifurcation Mode: ");
-			Serial.println(g_bifurcationMode);
+			Serial.print(g_bifurcationMode);
+			Serial.print("-");
+			switch (g_bifurcationMode)
+			{
+			case 0:
+				Serial.println("MODULO");
+				break;
+			case 1:
+				Serial.println("BELOW");
+				break;
+			case 2:
+				Serial.println("ALTERNATE");
+				break;
+			}
 			Serial.print("  -Bifurcating by: ");
 			Serial.println(g_bifurcatePatternsBy);
-			Serial.print("    -New Patterns: ");
-			Serial.print(g_colorStrategy);
-			Serial.print(", ");
-			Serial.println(g_bifurcateColorStrategy1);
-			if (g_bifurcateOscillation) {
+			Serial.print("    -Bifurcate Color Strategy: ");
+			Serial.print(g_bifurcateColorStrategy1);
+			Serial.print("-");
+			Serial.println(colorStrategyToString(g_bifurcateColorStrategy1));
+			if (g_bifurcateOscillation)
+			{
 				Serial.println("     -Oscillating");
 			}
 		}
@@ -603,7 +659,7 @@ void fullThreeWaveStrategy()
 	EVERY_N_SECONDS(g_everyNSecs) { randomizeReverses(); }
 }
 
-//from demo reel example
+// from demo reel example
 void confetti()
 {
 	if (g_patternsReset)
@@ -689,7 +745,7 @@ void executeDemoReelPattern()
 	}
 }
 
-//setup
+// setup
 void setupPatterns()
 {
 	patterns[0] = executeDemoReelPattern;
@@ -704,7 +760,7 @@ void setup()
 	delay(1000);
 	// tell FastLED about the LED strip configuration
 	FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
-	//FastLED.addLeds<LED_TYPE,DATA_PIN,CLK_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
+	// FastLED.addLeds<LED_TYPE,DATA_PIN,CLK_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
 
 	// set master brightness control
 	FastLED.setBrightness(BRIGHTNESS);
