@@ -6,8 +6,9 @@
 #define LED_TYPE WS2811
 #define COLOR_ORDER RGB
 #define BRIGHTNESS 150
+
 // consts
-#define NUM_PATTERNS 2
+#define SECONDS_TO_SHOW 60
 
 // choose the correct data pin for your layout
 // #define DATA_PIN 5
@@ -54,14 +55,13 @@
 #define BIFURCATION_MODE_ALTERNATE 2  // apply a different pattern to every other pixel (and handle even count rows correctly)
 
 CRGB leds[NUM_LEDS];
-// void (*patterns[NUM_PATTERNS])();
 
 // Shared Global Variables
 bool g_patternsReset = true;
 unsigned long g_startTime;
 uint8_t g_phase1, g_phase2, g_phase3;
 uint8_t g_bpm1, g_bpm2, g_bpm3;
-// float g_scale1, g_scale2, g_scale3;
+uint8_t g_bpmMax1, g_bpmMax2, g_bpmMax3;
 uint8_t g_pulseWidth1, g_pulseWidth2, g_pulseWidth3;
 uint8_t g_patternIndex;
 uint8_t g_hue1, g_paletteOffset;
@@ -81,7 +81,6 @@ uint8_t g_colorStrategy, g_bifurcateColorStrategy1;
 uint8_t g_phaseStrategy1, g_phaseStrategy2, g_phaseStrategy3;
 uint8_t g_waveStrategy1, g_waveStrategy2, g_waveStrategy3;
 uint8_t g_demoReelPatternIndex;
-// unsigned int g_rowGlitchFactor, g_columnGlitchFactor, g_pixelGlitchFactor;
 uint8_t g_minAmplitude1, g_maxAmplitude1, g_minAmplitude2, g_maxAmplitude2, g_minAmplitude3, g_maxAmplitude3;
 bool g_bifurcatePatterns, g_bifurcateOscillation;
 uint8_t g_bifurcatePatternsBy, g_bifurcationStrategy, g_bifurcationMode;
@@ -189,30 +188,44 @@ String waveStrategyToString(uint8_t strategy)
 // This function fills the palette with totally random colors.
 void setupRandomPalette()
 {
-	uint8_t weights[] = {1, 90, 9};
-	switch (calculateWeightedRandom(weights, 3))
-	// switch (2)
+	CHSV c1, c2, c3, c4;
+	c1 = getRandomColor();
+
+	if (c1.value < 125)
 	{
-	case 0:
-		Serial.println("16 random palette");
-		for (uint8_t i = 0; i < 16; i++)
+		c1.value = 125;
+	}
+	c2 = getRandomColor();
+	c3 = getRandomColor();
+	c4 = getRandomColor();
+
+	if (pctToBool(50))
+	{
+		Serial.print("2 random palette");
+		if (pctToBool(50))
 		{
-			g_palette1[i] = getRandomColor();
+			Serial.println(" - 360");
+			g_palette1 = CHSVPalette16(c1, c2, c1);
 		}
-		break;
-	case 1:
-		Serial.println("2 random palette");
-		g_palette1 = CRGBPalette16(getRandomColor(), getRandomColor());
-		break;
-	case 2:
-		Serial.println("4 random palette");
-		CRGB c1, c2, c3, c4;
-		c1 = getRandomColor();
-		c2 = getRandomColor();
-		c3 = getRandomColor();
-		c4 = getRandomColor();
-		g_palette1 = CRGBPalette16(c1, c2, c3, c4);
-		break;
+		else
+		{
+			Serial.println();
+			g_palette1 = CHSVPalette16(c1, c2);
+		}
+	}
+	else
+	{
+		Serial.print("3 random palette");
+		if (pctToBool(50))
+		{
+			Serial.println(" - 360");
+			g_palette1 = CHSVPalette16(c1, c2, c3, c1);
+		}
+		else
+		{
+			Serial.println();
+			g_palette1 = CHSVPalette16(c1, c2, c3);
+		}
 	}
 }
 
@@ -263,6 +276,9 @@ void resetPatternGlobals()
 	g_bpm1 = random8();
 	g_bpm2 = random8();
 	g_bpm3 = random8();
+	g_bpmMax1 = g_bpm1;
+	g_bpmMax2 = g_bpm2;
+	g_bpmMax3 = g_bpm3;
 
 	g_paletteBlending1 = LINEARBLEND;
 	g_colorIndex = 0;
@@ -280,9 +296,9 @@ void resetPatternGlobals()
 	Serial.print(",");
 	Serial.println(g_animateBPM3);
 
-	g_BPMAnimationBPM1 = random(5, 40);
-	g_BPMAnimationBPM2 = random(5, 40);
-	g_BPMAnimationBPM3 = random(5, 40);
+	g_BPMAnimationBPM1 = random(5, 20);
+	g_BPMAnimationBPM2 = random(5, 20);
+	g_BPMAnimationBPM3 = random(5, 20);
 
 	g_phase1 = random8();
 	g_phase2 = random8();
@@ -291,10 +307,6 @@ void resetPatternGlobals()
 	g_addGlitter = pctToBool(15);
 	g_glitterChance = 60;
 	g_glitterPercent = random8(40, 80);
-
-	// g_scale1 = getRandomFloat(0.1f, 4.0f);
-	// g_scale2 = getRandomFloat(0.1f, 4.0f);
-	// g_scale3 = getRandomFloat(0.1f, 4.0f);
 
 	g_sat1 = 255;
 
@@ -552,9 +564,9 @@ void executeColorStrategy(uint8_t pixelIndex, uint8_t val1, uint8_t val2, uint8_
 		leds[pixelIndex] = CRGB(val1, val2, val3);
 		break;
 	case COLOR_STRATEGY_HSV:
-		if (val2 < 170)
+		if (val2 < 200)
 		{
-			val2 = 170; // prevent low saturation values
+			val2 = 200; // prevent low saturation values
 		}
 		leds[pixelIndex] = CHSV(val1, val2, val3);
 		break;
@@ -573,17 +585,17 @@ void animateBPMs()
 {
 	if (g_animateBPM1)
 	{
-		g_bpm1 = interpolate(beatsin8(g_BPMAnimationBPM1), 0, 255, 2, 140);
+		g_bpm1 = interpolate(beatsin8(g_BPMAnimationBPM1), 0, 255, 2, g_bpmMax1);
 	}
 
 	if (g_animateBPM2)
 	{
-		g_bpm2 = interpolate(beatsin8(g_BPMAnimationBPM2), 0, 255, 2, 140);
+		g_bpm2 = interpolate(beatsin8(g_BPMAnimationBPM2), 0, 255, 2, g_bpmMax2);
 	}
 
 	if (g_animateBPM3)
 	{
-		g_bpm3 = interpolate(beatsin8(g_BPMAnimationBPM3), 0, 255, 2, 140);
+		g_bpm3 = interpolate(beatsin8(g_BPMAnimationBPM3), 0, 255, 2, g_bpmMax3);
 	}
 }
 
@@ -730,7 +742,7 @@ void loop()
 	FastLED.delay(1000 / FRAMES_PER_SECOND);
 
 	// do some periodic updates
-	EVERY_N_SECONDS(60) { doPeriodicUpdates(); } // change patterns periodically
+	EVERY_N_SECONDS(SECONDS_TO_SHOW) { doPeriodicUpdates(); } // change patterns periodically
 	EVERY_N_MILLIS(25) { setBrightnessFromKnob(); }
 }
 
