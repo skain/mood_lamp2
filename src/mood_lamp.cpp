@@ -12,8 +12,8 @@
 
 // choose the correct data pin for your layout
 // #define DATA_PIN 5
-#define DATA_PIN 4
-// #define DATA_PIN 2
+// #define DATA_PIN 4
+#define DATA_PIN 2
 
 #define POWER_SWITCH_ENABLED 0
 // #define POWER_SWITCH_ENABLED 1
@@ -24,9 +24,9 @@
 // #define NUM_COLUMNS 6
 // #define NUM_ROWS 7
 // #define NUM_COLUMNS 7
-#define NUM_ROWS 10
+// #define NUM_ROWS 10
 #define NUM_COLUMNS 5
-// #define NUM_ROWS 5
+#define NUM_ROWS 5
 // #define NUM_COLUMNS 5
 #define NUM_LEDS NUM_ROWS * NUM_COLUMNS
 
@@ -95,7 +95,7 @@ void doPeriodicUpdates()
 
 void setBrightnessFromKnob()
 {
-	uint8_t val = interpolate(analogRead(A0), 0, 1023, 30, 255);
+	uint8_t val = map(analogRead(A0), 0, 1023, 30, 255);
 	FastLED.setBrightness(val);
 	// EVERY_N_SECONDS(1) { Serial.println(val); }
 }
@@ -585,17 +585,17 @@ void animateBPMs()
 {
 	if (g_animateBPM1)
 	{
-		g_bpm1 = interpolate(beatsin8(g_BPMAnimationBPM1), 0, 255, 2, g_bpmMax1);
+		g_bpm1 = map(beatsin8(g_BPMAnimationBPM1), 0, 255, 2, g_bpmMax1);
 	}
 
 	if (g_animateBPM2)
 	{
-		g_bpm2 = interpolate(beatsin8(g_BPMAnimationBPM2), 0, 255, 2, g_bpmMax2);
+		g_bpm2 = map(beatsin8(g_BPMAnimationBPM2), 0, 255, 2, g_bpmMax2);
 	}
 
 	if (g_animateBPM3)
 	{
-		g_bpm3 = interpolate(beatsin8(g_BPMAnimationBPM3), 0, 255, 2, g_bpmMax3);
+		g_bpm3 = map(beatsin8(g_BPMAnimationBPM3), 0, 255, 2, g_bpmMax3);
 	}
 }
 

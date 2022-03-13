@@ -3,8 +3,6 @@
 
 float haveSecsElapsed(uint16_t secs, unsigned long startTime);
 
-float interpolate(float val, float inMin, float inMax, float outMin, float outMax);
-
 float phaseFromPixelIndex(uint16_t pixelIndex, uint16_t numPixels, float scale, bool reverse_ptn);
 
 int phaseFromPixelIndexWithRowOffset(uint16_t pixelIndex, uint16_t numPixels, uint16_t pixelsPerRow, fract8 rowOffsetPercent, float scale, bool reversePattern);

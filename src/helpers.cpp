@@ -10,7 +10,7 @@ float haveSecsElapsed(uint16_t secs, unsigned long startTime) {
   return false;
 }
 
-float interpolate(float val, float inMin, float inMax, float outMin, float outMax){
+float map(float val, float inMin, float inMax, float outMin, float outMax){
   return outMin + (val - inMin) * ((outMax - outMin)/(inMax - inMin));
 }
 
@@ -21,7 +21,7 @@ float phaseFromPixelIndex(uint16_t pixelIndex, uint16_t numPixels, float scale, 
 	  fromMin = fromMax;
 	  fromMax = 0;
   }
-  int phase = interpolate(pixelIndex, fromMin, fromMax, 0, 255);
+  int phase = map(pixelIndex, fromMin, fromMax, (long int)0, (long int)255);
   return phase;
 }
 
@@ -46,7 +46,7 @@ int phaseFromPixelIndexWithRowOffset(uint16_t pixelIndex, uint16_t numPixels, ui
 	  fromMax = 0;
     offset = offset * -1;
   }
-  int phase = interpolate(pixelIndex + offset, fromMin + offset, fromMax+ offset, 0, 255);
+  int phase = map(pixelIndex + offset, fromMin + offset, fromMax + offset, (long int)0, (long int)255);
   // phase += offset;
   
   EVERY_N_MILLIS(500) { 
@@ -99,7 +99,7 @@ float phaseFromRowIndex(uint16_t pixelIndex, uint16_t pixelsPerRow, uint16_t num
 	  fromMin = fromMax;
 	  fromMax = 0;
   }
-  return interpolate(rowIndex, fromMin, fromMax, 0, 255);
+  return map(rowIndex, fromMin, fromMax, (long int)0, (long int)255);
 }
 
 float phaseFromColumnIndex(uint16_t pixelIndex, uint16_t numCols, float scale, bool reversePattern){
@@ -114,7 +114,7 @@ float phaseFromColumnIndex(uint16_t pixelIndex, uint16_t numCols, float scale, b
 	  fromMin = fromMax;
 	  fromMax = 0;
   }
-  return interpolate(colIndex, fromMin, fromMax, 0, 255);
+  return map(colIndex, fromMin, fromMax, (long int)0, (long int)255);
 }
 
 float getRandomFloat(float min, float max){
