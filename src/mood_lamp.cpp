@@ -12,8 +12,8 @@
 
 // choose the correct data pin for your layout
 // #define DATA_PIN 5
-// #define DATA_PIN 4
-#define DATA_PIN 2
+#define DATA_PIN 4
+// #define DATA_PIN 2
 
 #define POWER_SWITCH_ENABLED 0
 // #define POWER_SWITCH_ENABLED 1
@@ -24,9 +24,9 @@
 // #define NUM_COLUMNS 6
 // #define NUM_ROWS 7
 // #define NUM_COLUMNS 7
-// #define NUM_ROWS 10
+#define NUM_ROWS 10
 #define NUM_COLUMNS 5
-#define NUM_ROWS 5
+// #define NUM_ROWS 5
 // #define NUM_COLUMNS 5
 #define NUM_LEDS NUM_ROWS * NUM_COLUMNS
 
@@ -85,13 +85,9 @@ uint8_t g_minAmplitude1, g_maxAmplitude1, g_minAmplitude2, g_maxAmplitude2, g_mi
 bool g_bifurcatePatterns, g_bifurcateOscillation;
 uint8_t g_bifurcatePatternsBy, g_bifurcationStrategy, g_bifurcationMode;
 uint16_t g_predictableRandomSeed;
+unsigned long g_transitionUntil;
 
 void resetPatternGlobals();
-
-void doPeriodicUpdates()
-{
-	resetPatternGlobals();
-}
 
 void setBrightnessFromKnob()
 {
@@ -110,7 +106,7 @@ bool checkPowerSwitch()
 		{
 			resetPatternGlobals();
 		}
-		delay(250);
+		FastLED.delay(250);
 		return false;
 	}
 
@@ -296,9 +292,9 @@ void resetPatternGlobals()
 	Serial.print(",");
 	Serial.println(g_animateBPM3);
 
-	g_BPMAnimationBPM1 = random(5, 20);
-	g_BPMAnimationBPM2 = random(5, 20);
-	g_BPMAnimationBPM3 = random(5, 20);
+	g_BPMAnimationBPM1 = random(2, 10);
+	g_BPMAnimationBPM2 = random(2, 10);
+	g_BPMAnimationBPM3 = random(2, 10);
 
 	g_phase1 = random8();
 	g_phase2 = random8();
@@ -384,7 +380,7 @@ uint8_t executePixelPhaseStrategy(uint16_t pixelIndex, uint8_t phaseStrategy, fl
 		break;
 	case PHASE_STRATEGY_RANDOM:
 		// NOTE: g_predictableRandomSeed must be set OUTSIDE the loop for this strategy to work!
-		phase = random8();
+		phase = map(random8(NUM_LEDS), 0, NUM_LEDS - 1, 0, 255);
 		break;
 	}
 	return phase;
@@ -734,7 +730,15 @@ void loop()
 
 	// Call the current pattern function once, updating the 'leds' array
 	// patterns[g_patternIndex]();
-	fullThreeWaveStrategy();
+	if (g_transitionUntil > millis())
+	{
+		fadeToBlackBy(leds, NUM_LEDS, 65);
+	}
+	else
+	{
+		g_transitionUntil = 0;
+		fullThreeWaveStrategy();
+	}
 
 	// send the 'leds' array out to the actual LED strip
 	FastLED.show();
@@ -742,7 +746,11 @@ void loop()
 	FastLED.delay(1000 / FRAMES_PER_SECOND);
 
 	// do some periodic updates
-	EVERY_N_SECONDS(SECONDS_TO_SHOW) { doPeriodicUpdates(); } // change patterns periodically
+	EVERY_N_SECONDS(SECONDS_TO_SHOW) 
+	{
+		g_transitionUntil = millis() + 500;
+		resetPatternGlobals();
+	} // change patterns periodically
 	EVERY_N_MILLIS(25) { setBrightnessFromKnob(); }
 }
 
@@ -761,5 +769,5 @@ void setup()
 	random16_set_seed(analogRead(3));
 	random16_add_entropy(random());
 
-	doPeriodicUpdates();
+	resetPatternGlobals();
 }
