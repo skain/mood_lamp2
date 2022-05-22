@@ -12,8 +12,8 @@
 
 // choose the correct data pin for your layout
 // #define DATA_PIN 5
-#define DATA_PIN 4
-// #define DATA_PIN 2
+// #define DATA_PIN 4
+#define DATA_PIN 2
 
 #define POWER_SWITCH_ENABLED 0
 // #define POWER_SWITCH_ENABLED 1
@@ -24,10 +24,10 @@
 // #define NUM_COLUMNS 6
 // #define NUM_ROWS 7
 // #define NUM_COLUMNS 7
-#define NUM_ROWS 10
-#define NUM_COLUMNS 5
-// #define NUM_ROWS 5
+// #define NUM_ROWS 10
 // #define NUM_COLUMNS 5
+#define NUM_ROWS 5
+#define NUM_COLUMNS 5
 #define NUM_LEDS NUM_ROWS * NUM_COLUMNS
 
 #define PHASE_STRATEGY_ROWS 0		 // Phase calculated by row
@@ -71,7 +71,7 @@ uint8_t g_glitterChance, g_glitterPercent;
 bool g_addGlitter;
 uint8_t g_everyNSecs;
 uint16_t g_everyNMillis1, g_everyNMillis2;
-CRGBPalette16 g_palette1;
+CHSVPalette16 g_palette1;
 TBlendType g_paletteBlending1;
 static uint8_t g_colorIndex;
 bool g_reverse1, g_reverse2, g_reverse3;
@@ -184,43 +184,41 @@ String waveStrategyToString(uint8_t strategy)
 // This function fills the palette with totally random colors.
 void setupRandomPalette()
 {
-	CHSV c1, c2, c3, c4;
+	CHSV c1, c2, c3;
 	c1 = getRandomColor();
-
 	if (c1.value < 125)
 	{
 		c1.value = 125;
 	}
-	c2 = getRandomColor();
-	c3 = getRandomColor();
-	c4 = getRandomColor();
 
+	Serial.print("Palette Type: ");
 	if (pctToBool(50))
 	{
-		Serial.print("2 random palette");
+		// complimentary palette
+		Serial.println("Complimentary");
+		c2 = CHSV(getHarmonicHue(c1.hue, 2, 1), c1.saturation, c1.value);
 		if (pctToBool(50))
 		{
-			Serial.println(" - 360");
-			g_palette1 = CHSVPalette16(c1, c2, c1);
+			g_palette1 = CHSVPalette16(c1, c2);
 		}
 		else
 		{
-			Serial.println();
-			g_palette1 = CHSVPalette16(c1, c2);
+			g_palette1 = CHSVPalette16(c1, c2, c1);
 		}
 	}
 	else
 	{
-		Serial.print("3 random palette");
+		Serial.println("Triadic");
+		// triadic palette
+		c2 = CHSV(getHarmonicHue(c1.hue, 3, 1), c1.saturation, c1.value);
+		c3 = CHSV(getHarmonicHue(c1.hue, 3, 2), c1.saturation, c1.value);
 		if (pctToBool(50))
 		{
-			Serial.println(" - 360");
-			g_palette1 = CHSVPalette16(c1, c2, c3, c1);
+			g_palette1 = CHSVPalette16(c2, c1, c3);
 		}
 		else
 		{
-			Serial.println();
-			g_palette1 = CHSVPalette16(c1, c2, c3);
+			g_palette1 = CHSVPalette16(c2, c1, c3, c2);
 		}
 	}
 }
@@ -341,7 +339,7 @@ void resetPatternGlobals()
 
 	setupRandomPalette();
 
-	g_colorStrategy = random8(1, 4);
+	g_colorStrategy = random8(2, 4);
 
 	uint8_t minAmpMax = 96;
 	uint8_t minAmpSpread = 96;
@@ -553,6 +551,7 @@ uint8_t executeBifurcationStrategy(uint8_t pixelIndex)
 void executeColorStrategy(uint8_t pixelIndex, uint8_t val1, uint8_t val2, uint8_t val3)
 {
 	uint8_t curColorStrategy = executeBifurcationStrategy(pixelIndex);
+	CHSV color;
 
 	switch (curColorStrategy)
 	{
@@ -560,18 +559,18 @@ void executeColorStrategy(uint8_t pixelIndex, uint8_t val1, uint8_t val2, uint8_
 		leds[pixelIndex] = CRGB(val1, val2, val3);
 		break;
 	case COLOR_STRATEGY_HSV:
-		if (val2 < 200)
-		{
-			val2 = 200; // prevent low saturation values
-		}
-		leds[pixelIndex] = CHSV(val1, val2, val3);
+		leds[pixelIndex] = CHSV(val1, constrainSaturation(val2), val3);
 		break;
 	case COLOR_STRATEGY_PALETTE:
-		leds[pixelIndex] = ColorFromPalette(g_palette1, val1, val2, g_paletteBlending1);
+		color = ColorFromPalette(g_palette1, val1, val2, g_paletteBlending1);
+		color.saturation = constrainSaturation(val3);
+		leds[pixelIndex] = color;
 		break;
 	case COLOR_STRATEGY_OFFSET_PALETTE:
 		uint8_t colorIndex = g_hue1 + (g_paletteOffset * pixelIndex);
-		leds[pixelIndex] = ColorFromPalette(g_palette1, colorIndex, val1, g_paletteBlending1);
+		color = ColorFromPalette(g_palette1, colorIndex, val1, g_paletteBlending1);
+		color.saturation = constrainSaturation(val2);
+		leds[pixelIndex] = color;
 		EVERY_N_MILLISECONDS(g_everyNMillis2) { g_hue1 += g_hueSteps1; }
 		break;
 	}
