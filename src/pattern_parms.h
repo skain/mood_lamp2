@@ -1,6 +1,9 @@
+#ifndef patternParms_h
+#define patternParms_h
 #include <FastLED.h>
 
-typedef struct {
+typedef struct
+{
 	bool g_patternsReset = true;
 	unsigned long g_startTime;
 	uint8_t g_phase1, g_phase2, g_phase3;
@@ -31,3 +34,5 @@ typedef struct {
 	uint16_t g_predictableRandomSeed;
 	unsigned long g_transitionUntil;
 } patternParms;
+
+#endif

@@ -34,10 +34,3 @@ uint8_t calculateWeightedRandom(uint8_t weights[], uint8_t numWeights);
 uint16_t calculatePixelRow(uint16_t pixelIndex, uint16_t pixelsPerRow);
 
 uint16_t calculatePixelColumn(uint16_t pixelIndex, uint16_t numColumns);
-
-int constrainSaturation(int sat);
-
-// splits the color wheel into equal segments
-// harmonicDivision is how many segments to divide the color wheel into
-// harmonicIndex is which segement you want returned (zero-based where zero returns the hue you passed in)
-int getHarmonicHue(int origHue, int harmonicDivision, int harmonicIndex);
