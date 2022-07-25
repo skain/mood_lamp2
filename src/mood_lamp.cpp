@@ -57,39 +57,9 @@
 
 CRGB leds[NUM_LEDS];
 
-// Shared Global Variables
-// bool g_patternsReset = true;
-// unsigned long g_startTime;
-// uint8_t g_phase1, g_phase2, g_phase3;
-// uint8_t g_bpm1, g_bpm2, g_bpm3;
-// uint8_t g_bpmMax1, g_bpmMax2, g_bpmMax3;
-// uint8_t g_pulseWidth1, g_pulseWidth2, g_pulseWidth3;
-// uint8_t g_patternIndex;
-// uint8_t g_hue1, g_paletteOffset;
-// uint8_t g_hueSteps1;
-// uint8_t g_sat1;
-// uint8_t g_glitterChance, g_glitterPercent;
-// bool g_addGlitter;
-// uint8_t g_everyNSecs;
-// uint16_t g_everyNMillis1, g_everyNMillis2;
-// CHSVPalette16 g_palette1;
-// TBlendType g_paletteBlending1;
-// static uint8_t g_colorIndex;
-// bool g_reverse1, g_reverse2, g_reverse3;
-// bool g_animateBPM1, g_animateBPM2, g_animateBPM3;
-// uint8_t g_BPMAnimationBPM1, g_BPMAnimationBPM2, g_BPMAnimationBPM3;
-// uint8_t g_colorStrategy, g_bifurcateColorStrategy1;
-// uint8_t g_phaseStrategy1, g_phaseStrategy2, g_phaseStrategy3;
-// uint8_t g_waveStrategy1, g_waveStrategy2, g_waveStrategy3;
-// uint8_t g_demoReelPatternIndex;
-// uint8_t g_minAmplitude1, g_maxAmplitude1, g_minAmplitude2, g_maxAmplitude2, g_minAmplitude3, g_maxAmplitude3;
-// bool g_bifurcatePatterns, g_bifurcateOscillation;
-// uint8_t g_bifurcatePatternsBy, g_bifurcationStrategy, g_bifurcationMode;
-// uint16_t g_predictableRandomSeed;
-// unsigned long g_transitionUntil;
 patternParms p1_parms;
 
-void resetPatternGlobals();
+void resetPatternGlobals(patternParms *p_parms);
 
 void setBrightnessFromKnob()
 {
@@ -98,15 +68,15 @@ void setBrightnessFromKnob()
 	// EVERY_N_SECONDS(1) { Serial.println(val); }
 }
 
-bool checkPowerSwitch()
+bool checkPowerSwitch(patternParms *p_parms)
 {
 	if (POWER_SWITCH_ENABLED == 1 && digitalRead(POWER_SWITCH_PIN))
 	{
 		fill_solid(leds, NUM_LEDS, CRGB(0, 0, 0));
 		FastLED.show();
-		if (!p1_parms.g_patternsReset)
+		if (!p_parms->g_patternsReset)
 		{
-			resetPatternGlobals();
+			resetPatternGlobals(p_parms);
 		}
 		FastLED.delay(250);
 		return false;
@@ -183,8 +153,7 @@ String waveStrategyToString(uint8_t strategy)
 
 // helpers that require access to globals TODO: fix this
 
-// This function fills the palette with totally random colors.
-void setupRandomPalette()
+void setupRandomPalette(patternParms* p_parms)
 {
 	CHSV c1, c2, c3;
 	c1 = CHSV(random(), 255, 255);
@@ -201,11 +170,11 @@ void setupRandomPalette()
 		c2 = CHSV(getHarmonicHue(c1.hue, 2, 1), c1.saturation, c1.value);
 		if (pctToBool(50))
 		{
-			p1_parms.g_palette1 = CHSVPalette16(c1, c2);
+			p_parms->g_palette1 = CHSVPalette16(c1, c2);
 		}
 		else
 		{
-			p1_parms.g_palette1 = CHSVPalette16(c1, c2, c1);
+			p_parms->g_palette1 = CHSVPalette16(c1, c2, c1);
 		}
 	}
 	else
@@ -216,11 +185,11 @@ void setupRandomPalette()
 		c3 = CHSV(getHarmonicHue(c1.hue, 3, 2), c1.saturation, c1.value);
 		if (pctToBool(50))
 		{
-			p1_parms.g_palette1 = CHSVPalette16(c2, c1, c3);
+			p_parms->g_palette1 = CHSVPalette16(c2, c1, c3);
 		}
 		else
 		{
-			p1_parms.g_palette1 = CHSVPalette16(c2, c1, c3, c2);
+			p_parms->g_palette1 = CHSVPalette16(c2, c1, c3, c2);
 		}
 	}
 }
@@ -233,13 +202,13 @@ void addGlitter(uint8_t chanceOfGlitter)
 	}
 }
 
-void randomizeReverses()
+void randomizeReverses(patternParms *p_parms)
 {
-	p1_parms.g_reverse1 = random8(2);
-	// Serial.print("p1_parms.g_reverse1: ");
-	Serial.println(p1_parms.g_reverse1);
-	p1_parms.g_reverse2 = random8(2);
-	p1_parms.g_reverse3 = random8(2);
+	p_parms->g_reverse1 = random8(2);
+	// Serial.print("p_parms->g_reverse1: ");
+	Serial.println(p_parms->g_reverse1);
+	p_parms->g_reverse2 = random8(2);
+	p_parms->g_reverse3 = random8(2);
 }
 
 uint8_t calculateNextColorStrategy(uint8_t curColorStrategy)
@@ -252,7 +221,7 @@ uint8_t calculateNextColorStrategy(uint8_t curColorStrategy)
 	return nextColorStrategy;
 }
 
-void resetPatternGlobals()
+void resetPatternGlobals(patternParms *p_parms)
 {
 	Serial.println();
 	Serial.println();
@@ -260,105 +229,105 @@ void resetPatternGlobals()
 	random16_set_seed(millis());
 	random16_add_entropy(random());
 
-	p1_parms.g_predictableRandomSeed = random16();
+	p_parms->g_predictableRandomSeed = random16();
 
-	p1_parms.g_patternsReset = true;
+	p_parms->g_patternsReset = true;
 
 	// uint8_t patternWeights[] = {10, 90};
 	// uncomment for sinelon
 	// g_patternIndex = calculateWeightedRandom(patternWeights, NUM_PATTERNS);
-	p1_parms.g_patternIndex = 1;
+	p_parms->g_patternIndex = 1;
 
-	p1_parms.g_bpm1 = random8();
-	p1_parms.g_bpm2 = random8();
-	p1_parms.g_bpm3 = random8();
-	p1_parms.g_bpmMax1 = p1_parms.g_bpm1;
-	p1_parms.g_bpmMax2 = p1_parms.g_bpm2;
-	p1_parms.g_bpmMax3 = p1_parms.g_bpm3;
+	p_parms->g_bpm1 = random8();
+	p_parms->g_bpm2 = random8();
+	p_parms->g_bpm3 = random8();
+	p_parms->g_bpmMax1 = p_parms->g_bpm1;
+	p_parms->g_bpmMax2 = p_parms->g_bpm2;
+	p_parms->g_bpmMax3 = p_parms->g_bpm3;
 
-	p1_parms.g_paletteBlending1 = LINEARBLEND;
-	p1_parms.g_colorIndex = 0;
+	p_parms->g_paletteBlending1 = LINEARBLEND;
+	p_parms->g_colorIndex = 0;
 
-	p1_parms.g_startTime = millis();
+	p_parms->g_startTime = millis();
 
-	randomizeReverses();
-	p1_parms.g_animateBPM1 = random(2);
-	p1_parms.g_animateBPM2 = random(2);
-	p1_parms.g_animateBPM3 = random(2);
-	Serial.print("p1_parms.BPMAnimates: ");
-	Serial.print(p1_parms.g_animateBPM1);
+	randomizeReverses(p_parms);
+	p_parms->g_animateBPM1 = random(2);
+	p_parms->g_animateBPM2 = random(2);
+	p_parms->g_animateBPM3 = random(2);
+	Serial.print("p_parms->BPMAnimates: ");
+	Serial.print(p_parms->g_animateBPM1);
 	Serial.print(",");
-	Serial.print(p1_parms.g_animateBPM2);
+	Serial.print(p_parms->g_animateBPM2);
 	Serial.print(",");
-	Serial.println(p1_parms.g_animateBPM3);
+	Serial.println(p_parms->g_animateBPM3);
 
-	p1_parms.g_BPMAnimationBPM1 = random(2, 10);
-	p1_parms.g_BPMAnimationBPM2 = random(2, 10);
-	p1_parms.g_BPMAnimationBPM3 = random(2, 10);
+	p_parms->g_BPMAnimationBPM1 = random(2, 10);
+	p_parms->g_BPMAnimationBPM2 = random(2, 10);
+	p_parms->g_BPMAnimationBPM3 = random(2, 10);
 
-	p1_parms.g_phase1 = random8();
-	p1_parms.g_phase2 = random8();
-	p1_parms.g_phase3 = random8();
+	p_parms->g_phase1 = random8();
+	p_parms->g_phase2 = random8();
+	p_parms->g_phase3 = random8();
 
-	p1_parms.g_addGlitter = pctToBool(15);
-	p1_parms.g_glitterChance = 60;
-	p1_parms.g_glitterPercent = random8(40, 80);
+	p_parms->g_addGlitter = pctToBool(15);
+	p_parms->g_glitterChance = 60;
+	p_parms->g_glitterPercent = random8(40, 80);
 
-	p1_parms.g_sat1 = 255;
+	p_parms->g_sat1 = 255;
 
-	p1_parms.g_pulseWidth2 = 255 / random8(2, NUM_LEDS);
-	p1_parms.g_pulseWidth3 = 255 / random8(2, NUM_LEDS);
-	p1_parms.g_pulseWidth1 = 255 / random8(2, NUM_LEDS);
+	p_parms->g_pulseWidth2 = 255 / random8(2, NUM_LEDS);
+	p_parms->g_pulseWidth3 = 255 / random8(2, NUM_LEDS);
+	p_parms->g_pulseWidth1 = 255 / random8(2, NUM_LEDS);
 
-	p1_parms.g_hue1 = random8();
-	p1_parms.g_paletteOffset = random8(1, 100);
+	p_parms->g_hue1 = random8();
+	p_parms->g_paletteOffset = random8(1, 100);
 
-	p1_parms.g_hueSteps1 = random8(1, 32);
+	p_parms->g_hueSteps1 = random8(1, 32);
 
-	p1_parms.g_everyNMillis1 = random16(100, 1000);
-	p1_parms.g_everyNMillis2 = random(50, 250);
-	p1_parms.g_everyNSecs = random8(3, 15);
+	p_parms->g_everyNMillis1 = random16(100, 1000);
+	p_parms->g_everyNMillis2 = random(50, 250);
+	p_parms->g_everyNSecs = random8(3, 15);
 
-	p1_parms.g_phaseStrategy1 = random8(0, 4);
-	Serial.print("  -p1_parms.g_phaseStrategy1: ");
-	Serial.println(phaseStrategyToString(p1_parms.g_phaseStrategy1));
-	p1_parms.g_phaseStrategy2 = random8(0, 4);
-	Serial.print("  -p1_parms.g_phaseStrategy2: ");
-	Serial.println(phaseStrategyToString(p1_parms.g_phaseStrategy2));
-	p1_parms.g_phaseStrategy3 = random8(0, 4);
+	p_parms->g_phaseStrategy1 = random8(0, 4);
+	Serial.print("  -p_parms->g_phaseStrategy1: ");
+	Serial.println(phaseStrategyToString(p_parms->g_phaseStrategy1));
+	p_parms->g_phaseStrategy2 = random8(0, 4);
+	Serial.print("  -p_parms->g_phaseStrategy2: ");
+	Serial.println(phaseStrategyToString(p_parms->g_phaseStrategy2));
+	p_parms->g_phaseStrategy3 = random8(0, 4);
 	Serial.print("  -g_phaseStrategy3: ");
-	Serial.println(phaseStrategyToString(p1_parms.g_phaseStrategy3));
+	Serial.println(phaseStrategyToString(p_parms->g_phaseStrategy3));
 
-	p1_parms.g_waveStrategy1 = random8(0, 5);
-	Serial.print("  -p1_parms.g_waveStrategy1: ");
-	Serial.println(waveStrategyToString(p1_parms.g_waveStrategy1));
-	p1_parms.g_waveStrategy2 = random8(0, 5);
+	p_parms->g_waveStrategy1 = random8(0, 5);
+	Serial.print("  -p_parms->g_waveStrategy1: ");
+	Serial.println(waveStrategyToString(p_parms->g_waveStrategy1));
+	p_parms->g_waveStrategy2 = random8(0, 5);
 	Serial.print("  -g_waveStrategy2: ");
-	Serial.println(waveStrategyToString(p1_parms.g_waveStrategy2));
-	p1_parms.g_waveStrategy3 = random8(0, 5);
+	Serial.println(waveStrategyToString(p_parms->g_waveStrategy2));
+	p_parms->g_waveStrategy3 = random8(0, 5);
 	Serial.print("  -g_waveStrategy3: ");
-	Serial.println(waveStrategyToString(p1_parms.g_waveStrategy3));
+	Serial.println(waveStrategyToString(p_parms->g_waveStrategy3));
 
-	setupRandomPalette();
+	setupRandomPalette(p_parms);
 
-	p1_parms.g_colorStrategy = random8(2, 4);
+	p_parms->g_colorStrategy = random8(2, 4);
 
 	uint8_t minAmpMax = 96;
 	uint8_t minAmpSpread = 96;
-	p1_parms.g_minAmplitude1 = random8(minAmpMax);
-	p1_parms.g_maxAmplitude1 = random8(p1_parms.g_minAmplitude1 + minAmpSpread, 255);
-	p1_parms.g_minAmplitude2 = random8(minAmpMax);
-	p1_parms.g_maxAmplitude2 = random8(p1_parms.g_minAmplitude2 + minAmpSpread, 255);
-	p1_parms.g_minAmplitude3 = random8(minAmpMax);
-	p1_parms.g_maxAmplitude3 = random8(p1_parms.g_minAmplitude3 + minAmpSpread, 255);
+	p_parms->g_minAmplitude1 = random8(minAmpMax);
+	p_parms->g_maxAmplitude1 = random8(p_parms->g_minAmplitude1 + minAmpSpread, 255);
+	p_parms->g_minAmplitude2 = random8(minAmpMax);
+	p_parms->g_maxAmplitude2 = random8(p_parms->g_minAmplitude2 + minAmpSpread, 255);
+	p_parms->g_minAmplitude3 = random8(minAmpMax);
+	p_parms->g_maxAmplitude3 = random8(p_parms->g_minAmplitude3 + minAmpSpread, 255);
 
-	p1_parms.g_bifurcatePatterns = pctToBool(70);
-	p1_parms.g_bifurcatePatterns = false; // comment out to enable bifurcation
-	p1_parms.g_bifurcateOscillation = pctToBool(60);
-	p1_parms.g_bifurcatePatternsBy = random8(2, NUM_LEDS / 2);
-	p1_parms.g_bifurcationStrategy = random(0, NUM_BIFURCATION_STRATEGIES);
-	p1_parms.g_bifurcationMode = random(0, 3);
-	p1_parms.g_bifurcateColorStrategy1 = calculateNextColorStrategy(p1_parms.g_colorStrategy);
+	p_parms->g_bifurcatePatterns = pctToBool(70);
+	p_parms->g_bifurcatePatterns = false; // comment out to enable bifurcation
+	p_parms->g_bifurcateOscillation = pctToBool(60);
+	p_parms->g_bifurcatePatternsBy = random8(2, NUM_LEDS / 2);
+	p_parms->g_bifurcationStrategy = random(0, NUM_BIFURCATION_STRATEGIES);
+	p_parms->g_bifurcationMode = random(0, 3);
+	p_parms->g_bifurcateColorStrategy1 = calculateNextColorStrategy(p_parms->g_colorStrategy);
 }
 
 uint8_t executePixelPhaseStrategy(uint16_t pixelIndex, uint8_t phaseStrategy, float scale, bool reversePattern,
@@ -412,25 +381,25 @@ uint8_t executeWaveStrategy(uint8_t waveStrategy, uint8_t bpm, unsigned long sta
 	return waveValue;
 }
 
-uint8_t executeBifurcationStrategy(uint8_t pixelIndex)
+uint8_t executeBifurcationStrategy(uint8_t pixelIndex, patternParms *p_parms)
 {
 	uint8_t curColorStrategy, bifurcateVal, calculatedIndex, maxAmplitude;
 	bool isBifurcated = false;
 
-	curColorStrategy = p1_parms.g_colorStrategy;
-	bifurcateVal = p1_parms.g_bifurcatePatternsBy;
+	curColorStrategy = p_parms->g_colorStrategy;
+	bifurcateVal = p_parms->g_bifurcatePatternsBy;
 
-	if (p1_parms.g_bifurcatePatterns)
+	if (p_parms->g_bifurcatePatterns)
 	{
-		switch (p1_parms.g_bifurcationStrategy)
+		switch (p_parms->g_bifurcationStrategy)
 		{
 		case BIFURCATION_STRATEGY_PIXELS:
-			switch (p1_parms.g_bifurcationMode)
+			switch (p_parms->g_bifurcationMode)
 			{
 			case BIFURCATION_MODE_MODULO:
-				if (p1_parms.g_bifurcateOscillation)
+				if (p_parms->g_bifurcateOscillation)
 				{
-					bifurcateVal = executeWaveStrategy(p1_parms.g_waveStrategy1, p1_parms.g_bpm1 / 6, p1_parms.g_startTime, 0, 0, p1_parms.g_bifurcatePatternsBy, p1_parms.g_pulseWidth1);
+					bifurcateVal = executeWaveStrategy(p_parms->g_waveStrategy1, p_parms->g_bpm1 / 6, p_parms->g_startTime, 0, 0, p_parms->g_bifurcatePatternsBy, p_parms->g_pulseWidth1);
 				}
 
 				if (pixelIndex % bifurcateVal == 0)
@@ -439,9 +408,9 @@ uint8_t executeBifurcationStrategy(uint8_t pixelIndex)
 				}
 				break;
 			case BIFURCATION_MODE_BELOW:
-				if (p1_parms.g_bifurcateOscillation)
+				if (p_parms->g_bifurcateOscillation)
 				{
-					bifurcateVal = executeWaveStrategy(p1_parms.g_waveStrategy1, p1_parms.g_bpm1 / 2, p1_parms.g_startTime, 0, 0, NUM_LEDS, p1_parms.g_pulseWidth1);
+					bifurcateVal = executeWaveStrategy(p_parms->g_waveStrategy1, p_parms->g_bpm1 / 2, p_parms->g_startTime, 0, 0, NUM_LEDS, p_parms->g_pulseWidth1);
 				}
 
 				if (pixelIndex < bifurcateVal)
@@ -450,9 +419,9 @@ uint8_t executeBifurcationStrategy(uint8_t pixelIndex)
 				}
 				break;
 			case BIFURCATION_MODE_ALTERNATE:
-				if (p1_parms.g_bifurcateOscillation)
+				if (p_parms->g_bifurcateOscillation)
 				{
-					bifurcateVal = beatsquare8(p1_parms.g_bpm1 / 6, 0, 1, p1_parms.g_startTime, 0);
+					bifurcateVal = beatsquare8(p_parms->g_bpm1 / 6, 0, 1, p_parms->g_startTime, 0);
 				}
 
 				calculatedIndex = pixelIndex;
@@ -480,7 +449,7 @@ uint8_t executeBifurcationStrategy(uint8_t pixelIndex)
 			break;
 		case BIFURCATION_STRATEGY_COLS:
 		case BIFURCATION_STRATEGY_ROWS:
-			if (p1_parms.g_bifurcationStrategy == BIFURCATION_STRATEGY_COLS)
+			if (p_parms->g_bifurcationStrategy == BIFURCATION_STRATEGY_COLS)
 			{
 				calculatedIndex = calculatePixelColumn(pixelIndex, NUM_COLUMNS);
 				maxAmplitude = NUM_COLUMNS;
@@ -492,12 +461,12 @@ uint8_t executeBifurcationStrategy(uint8_t pixelIndex)
 				maxAmplitude = NUM_ROWS;
 				bifurcateVal = bifurcateVal % NUM_ROWS;
 			}
-			switch (p1_parms.g_bifurcationMode)
+			switch (p_parms->g_bifurcationMode)
 			{
 			case BIFURCATION_MODE_MODULO:
-				if (p1_parms.g_bifurcateOscillation)
+				if (p_parms->g_bifurcateOscillation)
 				{
-					bifurcateVal = executeWaveStrategy(p1_parms.g_waveStrategy1, p1_parms.g_bpm1 / 6, p1_parms.g_startTime, 0, 0, p1_parms.g_bifurcatePatternsBy, p1_parms.g_pulseWidth1);
+					bifurcateVal = executeWaveStrategy(p_parms->g_waveStrategy1, p_parms->g_bpm1 / 6, p_parms->g_startTime, 0, 0, p_parms->g_bifurcatePatternsBy, p_parms->g_pulseWidth1);
 				}
 
 				if (calculatedIndex % bifurcateVal == 0)
@@ -506,9 +475,9 @@ uint8_t executeBifurcationStrategy(uint8_t pixelIndex)
 				}
 				break;
 			case BIFURCATION_MODE_BELOW:
-				if (p1_parms.g_bifurcateOscillation)
+				if (p_parms->g_bifurcateOscillation)
 				{
-					bifurcateVal = executeWaveStrategy(p1_parms.g_waveStrategy1, p1_parms.g_bpm1 / 3, p1_parms.g_startTime, 0, 0, maxAmplitude, p1_parms.g_pulseWidth1);
+					bifurcateVal = executeWaveStrategy(p_parms->g_waveStrategy1, p_parms->g_bpm1 / 3, p_parms->g_startTime, 0, 0, maxAmplitude, p_parms->g_pulseWidth1);
 				}
 
 				if (calculatedIndex < bifurcateVal)
@@ -517,9 +486,9 @@ uint8_t executeBifurcationStrategy(uint8_t pixelIndex)
 				}
 				break;
 			case BIFURCATION_MODE_ALTERNATE:
-				if (p1_parms.g_bifurcateOscillation)
+				if (p_parms->g_bifurcateOscillation)
 				{
-					bifurcateVal = beatsquare8(p1_parms.g_bpm1 / 6, 0, 1, p1_parms.g_startTime, 0);
+					bifurcateVal = beatsquare8(p_parms->g_bpm1 / 6, 0, 1, p_parms->g_startTime, 0);
 				}
 
 				if (calculatedIndex % 2 == 0)
@@ -543,16 +512,16 @@ uint8_t executeBifurcationStrategy(uint8_t pixelIndex)
 
 		if (isBifurcated)
 		{
-			curColorStrategy = p1_parms.g_bifurcateColorStrategy1;
+			curColorStrategy = p_parms->g_bifurcateColorStrategy1;
 		}
 	}
 
 	return curColorStrategy;
 }
 
-void executeColorStrategy(uint8_t pixelIndex, uint8_t val1, uint8_t val2, uint8_t val3)
+void executeColorStrategy(patternParms *p_parms, uint8_t pixelIndex, uint8_t val1, uint8_t val2, uint8_t val3)
 {
-	uint8_t curColorStrategy = executeBifurcationStrategy(pixelIndex);
+	uint8_t curColorStrategy = executeBifurcationStrategy(pixelIndex, p_parms);
 	CHSV color;
 
 	switch (curColorStrategy)
@@ -564,55 +533,55 @@ void executeColorStrategy(uint8_t pixelIndex, uint8_t val1, uint8_t val2, uint8_
 		leds[pixelIndex] = CHSV(val1, constrainSaturation(val2), val3);
 		break;
 	case COLOR_STRATEGY_PALETTE:
-		color = ColorFromPalette(p1_parms.g_palette1, val1, val2, p1_parms.g_paletteBlending1);
+		color = ColorFromPalette(p_parms->g_palette1, val1, val2, p_parms->g_paletteBlending1);
 		color.saturation = constrainSaturation(val3);
 		leds[pixelIndex] = color;
 		break;
 	case COLOR_STRATEGY_OFFSET_PALETTE:
-		uint8_t colorIndex = p1_parms.g_hue1 + (p1_parms.g_paletteOffset * pixelIndex);
-		color = ColorFromPalette(p1_parms.g_palette1, colorIndex, val1, p1_parms.g_paletteBlending1);
+		uint8_t colorIndex = p_parms->g_hue1 + (p_parms->g_paletteOffset * pixelIndex);
+		color = ColorFromPalette(p_parms->g_palette1, colorIndex, val1, p_parms->g_paletteBlending1);
 		color.saturation = constrainSaturation(val2);
 		leds[pixelIndex] = color;
-		EVERY_N_MILLISECONDS(p1_parms.g_everyNMillis2) { p1_parms.g_hue1 += p1_parms.g_hueSteps1; }
+		EVERY_N_MILLISECONDS(p_parms->g_everyNMillis2) { p_parms->g_hue1 += p_parms->g_hueSteps1; }
 		break;
 	}
 }
 
-void animateBPMs()
+void animateBPMs(patternParms *p_parms)
 {
-	if (p1_parms.g_animateBPM1)
+	if (p_parms->g_animateBPM1)
 	{
-		p1_parms.g_bpm1 = map(beatsin8(p1_parms.g_BPMAnimationBPM1), 0, 255, 2, p1_parms.g_bpmMax1);
+		p_parms->g_bpm1 = map(beatsin8(p_parms->g_BPMAnimationBPM1), 0, 255, 2, p_parms->g_bpmMax1);
 	}
 
-	if (p1_parms.g_animateBPM2)
+	if (p_parms->g_animateBPM2)
 	{
-		p1_parms.g_bpm2 = map(beatsin8(p1_parms.g_BPMAnimationBPM2), 0, 255, 2, p1_parms.g_bpmMax2);
+		p_parms->g_bpm2 = map(beatsin8(p_parms->g_BPMAnimationBPM2), 0, 255, 2, p_parms->g_bpmMax2);
 	}
 
-	if (p1_parms.g_animateBPM3)
+	if (p_parms->g_animateBPM3)
 	{
-		p1_parms.g_bpm3 = map(beatsin8(p1_parms.g_BPMAnimationBPM3), 0, 255, 2, p1_parms.g_bpmMax3);
+		p_parms->g_bpm3 = map(beatsin8(p_parms->g_BPMAnimationBPM3), 0, 255, 2, p_parms->g_bpmMax3);
 	}
 }
 
 // sequences
-void fullThreeWaveStrategy()
+void fullThreeWaveStrategy(patternParms *p_parms)
 {
-	animateBPMs();
-	if (p1_parms.g_patternsReset)
+	animateBPMs(p_parms);
+	if (p_parms->g_patternsReset)
 	{
 		// Serial.println("fullThreeWaveStrategy");
-		switch (p1_parms.g_colorStrategy)
+		switch (p_parms->g_colorStrategy)
 		{
 		case COLOR_STRATEGY_HSV:
 			Serial.println("  -COLOR_STRATEGY_HSV");
-			if (p1_parms.g_minAmplitude2 < 170)
+			if (p_parms->g_minAmplitude2 < 170)
 			{
-				p1_parms.g_minAmplitude2 = 170; // low values for saturation are kind of boring...
-				if (p1_parms.g_maxAmplitude2 < p1_parms.g_minAmplitude2)
+				p_parms->g_minAmplitude2 = 170; // low values for saturation are kind of boring...
+				if (p_parms->g_maxAmplitude2 < p_parms->g_minAmplitude2)
 				{
-					p1_parms.g_maxAmplitude2 = 255;
+					p_parms->g_maxAmplitude2 = 255;
 				}
 			}
 			break;
@@ -622,19 +591,19 @@ void fullThreeWaveStrategy()
 		case COLOR_STRATEGY_RGB:
 			Serial.println("  -COLOR_STRATEGY_RGB");
 			// similarly, high RGB mins equal low saturation
-			if (p1_parms.g_minAmplitude1 > 25)
+			if (p_parms->g_minAmplitude1 > 25)
 			{
-				p1_parms.g_minAmplitude1 = 25;
+				p_parms->g_minAmplitude1 = 25;
 			}
 
-			if (p1_parms.g_minAmplitude2 > 25)
+			if (p_parms->g_minAmplitude2 > 25)
 			{
-				p1_parms.g_minAmplitude2 = 25;
+				p_parms->g_minAmplitude2 = 25;
 			}
 
-			if (p1_parms.g_minAmplitude3 > 25)
+			if (p_parms->g_minAmplitude3 > 25)
 			{
-				p1_parms.g_minAmplitude3 = 25;
+				p_parms->g_minAmplitude3 = 25;
 			}
 			break;
 		case COLOR_STRATEGY_OFFSET_PALETTE:
@@ -648,12 +617,12 @@ void fullThreeWaveStrategy()
 		// g_bifurcateOscillation = false;
 		// g_addGlitter = false;
 
-		if (p1_parms.g_bifurcatePatterns)
+		if (p_parms->g_bifurcatePatterns)
 		{
 			Serial.print("  -Bifurcation Strategy: ");
-			Serial.print(p1_parms.g_bifurcationStrategy);
+			Serial.print(p_parms->g_bifurcationStrategy);
 			Serial.print("-");
-			switch (p1_parms.g_bifurcationStrategy)
+			switch (p_parms->g_bifurcationStrategy)
 			{
 				case 0:
 					Serial.println("PIXELS");
@@ -665,9 +634,9 @@ void fullThreeWaveStrategy()
 					Serial.println("COLS");
 			}
 			Serial.print("  -Bifurcation Mode: ");
-			Serial.print(p1_parms.g_bifurcationMode);
+			Serial.print(p_parms->g_bifurcationMode);
 			Serial.print("-");
-			switch (p1_parms.g_bifurcationMode)
+			switch (p_parms->g_bifurcationMode)
 			{
 			case 0:
 				Serial.println("MODULO");
@@ -680,41 +649,41 @@ void fullThreeWaveStrategy()
 				break;
 			}
 			Serial.print("  -Bifurcating by: ");
-			Serial.println(p1_parms.g_bifurcatePatternsBy);
+			Serial.println(p_parms->g_bifurcatePatternsBy);
 			Serial.print("    -Bifurcate Color Strategy: ");
-			Serial.print(p1_parms.g_bifurcateColorStrategy1);
+			Serial.print(p_parms->g_bifurcateColorStrategy1);
 			Serial.print("-");
-			Serial.println(colorStrategyToString(p1_parms.g_bifurcateColorStrategy1));
-			if (p1_parms.g_bifurcateOscillation)
+			Serial.println(colorStrategyToString(p_parms->g_bifurcateColorStrategy1));
+			if (p_parms->g_bifurcateOscillation)
 			{
 				Serial.println("     -Oscillating");
 			}
 		}
 
-		p1_parms.g_patternsReset = false;
+		p_parms->g_patternsReset = false;
 	}
 
 	uint8_t phase1, phase2, phase3;
 	uint8_t val1, val2, val3;
-	bool reverse = p1_parms.g_reverse1 && beatsquare8(p1_parms.g_bpm1 / 8) > 0;
-	random16_set_seed(p1_parms.g_predictableRandomSeed); // The randomizer needs to be re-set each time through the loop in order for the 'random' numbers to be the same each time through.
+	bool reverse = p_parms->g_reverse1 && beatsquare8(p_parms->g_bpm1 / 8) > 0;
+	random16_set_seed(p_parms->g_predictableRandomSeed); // The randomizer needs to be re-set each time through the loop in order for the 'random' numbers to be the same each time through.
 
 	for (uint16_t i = 0; i < NUM_LEDS; i++)
 	{
-		phase1 = executePixelPhaseStrategy(i, p1_parms.g_phaseStrategy1, 1, reverse, 0, 0, 0);
-		phase2 = executePixelPhaseStrategy(i, p1_parms.g_phaseStrategy2, 1, reverse, 0, 0, 0);
-		phase3 = executePixelPhaseStrategy(i, p1_parms.g_phaseStrategy3, 1, reverse, 0, 0, 0);
-		val1 = executeWaveStrategy(p1_parms.g_waveStrategy1, p1_parms.g_bpm1, p1_parms.g_startTime, phase1, p1_parms.g_minAmplitude1, p1_parms.g_maxAmplitude1, p1_parms.g_pulseWidth1);
-		val2 = executeWaveStrategy(p1_parms.g_waveStrategy2, p1_parms.g_bpm2, p1_parms.g_startTime, phase2, p1_parms.g_minAmplitude2, p1_parms.g_maxAmplitude2, p1_parms.g_pulseWidth2);
-		val3 = executeWaveStrategy(p1_parms.g_waveStrategy3, p1_parms.g_bpm3, p1_parms.g_startTime, phase3, p1_parms.g_minAmplitude3, p1_parms.g_maxAmplitude3, p1_parms.g_pulseWidth3);
+		phase1 = executePixelPhaseStrategy(i, p_parms->g_phaseStrategy1, 1, reverse, 0, 0, 0);
+		phase2 = executePixelPhaseStrategy(i, p_parms->g_phaseStrategy2, 1, reverse, 0, 0, 0);
+		phase3 = executePixelPhaseStrategy(i, p_parms->g_phaseStrategy3, 1, reverse, 0, 0, 0);
+		val1 = executeWaveStrategy(p_parms->g_waveStrategy1, p_parms->g_bpm1, p_parms->g_startTime, phase1, p_parms->g_minAmplitude1, p_parms->g_maxAmplitude1, p_parms->g_pulseWidth1);
+		val2 = executeWaveStrategy(p_parms->g_waveStrategy2, p_parms->g_bpm2, p_parms->g_startTime, phase2, p_parms->g_minAmplitude2, p_parms->g_maxAmplitude2, p_parms->g_pulseWidth2);
+		val3 = executeWaveStrategy(p_parms->g_waveStrategy3, p_parms->g_bpm3, p_parms->g_startTime, phase3, p_parms->g_minAmplitude3, p_parms->g_maxAmplitude3, p_parms->g_pulseWidth3);
 
-		executeColorStrategy(i, val1, val2, val3);
+		executeColorStrategy(p_parms, i, val1, val2, val3);
 	}
 	random16_set_seed(millis()); // Re-randomizing the random number seed for other routines.
 
-	if (p1_parms.g_addGlitter)
+	if (p_parms->g_addGlitter)
 	{
-		addGlitter(p1_parms.g_glitterChance);
+		addGlitter(p_parms->g_glitterChance);
 	}
 }
 
@@ -724,7 +693,7 @@ void loop()
 	// g_bifurcatePatterns = true;
 	// g_colorStrategy = 3;
 
-	if (!checkPowerSwitch())
+	if (!checkPowerSwitch(&p1_parms))
 	{
 		return;
 	}
@@ -738,7 +707,7 @@ void loop()
 	else
 	{
 		p1_parms.g_transitionUntil = 0;
-		fullThreeWaveStrategy();
+		fullThreeWaveStrategy(&p1_parms);
 	}
 
 	// send the 'leds' array out to the actual LED strip
@@ -750,7 +719,7 @@ void loop()
 	EVERY_N_SECONDS(SECONDS_TO_SHOW) 
 	{
 		p1_parms.g_transitionUntil = millis() + 500;
-		resetPatternGlobals();
+		resetPatternGlobals(&p1_parms);
 	} // change patterns periodically
 	EVERY_N_MILLIS(25) { setBrightnessFromKnob(); }
 }
@@ -770,5 +739,5 @@ void setup()
 	random16_set_seed(analogRead(3));
 	random16_add_entropy(random());
 
-	resetPatternGlobals();
+	resetPatternGlobals(&p1_parms);
 }
