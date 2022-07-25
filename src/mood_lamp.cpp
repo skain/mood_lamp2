@@ -12,8 +12,8 @@
 
 // choose the correct data pin for your layout
 // #define DATA_PIN 5
-// #define DATA_PIN 4
-#define DATA_PIN 2
+#define DATA_PIN 4
+// #define DATA_PIN 2
 
 #define POWER_SWITCH_ENABLED 0
 // #define POWER_SWITCH_ENABLED 1
@@ -24,10 +24,10 @@
 // #define NUM_COLUMNS 6
 // #define NUM_ROWS 7
 // #define NUM_COLUMNS 7
-// #define NUM_ROWS 10
-// #define NUM_COLUMNS 5
-#define NUM_ROWS 5
+#define NUM_ROWS 10
 #define NUM_COLUMNS 5
+// #define NUM_ROWS 5
+// #define NUM_COLUMNS 5
 #define NUM_LEDS NUM_ROWS * NUM_COLUMNS
 
 #define PHASE_STRATEGY_ROWS 0		 // Phase calculated by row
@@ -185,7 +185,7 @@ String waveStrategyToString(uint8_t strategy)
 void setupRandomPalette()
 {
 	CHSV c1, c2, c3;
-	c1 = getRandomColor();
+	c1 = CHSV(random(), 255, 255);
 	if (c1.value < 125)
 	{
 		c1.value = 125;
@@ -245,7 +245,7 @@ uint8_t calculateNextColorStrategy(uint8_t curColorStrategy)
 	uint8_t nextColorStrategy = curColorStrategy;
 	while (nextColorStrategy == curColorStrategy)
 	{
-		nextColorStrategy = random8(1, 4);
+		nextColorStrategy = random8(2, 4);
 	}
 	return nextColorStrategy;
 }

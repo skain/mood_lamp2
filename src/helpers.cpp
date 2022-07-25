@@ -12,11 +12,6 @@ float haveSecsElapsed(uint16_t secs, unsigned long startTime)
 	return false;
 }
 
-float map(float val, float inMin, float inMax, float outMin, float outMax)
-{
-	return outMin + (val - inMin) * ((outMax - outMin) / (inMax - inMin));
-}
-
 float phaseFromPixelIndex(uint16_t pixelIndex, uint16_t numPixels, float scale, bool reversePattern)
 {
 	uint16_t fromMin = 0;
@@ -236,7 +231,7 @@ uint8_t calculateWeightedRandom(uint8_t weights[], uint8_t numWeights)
 
 int constrainSaturation(int sat)
 {
-	return constrain(sat, 190, 255);
+	return map(sat, 0, 255, 50, 255);
 }
 
 // splits the color wheel into equal segments
