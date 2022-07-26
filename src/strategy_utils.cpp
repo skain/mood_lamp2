@@ -267,3 +267,44 @@ uint8_t executeBifurcationStrategy(uint8_t num_leds, uint8_t num_columns, uint8_
 
 	return curColorStrategy;
 }
+
+int constrainSaturation(int sat)
+{
+	return map(sat, 0, 255, 50, 255);
+}
+
+void executeColorStrategy(CRGB *leds, uint8_t num_leds, uint8_t num_columns, uint8_t num_rows, patternParms *p_parms, uint8_t pixelIndex, uint8_t val1, uint8_t val2, uint8_t val3)
+{
+	uint8_t curColorStrategy = executeBifurcationStrategy(num_leds, num_columns, num_rows, pixelIndex, p_parms);
+	CHSV color;
+
+	switch (curColorStrategy)
+	{
+	case COLOR_STRATEGY_RGB:
+		leds[pixelIndex] = CRGB(val1, val2, val3);
+		break;
+	case COLOR_STRATEGY_HSV:
+		leds[pixelIndex] = CHSV(val1, constrainSaturation(val2), val3);
+		break;
+	case COLOR_STRATEGY_PALETTE:
+		color = ColorFromPalette(p_parms->g_palette1, val1, val2, p_parms->g_paletteBlending1);
+		color.saturation = constrainSaturation(val3);
+		leds[pixelIndex] = color;
+		break;
+	case COLOR_STRATEGY_OFFSET_PALETTE:
+		uint8_t colorIndex = p_parms->g_hue1 + (p_parms->g_paletteOffset * pixelIndex);
+		color = ColorFromPalette(p_parms->g_palette1, colorIndex, val1, p_parms->g_paletteBlending1);
+		color.saturation = constrainSaturation(val2);
+		leds[pixelIndex] = color;
+		EVERY_N_MILLISECONDS(p_parms->g_everyNMillis2) { p_parms->g_hue1 += p_parms->g_hueSteps1; }
+		break;
+	}
+}
+
+void addGlitter(CRGB *leds, uint8_t num_leds, uint8_t chanceOfGlitter)
+{
+	if (pctToBool(chanceOfGlitter))
+	{
+		leds[random16(num_leds)] += CRGB::White;
+	}
+}

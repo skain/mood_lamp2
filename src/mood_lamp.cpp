@@ -4,6 +4,7 @@
 #include "pattern_parms.h"
 #include "strategy_utils.h"
 #include "color_utils.h"
+#include "pattern_parms_utils.h"
 #include <FastLED.h>
 #define FRAMES_PER_SECOND 120
 
@@ -62,23 +63,6 @@ bool checkPowerSwitch(patternParms *p_parms)
 	}
 
 	return true;
-}
-
-void addGlitter(uint8_t chanceOfGlitter)
-{
-	if (pctToBool(chanceOfGlitter))
-	{
-		leds[random16(NUM_LEDS)] += CRGB::White;
-	}
-}
-
-void randomizeReverses(patternParms *p_parms)
-{
-	p_parms->g_reverse1 = random8(2);
-	// Serial.print("p_parms->g_reverse1: ");
-	Serial.println(p_parms->g_reverse1);
-	p_parms->g_reverse2 = random8(2);
-	p_parms->g_reverse3 = random8(2);
 }
 
 void resetPatternGlobals(patternParms *p_parms)
@@ -188,52 +172,6 @@ void resetPatternGlobals(patternParms *p_parms)
 	p_parms->g_bifurcationStrategy = random(0, NUM_BIFURCATION_STRATEGIES);
 	p_parms->g_bifurcationMode = random(0, 3);
 	p_parms->g_bifurcateColorStrategy1 = calculateNextColorStrategy(p_parms->g_colorStrategy);
-}
-
-void executeColorStrategy(patternParms *p_parms, uint8_t pixelIndex, uint8_t val1, uint8_t val2, uint8_t val3)
-{
-	uint8_t curColorStrategy = executeBifurcationStrategy(NUM_LEDS, NUM_COLUMNS, NUM_ROWS, pixelIndex, p_parms);
-	CHSV color;
-
-	switch (curColorStrategy)
-	{
-	case COLOR_STRATEGY_RGB:
-		leds[pixelIndex] = CRGB(val1, val2, val3);
-		break;
-	case COLOR_STRATEGY_HSV:
-		leds[pixelIndex] = CHSV(val1, constrainSaturation(val2), val3);
-		break;
-	case COLOR_STRATEGY_PALETTE:
-		color = ColorFromPalette(p_parms->g_palette1, val1, val2, p_parms->g_paletteBlending1);
-		color.saturation = constrainSaturation(val3);
-		leds[pixelIndex] = color;
-		break;
-	case COLOR_STRATEGY_OFFSET_PALETTE:
-		uint8_t colorIndex = p_parms->g_hue1 + (p_parms->g_paletteOffset * pixelIndex);
-		color = ColorFromPalette(p_parms->g_palette1, colorIndex, val1, p_parms->g_paletteBlending1);
-		color.saturation = constrainSaturation(val2);
-		leds[pixelIndex] = color;
-		EVERY_N_MILLISECONDS(p_parms->g_everyNMillis2) { p_parms->g_hue1 += p_parms->g_hueSteps1; }
-		break;
-	}
-}
-
-void animateBPMs(patternParms *p_parms)
-{
-	if (p_parms->g_animateBPM1)
-	{
-		p_parms->g_bpm1 = map(beatsin8(p_parms->g_BPMAnimationBPM1), 0, 255, 2, p_parms->g_bpmMax1);
-	}
-
-	if (p_parms->g_animateBPM2)
-	{
-		p_parms->g_bpm2 = map(beatsin8(p_parms->g_BPMAnimationBPM2), 0, 255, 2, p_parms->g_bpmMax2);
-	}
-
-	if (p_parms->g_animateBPM3)
-	{
-		p_parms->g_bpm3 = map(beatsin8(p_parms->g_BPMAnimationBPM3), 0, 255, 2, p_parms->g_bpmMax3);
-	}
 }
 
 // sequences
@@ -348,13 +286,13 @@ void fullThreeWaveStrategy(patternParms *p_parms)
 		val2 = executeWaveStrategy(p_parms->g_waveStrategy2, p_parms->g_bpm2, p_parms->g_startTime, phase2, p_parms->g_minAmplitude2, p_parms->g_maxAmplitude2, p_parms->g_pulseWidth2);
 		val3 = executeWaveStrategy(p_parms->g_waveStrategy3, p_parms->g_bpm3, p_parms->g_startTime, phase3, p_parms->g_minAmplitude3, p_parms->g_maxAmplitude3, p_parms->g_pulseWidth3);
 
-		executeColorStrategy(p_parms, i, val1, val2, val3);
+		executeColorStrategy(leds, NUM_LEDS, NUM_COLUMNS, NUM_ROWS, p_parms, i, val1, val2, val3);
 	}
 	random16_set_seed(millis()); // Re-randomizing the random number seed for other routines.
 
 	if (p_parms->g_addGlitter)
 	{
-		addGlitter(p_parms->g_glitterChance);
+		addGlitter(leds, NUM_LEDS, p_parms->g_glitterChance);
 	}
 }
 

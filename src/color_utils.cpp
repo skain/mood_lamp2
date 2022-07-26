@@ -4,11 +4,6 @@
 #include "helpers.h"
 
 
-int constrainSaturation(int sat)
-{
-	return map(sat, 0, 255, 50, 255);
-}
-
 // splits the color wheel into equal segments
 // harmonicDivision is how many segments to divide the color wheel into
 // harmonicIndex is which segement you want returned (zero-based where zero returns the hue you passed in)

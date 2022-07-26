@@ -1,8 +1,6 @@
 #include <FastLED.h>
 #include "pattern_parms.h"
 
-int constrainSaturation(int sat);
-
 // splits the color wheel into equal segments
 // harmonicDivision is how many segments to divide the color wheel into
 // harmonicIndex is which segement you want returned (zero-based where zero returns the hue you passed in)
