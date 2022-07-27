@@ -8,12 +8,9 @@
 #include <FastLED.h>
 #include "config.h"
 
-
 CRGB leds[NUM_LEDS], leds1[NUM_LEDS], leds2[NUM_LEDS];
 
 patternParms p1_parms, p2_parms;
-
-// void resetPatternGlobals(patternParms *p_parms);
 
 void setBrightnessFromKnob()
 {
