@@ -1,3 +1,5 @@
+#ifndef strategy_utils_h
+#define strategy_utils_h
 #include <FastLED.h>
 #include "pattern_parms.h"
 
@@ -13,3 +15,5 @@ uint8_t executeWaveStrategy(uint8_t waveStrategy, uint8_t bpm, unsigned long sta
 void executeColorStrategy(CRGB *leds, uint8_t num_leds, uint8_t num_columns, uint8_t num_rows, patternParms *p_parms, uint8_t pixelIndex, uint8_t val1, uint8_t val2, uint8_t val3);
 uint8_t executeBifurcationStrategy(uint8_t num_leds, uint8_t num_columns, uint8_t num_rows, uint8_t pixelIndex, patternParms *p_parms);
 void addGlitter(CRGB *leds, uint8_t num_leds, uint8_t chanceOfGlitter);
+void fullThreeWaveStrategy(CRGB *leds, uint8_t num_leds, uint8_t num_columns, uint8_t num_rows, patternParms *p_parms);
+#endif

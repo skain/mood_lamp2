@@ -2,6 +2,7 @@
 #include "compiler_defs.h"
 #include "pattern_parms.h"
 #include "helpers.h"
+#include "pattern_parms_utils.h"
 
 String colorStrategyToString(uint8_t strategy)
 {
@@ -306,5 +307,126 @@ void addGlitter(CRGB *leds, uint8_t num_leds, uint8_t chanceOfGlitter)
 	if (pctToBool(chanceOfGlitter))
 	{
 		leds[random16(num_leds)] += CRGB::White;
+	}
+}
+
+void fullThreeWaveStrategy(CRGB *leds, uint8_t num_leds, uint8_t num_columns, uint8_t num_rows, patternParms *p_parms)
+{
+	animateBPMs(p_parms);
+	if (p_parms->g_patternsReset)
+	{
+		// Serial.println("fullThreeWaveStrategy");
+		switch (p_parms->g_colorStrategy)
+		{
+		case COLOR_STRATEGY_HSV:
+			Serial.println("  -COLOR_STRATEGY_HSV");
+			if (p_parms->g_minAmplitude2 < 170)
+			{
+				p_parms->g_minAmplitude2 = 170; // low values for saturation are kind of boring...
+				if (p_parms->g_maxAmplitude2 < p_parms->g_minAmplitude2)
+				{
+					p_parms->g_maxAmplitude2 = 255;
+				}
+			}
+			break;
+		case COLOR_STRATEGY_PALETTE:
+			Serial.println("  -COLOR_STRATEGY_PALETTE");
+			break;
+		case COLOR_STRATEGY_RGB:
+			Serial.println("  -COLOR_STRATEGY_RGB");
+			// similarly, high RGB mins equal low saturation
+			if (p_parms->g_minAmplitude1 > 25)
+			{
+				p_parms->g_minAmplitude1 = 25;
+			}
+
+			if (p_parms->g_minAmplitude2 > 25)
+			{
+				p_parms->g_minAmplitude2 = 25;
+			}
+
+			if (p_parms->g_minAmplitude3 > 25)
+			{
+				p_parms->g_minAmplitude3 = 25;
+			}
+			break;
+		case COLOR_STRATEGY_OFFSET_PALETTE:
+			Serial.println("  -COLOR_STRATEGY_OFFSET_PALETTE");
+			break;
+		}
+		// g_bifurcatePatterns = true;
+		// g_bifurcatePatternsBy = 2;
+		// g_bifurcationMode = BIFURCATION_MODE_BELOW;
+		// g_bifurcationStrategy = BIFURCATION_STRATEGY_ROWS;
+		// g_bifurcateOscillation = false;
+		// g_addGlitter = false;
+
+		if (p_parms->g_bifurcatePatterns)
+		{
+			Serial.print("  -Bifurcation Strategy: ");
+			Serial.print(p_parms->g_bifurcationStrategy);
+			Serial.print("-");
+			switch (p_parms->g_bifurcationStrategy)
+			{
+			case 0:
+				Serial.println("PIXELS");
+				break;
+			case 1:
+				Serial.println("ROWS");
+				break;
+			case 2:
+				Serial.println("COLS");
+			}
+			Serial.print("  -Bifurcation Mode: ");
+			Serial.print(p_parms->g_bifurcationMode);
+			Serial.print("-");
+			switch (p_parms->g_bifurcationMode)
+			{
+			case 0:
+				Serial.println("MODULO");
+				break;
+			case 1:
+				Serial.println("BELOW");
+				break;
+			case 2:
+				Serial.println("ALTERNATE");
+				break;
+			}
+			Serial.print("  -Bifurcating by: ");
+			Serial.println(p_parms->g_bifurcatePatternsBy);
+			Serial.print("    -Bifurcate Color Strategy: ");
+			Serial.print(p_parms->g_bifurcateColorStrategy1);
+			Serial.print("-");
+			Serial.println(colorStrategyToString(p_parms->g_bifurcateColorStrategy1));
+			if (p_parms->g_bifurcateOscillation)
+			{
+				Serial.println("     -Oscillating");
+			}
+		}
+
+		p_parms->g_patternsReset = false;
+	}
+
+	uint8_t phase1, phase2, phase3;
+	uint8_t val1, val2, val3;
+	bool reverse = p_parms->g_reverse1 && beatsquare8(p_parms->g_bpm1 / 8) > 0;
+	random16_set_seed(p_parms->g_predictableRandomSeed); // The randomizer needs to be re-set each time through the loop in order for the 'random' numbers to be the same each time through.
+
+	for (uint16_t i = 0; i < num_leds; i++)
+	{
+		phase1 = executePixelPhaseStrategy(num_columns, num_rows, num_leds, i, p_parms->g_phaseStrategy1, 1, reverse, 0, 0, 0);
+		phase2 = executePixelPhaseStrategy(num_columns, num_rows, num_leds, i, p_parms->g_phaseStrategy2, 1, reverse, 0, 0, 0);
+		phase3 = executePixelPhaseStrategy(num_columns, num_rows, num_leds, i, p_parms->g_phaseStrategy3, 1, reverse, 0, 0, 0);
+		val1 = executeWaveStrategy(p_parms->g_waveStrategy1, p_parms->g_bpm1, p_parms->g_startTime, phase1, p_parms->g_minAmplitude1, p_parms->g_maxAmplitude1, p_parms->g_pulseWidth1);
+		val2 = executeWaveStrategy(p_parms->g_waveStrategy2, p_parms->g_bpm2, p_parms->g_startTime, phase2, p_parms->g_minAmplitude2, p_parms->g_maxAmplitude2, p_parms->g_pulseWidth2);
+		val3 = executeWaveStrategy(p_parms->g_waveStrategy3, p_parms->g_bpm3, p_parms->g_startTime, phase3, p_parms->g_minAmplitude3, p_parms->g_maxAmplitude3, p_parms->g_pulseWidth3);
+
+		executeColorStrategy(leds, num_leds, num_columns, num_rows, p_parms, i, val1, val2, val3);
+	}
+	random16_set_seed(millis()); // Re-randomizing the random number seed for other routines.
+
+	if (p_parms->g_addGlitter)
+	{
+		addGlitter(leds, num_leds, p_parms->g_glitterChance);
 	}
 }

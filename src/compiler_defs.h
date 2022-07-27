@@ -1,3 +1,5 @@
+#ifndef compiler_defs_h
+#define compiler_defs_h
 #define PHASE_STRATEGY_ROWS 0		 // Phase calculated by row
 #define PHASE_STRATEGY_COLUMNS 1	 // Phase calculated by column
 #define PHASE_STRATEGY_STRIP_INDEX 2 // Phase calculated directly by pixel location on strip
@@ -21,3 +23,4 @@
 #define BIFURCATION_MODE_MODULO 0	  // apply a different pattern to pixels based on the modulo of the pixel index, row, or column
 #define BIFURCATION_MODE_BELOW 1	  // apply a different pattern to pixels that have an index, row or column below a specific value
 #define BIFURCATION_MODE_ALTERNATE 2  // apply a different pattern to every other pixel (and handle even count rows correctly)
+#endif
